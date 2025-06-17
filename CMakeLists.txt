@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.30)
+project(terraria_clone C)
+add_subdirectory(zeta_framework)
+add_executable(zeta_framework src/game.c)
+target_link_libraries(terraria_clone PRIVATE zeta_framework)
