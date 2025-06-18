@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <zfw_game.h>
 
+#define PLAYER_MOVE_SPD 3.0f
+#define PLAYER_MOVE_SPD_LERP 0.3f
+
 typedef enum {
     ek_sprite_player,
 
@@ -13,6 +16,9 @@ s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
 
 typedef struct {
     s_textures textures;
+
+    s_vec_2d player_pos;
+    s_vec_2d player_vel;
 } s_game;
 
 static const char* TextureIndexToFilePath(const int index) {
@@ -31,6 +37,15 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
 
 static bool GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
+
+    const float move_axis = IsKeyDown(ek_key_code_d, func_data->input_state) - IsKeyDown(ek_key_code_a, func_data->input_state);
+    const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
+    game->player_vel.x = Lerp(game->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
+
+    game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
+
+    game->player_pos.y = 80.0f;
+
     return true;
 }
 
@@ -53,7 +68,7 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    RenderSprite(&func_data->rendering_context, ek_sprite_player, &game->textures, VEC_2D_ZERO, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){4.0f, 4.0f}, 0.0f, WHITE);
+    RenderSprite(&func_data->rendering_context, ek_sprite_player, &game->textures, game->player_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){4.0f, 4.0f}, 0.0f, WHITE);
     Flush(&func_data->rendering_context);
 
     return true;
