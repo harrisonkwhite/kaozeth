@@ -4,32 +4,60 @@
 #define PLAYER_MOVE_SPD 3.0f
 #define PLAYER_MOVE_SPD_LERP 0.3f
 
+#define TILEMAP_WIDTH 128
+#define TILEMAP_HEIGHT 128
+#define TILE_SIZE 8
+
+#define VIEW_SCALE 2.0f
+
 typedef enum {
     ek_sprite_player,
+    ek_sprite_tile,
 
     eks_sprite_cnt
 } e_sprite;
 
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
-    {0, 0, 24, 24}
+    {0, 0, 24, 24}, // Player
+    {24, 0, 8, 8} // Tile
 };
+
+typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
 
 typedef struct {
     s_textures textures;
 
     s_vec_2d player_pos;
     s_vec_2d player_vel;
+
+    t_tilemap_activity tilemap_activity;
 } s_game;
 
 static const char* TextureIndexToFilePath(const int index) {
     return "../assets/sprites.png";
 }
 
+static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
+    assert(tm_activity);
+    assert(pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT);
+    return IsBitActive(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+}
+
+static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
+    assert(tm_activity);
+    assert(pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT);
+    ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+}
+
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, 1, TextureIndexToFilePath)) {
-            return false;
+        return false;
+    }
+
+    for (int i = 0; i < TILEMAP_WIDTH; i++) {
+        ActivateTile(&game->tilemap_activity, (s_vec_2d_i){i, 0});
     }
 
     return true;
@@ -68,7 +96,31 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    RenderSprite(&func_data->rendering_context, ek_sprite_player, &game->textures, game->player_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){4.0f, 4.0f}, 0.0f, WHITE);
+    {
+        ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
+
+        t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
+        (*vm)[0][0] = VIEW_SCALE;
+        (*vm)[1][1] = VIEW_SCALE;
+        (*vm)[2][2] = VIEW_SCALE;
+        (*vm)[3][3] = 1.0f;
+    }
+
+    // Render tilemap.
+    for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            if (!IsTileActive(&game->tilemap_activity, (s_vec_2d_i){tx, ty})) {
+                continue;
+            }
+
+            const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
+            RenderSprite(&func_data->rendering_context, ek_sprite_tile, &game->textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        }
+    }
+
+    // Render the player.
+    RenderSprite(&func_data->rendering_context, ek_sprite_player, &game->textures, game->player_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+
     Flush(&func_data->rendering_context);
 
     return true;
