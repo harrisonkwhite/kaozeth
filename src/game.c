@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <zfw_game.h>
 
-#define GRAVITY 0.2f
+#define GRAVITY 0.15f
 
-#define PLAYER_MOVE_SPD 2.0f
+#define PLAYER_MOVE_SPD 1.5f
 #define PLAYER_MOVE_SPD_LERP 0.2f
-#define PLAYER_JUMP_HEIGHT 5.0f
+#define PLAYER_JUMP_HEIGHT 3.0f
 
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 60
@@ -24,7 +24,7 @@ typedef enum {
 } e_sprite;
 
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
-    {0, 0, 16, 24}, // Player
+    {1, 1, 14, 22}, // Player
     {16, 0, 8, 8}, // Tile
     {24, 0, 8, 8} // Cursor
 };
@@ -36,6 +36,7 @@ typedef struct {
 
     s_vec_2d player_pos;
     s_vec_2d player_vel;
+    bool player_jumping;
 
     t_tilemap_activity tilemap_activity;
 
@@ -202,8 +203,15 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
 
         game->player_vel.y += GRAVITY;
 
-        if (IsKeyPressed(ek_key_code_space, func_data->input_state, func_data->input_state_last)) {
-            game->player_vel.y = -PLAYER_JUMP_HEIGHT;
+        if (!game->player_jumping) {
+            if (IsKeyPressed(ek_key_code_space, func_data->input_state, func_data->input_state_last)) {
+                game->player_vel.y = -PLAYER_JUMP_HEIGHT;
+                game->player_jumping = true;
+            }
+        } else {
+            if (game->player_vel.y < 0.0f && !IsKeyDown(ek_key_code_space, func_data->input_state)) {
+                game->player_vel.y = 0.0f;
+            }
         }
 
         {
@@ -212,6 +220,13 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
         }
 
         game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
+
+        // Leave jumping state if tile is below.
+        const s_rect below_collider = RectTranslated(PlayerCollider(game->player_pos), (s_vec_2d){0.0f, 1.0f});
+
+        if (TileCollisionCheck(&game->tilemap_activity, below_collider)) {
+            game->player_jumping = false;
+        }
     }
 
     //
