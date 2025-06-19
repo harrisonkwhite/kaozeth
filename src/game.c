@@ -3,28 +3,30 @@
 
 #define GRAVITY 0.2f
 
-#define PLAYER_MOVE_SPD 3.0f
-#define PLAYER_MOVE_SPD_LERP 0.3f
+#define PLAYER_MOVE_SPD 2.0f
+#define PLAYER_MOVE_SPD_LERP 0.2f
 #define PLAYER_JUMP_HEIGHT 5.0f
 
-#define TILEMAP_WIDTH 32
-#define TILEMAP_HEIGHT 32
+#define TILEMAP_WIDTH 120
+#define TILEMAP_HEIGHT 60
 #define TILE_SIZE 8
-#define TILEMAP_SURFACE_LEVEL 24
+#define TILEMAP_SURFACE_LEVEL 40
 static_assert(TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface level!");
 
-#define VIEW_SCALE 2.0f
+#define VIEW_SCALE 4.0f
 
 typedef enum {
     ek_sprite_player,
     ek_sprite_tile,
+    ek_sprite_cursor,
 
     eks_sprite_cnt
 } e_sprite;
 
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
     {0, 0, 16, 24}, // Player
-    {16, 0, 8, 8} // Tile
+    {16, 0, 8, 8}, // Tile
+    {24, 0, 8, 8} // Cursor
 };
 
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
@@ -187,25 +189,30 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
     );
 }
 
+static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(mat && IsZero(mat, sizeof(*mat)));
+    assert(display_size.x > 0 && display_size.y > 0);
+
+    const s_vec_2d view_pos = {
+        (-cam_pos.x * VIEW_SCALE) + (display_size.x / 2.0f),
+        (-cam_pos.y * VIEW_SCALE) + (display_size.y / 2.0f)
+    };
+
+    InitIdenMatrix4x4(mat);
+    TranslateMatrix4x4(mat, view_pos);
+    ScaleMatrix4x4(mat, VIEW_SCALE);
+}
+
 static bool RenderGame(const s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    {
-        ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
-
-        const s_vec_2d_i view_size = func_data->rendering_context.display_size;
-        const s_vec_2d view_pos = {
-            (-game->cam_pos.x * VIEW_SCALE) + (view_size.x / 2.0f),
-            (-game->cam_pos.y * VIEW_SCALE) + (view_size.y / 2.0f)
-        };
-
-        t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
-        InitIdenMatrix4x4(vm);
-        TranslateMatrix4x4(vm, view_pos);
-        ScaleMatrix4x4(vm, VIEW_SCALE);
-    }
+    //
+    // World
+    //
+    ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
+    InitCameraViewMatrix4x4(&func_data->rendering_context.state->view_mat, game->cam_pos, func_data->rendering_context.display_size);
 
     // Render tilemap.
     for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
@@ -224,6 +231,18 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
     Flush(&func_data->rendering_context);
 
+    //
+    // UI
+    //
+
+    ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
+    InitIdenMatrix4x4(&func_data->rendering_context.state->view_mat);
+
+    // Render the cursor.
+    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, func_data->input_state->mouse_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+
+    Flush(&func_data->rendering_context);
+
     return true;
 }
 
@@ -235,7 +254,7 @@ int main() {
         .user_mem_size = sizeof(s_game),
         .user_mem_alignment = alignof(s_game),
 
-        .window_init_size = {1280, 720},
+        .window_init_size = {1920, 1080},
         .window_title = "Terraria Clone",
         .window_flags = ek_window_flag_hide_cursor | ek_window_flag_resizable,
 
