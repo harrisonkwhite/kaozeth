@@ -32,6 +32,13 @@ s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
 
 typedef struct {
+    int item_id;
+    int quantity;
+} s_inventory_slot;
+
+#define PLAYER_INVENTORY_LENGTH 32
+
+typedef struct {
     s_textures textures;
 
     s_vec_2d player_pos;
@@ -40,8 +47,55 @@ typedef struct {
 
     t_tilemap_activity tilemap_activity;
 
+    bool player_inventory_open;
+    s_inventory_slot player_inventory_slots[PLAYER_INVENTORY_LENGTH];
+
     s_vec_2d cam_pos;
 } s_game;
+
+#define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
+
+// Returns the quantity that couldn't be added (0 if everything was added).
+static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const int item_id, int quantity) {
+    assert(slots);
+    assert(slot_cnt > 0);
+    assert(quantity > 0);
+
+    for (int i = 0; i < slot_cnt && quantity > 0; i++) {
+        if (slots[i].quantity > 0 && slots[i].item_id == item_id && slots[i].quantity < ITEM_QUANTITY_LIMIT) {
+            const int quant_to_add = MIN(ITEM_QUANTITY_LIMIT - slots[i].quantity, quantity);
+            slots[i].quantity += quant_to_add;
+            quantity -= quant_to_add;
+        }
+    }
+
+    for (int i = 0; i < slot_cnt && quantity > 0; i++) {
+        if (slots[i].quantity == 0) {
+            const int quant_to_add = MIN(ITEM_QUANTITY_LIMIT, quantity);
+            slots[i].quantity += quant_to_add;
+            quantity -= quant_to_add;
+        }
+    }
+    
+    return quantity;
+}
+
+// Returns the quantity that couldn't be removed (0 if everything was removed).
+static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const int item_id, int quantity) {
+    assert(slots);
+    assert(slot_cnt > 0);
+    assert(quantity > 0);
+
+    for (int i = 0; i < slot_cnt && quantity > 0; i++) {
+        if (slots[i].quantity > 0 && slots[i].item_id == item_id) {
+            const int quant_to_remove = MIN(slots[i].quantity, quantity);
+            slots[i].quantity -= quant_to_remove;
+            quantity -= quant_to_remove;
+        }
+    }
+
+    return quantity;
+}
 
 static const char* TextureIndexToFilePath(const int index) {
     return "../assets/sprites.png";
@@ -250,6 +304,13 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
         }
     }
 
+    //
+    // Player Inventory
+    //
+    if (IsKeyPressed(ek_key_code_escape, func_data->input_state, func_data->input_state_last)) {
+        game->player_inventory_open = !game->player_inventory_open;
+    }
+
     return true;
 }
 
@@ -315,6 +376,32 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
     ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
     InitIdenMatrix4x4(&func_data->rendering_context.state->view_mat);
+
+#define INVENTORY_SLOT_SIZE 64.0f
+#define INVENTORY_SLOT_GAP 80.0f
+#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.05f, 0.05f}
+#define PLAYER_INVENTORY_COLUMN_CNT 8
+
+    // Render the player inventory.
+    const s_vec_2d player_inv_pos = {
+        func_data->rendering_context.display_size.x * PLAYER_INVENTORY_POS_PERC.x,
+        func_data->rendering_context.display_size.y * PLAYER_INVENTORY_POS_PERC.y
+    };
+
+    const int slot_display_cnt = game->player_inventory_open ? PLAYER_INVENTORY_LENGTH : PLAYER_INVENTORY_COLUMN_CNT;
+
+    for (int i = 0; i < slot_display_cnt; i++) {
+        const s_inventory_slot* const slot = &game->player_inventory_slots[i];
+
+        const s_rect slot_rect = {
+            player_inv_pos.x + (INVENTORY_SLOT_GAP * (i % PLAYER_INVENTORY_COLUMN_CNT)),
+            player_inv_pos.y + ((int)(i / PLAYER_INVENTORY_COLUMN_CNT) * INVENTORY_SLOT_GAP),
+            INVENTORY_SLOT_SIZE,
+            INVENTORY_SLOT_SIZE
+        };
+
+        RenderRectOutline(&func_data->rendering_context, slot_rect, WHITE, 2.0f);
+    }
 
     // Render the cursor.
     RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, func_data->input_state->mouse_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
