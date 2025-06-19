@@ -46,16 +46,26 @@ static const char* TextureIndexToFilePath(const int index) {
     return "../assets/sprites.png";
 }
 
+static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
+    return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
+}
+
 static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
     assert(tm_activity);
-    assert(pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT);
+    assert(IsTilePosInBounds(pos));
     return IsBitActive(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
     assert(tm_activity);
-    assert(pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT);
+    assert(IsTilePosInBounds(pos));
     ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+}
+
+static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
+    assert(tm_activity);
+    assert(IsTilePosInBounds(pos));
+    DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 static s_rect_edges_i RectTilemapSpan(const s_rect rect) {
@@ -150,27 +160,80 @@ static s_rect PlayerCollider(const s_vec_2d player_pos) {
     };
 }
 
+static inline s_vec_2d CameraSize(const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+    return (s_vec_2d){display_size.x / VIEW_SCALE, display_size.y / VIEW_SCALE};
+}
+
+static inline s_vec_2d CameraTopLeft(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+    const s_vec_2d size = CameraSize(display_size);
+    return (s_vec_2d){cam_pos.x - (size.x / 2.0f), cam_pos.y - (size.y / 2.0f)};
+}
+
+static inline s_vec_2d CameraToDisplayPos(const s_vec_2d pos, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+    const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+    return (s_vec_2d) {
+        (pos.x - cam_tl.x) * VIEW_SCALE,
+        (pos.y - cam_tl.y) * VIEW_SCALE
+    };
+}
+
+static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+    const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+    return (s_vec_2d) {
+        cam_tl.x + (pos.x / VIEW_SCALE),
+        cam_tl.y + (pos.y / VIEW_SCALE)
+    };
+}
+
 static bool GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    const float move_axis = IsKeyDown(ek_key_code_d, func_data->input_state) - IsKeyDown(ek_key_code_a, func_data->input_state);
-    const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
-    game->player_vel.x = Lerp(game->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
-
-    game->player_vel.y += GRAVITY;
-
-    if (IsKeyPressed(ek_key_code_space, func_data->input_state, func_data->input_state_last)) {
-        game->player_vel.y = -PLAYER_JUMP_HEIGHT;
-    }
-
+    //
+    // Player Movement
+    //
     {
-        const s_rect collider = PlayerCollider(game->player_pos);
-        ProcTileCollisions(&game->player_vel, collider, &game->tilemap_activity);
+        const float move_axis = IsKeyDown(ek_key_code_d, func_data->input_state) - IsKeyDown(ek_key_code_a, func_data->input_state);
+        const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
+        game->player_vel.x = Lerp(game->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
+
+        game->player_vel.y += GRAVITY;
+
+        if (IsKeyPressed(ek_key_code_space, func_data->input_state, func_data->input_state_last)) {
+            game->player_vel.y = -PLAYER_JUMP_HEIGHT;
+        }
+
+        {
+            const s_rect collider = PlayerCollider(game->player_pos);
+            ProcTileCollisions(&game->player_vel, collider, &game->tilemap_activity);
+        }
+
+        game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
     }
 
-    game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
-
+    //
+    // Camera
+    //
     game->cam_pos = game->player_pos;
+
+    //
+    // Tilemap Interaction
+    //
+    if (IsMouseButtonPressed(ek_mouse_button_code_left, func_data->input_state, func_data->input_state_last)) {
+        const s_vec_2d mouse_cam_pos = DisplayToCameraPos(func_data->input_state->mouse_pos, game->cam_pos, func_data->window_state.size);
+
+        const s_vec_2d_i mouse_tile_pos = {
+            floorf(mouse_cam_pos.x / TILE_SIZE),
+            floorf(mouse_cam_pos.y / TILE_SIZE)
+        };
+
+        if (IsTilePosInBounds(mouse_tile_pos)) {
+            DeactivateTile(&game->tilemap_activity, mouse_tile_pos);
+        }
+    }
 
     return true;
 }
