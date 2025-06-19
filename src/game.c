@@ -11,9 +11,9 @@
 #define TILEMAP_HEIGHT 32
 #define TILE_SIZE 8
 #define TILEMAP_SURFACE_LEVEL 24
-static_assert(TILEMAP_SURFACE_LEVEL >= 0 && TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface level!");
+static_assert(TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface level!");
 
-#define VIEW_SCALE 3.0f
+#define VIEW_SCALE 2.0f
 
 typedef enum {
     ek_sprite_player,
@@ -23,8 +23,8 @@ typedef enum {
 } e_sprite;
 
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
-    {0, 0, 24, 24}, // Player
-    {24, 0, 8, 8} // Tile
+    {0, 0, 16, 24}, // Player
+    {16, 0, 8, 8} // Tile
 };
 
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
@@ -36,6 +36,8 @@ typedef struct {
     s_vec_2d player_vel;
 
     t_tilemap_activity tilemap_activity;
+
+    s_vec_2d cam_pos;
 } s_game;
 
 static const char* TextureIndexToFilePath(const int index) {
@@ -166,6 +168,8 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
 
     game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
 
+    game->cam_pos = game->player_pos;
+
     return true;
 }
 
@@ -191,11 +195,16 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
     {
         ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
 
+        const s_vec_2d_i view_size = func_data->rendering_context.display_size;
+        const s_vec_2d view_pos = {
+            (-game->cam_pos.x * VIEW_SCALE) + (view_size.x / 2.0f),
+            (-game->cam_pos.y * VIEW_SCALE) + (view_size.y / 2.0f)
+        };
+
         t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
-        (*vm)[0][0] = VIEW_SCALE;
-        (*vm)[1][1] = VIEW_SCALE;
-        (*vm)[2][2] = VIEW_SCALE;
-        (*vm)[3][3] = 1.0f;
+        InitIdenMatrix4x4(vm);
+        TranslateMatrix4x4(vm, view_pos);
+        ScaleMatrix4x4(vm, VIEW_SCALE);
     }
 
     // Render tilemap.
