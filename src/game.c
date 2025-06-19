@@ -4,8 +4,8 @@
 #define PLAYER_MOVE_SPD 3.0f
 #define PLAYER_MOVE_SPD_LERP 0.3f
 
-#define TILEMAP_WIDTH 128
-#define TILEMAP_HEIGHT 128
+#define TILEMAP_WIDTH 28
+#define TILEMAP_HEIGHT 28
 #define TILE_SIZE 8
 
 #define VIEW_SCALE 2.0f
@@ -49,6 +49,72 @@ static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i
     ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
+static s_rect_edges_i RectTilemapSpan(const s_rect rect) {
+    assert(rect.width >= 0.0f && rect.height >= 0.0f);
+
+    return RectEdgesIClamped(
+        (s_rect_edges_i){
+            rect.x / TILE_SIZE,
+            rect.y / TILE_SIZE,
+            ceilf((rect.x + rect.width) / TILE_SIZE),
+            ceilf((rect.y + rect.height) / TILE_SIZE)
+        },
+        (s_rect_edges_i){0, 0, TILEMAP_WIDTH, TILEMAP_HEIGHT}
+    );
+}
+
+static bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider) {
+    assert(tm_activity);
+    assert(collider.width > 0.0f && collider.height > 0.0f);
+
+    const s_rect_edges_i collider_tilemap_span = RectTilemapSpan(collider);
+
+    for (int ty = collider_tilemap_span.top; ty < collider_tilemap_span.bottom; ty++) {
+        for (int tx = collider_tilemap_span.left; tx < collider_tilemap_span.right; tx++) {
+            if (!IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+                continue;
+            }
+
+            const s_rect tile_collider = {
+                TILE_SIZE * tx,
+                TILE_SIZE * ty,
+                TILE_SIZE,
+                TILE_SIZE
+            };
+
+            if (DoRectsInters(collider, tile_collider)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+static void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity) {
+    assert(vel);
+    assert(collider.width > 0 && collider.height > 0);
+    assert(tm_activity);
+
+    const s_rect hor_rect = RectTranslated(collider, (s_vec_2d){vel->x, 0.0f});
+
+    if (TileCollisionCheck(tm_activity, hor_rect)) {
+        vel->x = 0.0f;
+    }
+
+    const s_rect ver_rect = RectTranslated(collider, (s_vec_2d){0.0f, vel->y});
+
+    if (TileCollisionCheck(tm_activity, ver_rect)) {
+        vel->y = 0.0f;
+    }
+
+    const s_rect diag_rect = RectTranslated(collider, *vel);
+
+    if (TileCollisionCheck(tm_activity, diag_rect)) {
+        vel->x = 0.0f;
+    }
+}
+
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
@@ -56,11 +122,21 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    for (int i = 0; i < TILEMAP_WIDTH; i++) {
-        ActivateTile(&game->tilemap_activity, (s_vec_2d_i){i, 0});
+    for (int i = 0; i < TILEMAP_HEIGHT; i++) {
+        ActivateTile(&game->tilemap_activity, (s_vec_2d_i){TILEMAP_WIDTH - 1, i});
     }
 
     return true;
+}
+
+static s_rect PlayerCollider(const s_vec_2d player_pos) {
+    const s_rect_i src_rect = g_sprite_src_rects[ek_sprite_player];
+    return (s_rect){
+        player_pos.x - (src_rect.width / 2.0f),
+        player_pos.y - (src_rect.height / 2.0f),
+        src_rect.width,
+        src_rect.height,
+    };
 }
 
 static bool GameTick(const s_game_tick_func_data* const func_data) {
@@ -69,6 +145,11 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
     const float move_axis = IsKeyDown(ek_key_code_d, func_data->input_state) - IsKeyDown(ek_key_code_a, func_data->input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
     game->player_vel.x = Lerp(game->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
+
+    {
+        const s_rect collider = PlayerCollider(game->player_pos);
+        ProcTileCollisions(&game->player_vel, collider, &game->tilemap_activity);
+    }
 
     game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
 
