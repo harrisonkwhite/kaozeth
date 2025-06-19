@@ -1,14 +1,19 @@
 #include <stdlib.h>
 #include <zfw_game.h>
 
+#define GRAVITY 0.2f
+
 #define PLAYER_MOVE_SPD 3.0f
 #define PLAYER_MOVE_SPD_LERP 0.3f
+#define PLAYER_JUMP_HEIGHT 5.0f
 
-#define TILEMAP_WIDTH 28
-#define TILEMAP_HEIGHT 28
+#define TILEMAP_WIDTH 32
+#define TILEMAP_HEIGHT 32
 #define TILE_SIZE 8
+#define TILEMAP_SURFACE_LEVEL 24
+static_assert(TILEMAP_SURFACE_LEVEL >= 0 && TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface level!");
 
-#define VIEW_SCALE 2.0f
+#define VIEW_SCALE 3.0f
 
 typedef enum {
     ek_sprite_player,
@@ -122,8 +127,10 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    for (int i = 0; i < TILEMAP_HEIGHT; i++) {
-        ActivateTile(&game->tilemap_activity, (s_vec_2d_i){TILEMAP_WIDTH - 1, i});
+    for (int ty = TILEMAP_SURFACE_LEVEL; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            ActivateTile(&game->tilemap_activity, (s_vec_2d_i){tx, ty});
+        }
     }
 
     return true;
@@ -146,14 +153,18 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
     game->player_vel.x = Lerp(game->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
 
+    game->player_vel.y += GRAVITY;
+
+    if (IsKeyPressed(ek_key_code_space, func_data->input_state, func_data->input_state_last)) {
+        game->player_vel.y = -PLAYER_JUMP_HEIGHT;
+    }
+
     {
         const s_rect collider = PlayerCollider(game->player_pos);
         ProcTileCollisions(&game->player_vel, collider, &game->tilemap_activity);
     }
 
     game->player_pos = Vec2DSum(game->player_pos, game->player_vel);
-
-    game->player_pos.y = 80.0f;
 
     return true;
 }
