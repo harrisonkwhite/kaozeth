@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <zfw_game.h>
+#include "game.h"
+#include "items.h"
+#include "zfw_math.h"
 
 #define GRAVITY 0.15f
 
@@ -15,14 +18,6 @@ static_assert(TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface 
 
 #define VIEW_SCALE 4.0f
 
-typedef enum {
-    ek_sprite_player,
-    ek_sprite_tile,
-    ek_sprite_cursor,
-
-    eks_sprite_cnt
-} e_sprite;
-
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
     {1, 1, 14, 22}, // Player
     {16, 0, 8, 8}, // Tile
@@ -32,11 +27,17 @@ s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
 
 typedef struct {
-    int item_id;
+    e_item_type item_type;
     int quantity;
 } s_inventory_slot;
 
 #define PLAYER_INVENTORY_LENGTH 32
+#define INVENTORY_SLOT_SIZE 80.0f
+#define INVENTORY_SLOT_GAP 112.0f
+#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.05f, 0.075f}
+#define PLAYER_INVENTORY_COLUMN_CNT 8
+static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count is too large, as each hotbar slot needs an associated digit key.");
+#define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.3f
 
 typedef struct {
     s_textures textures;
@@ -49,6 +50,7 @@ typedef struct {
 
     bool player_inventory_open;
     s_inventory_slot player_inventory_slots[PLAYER_INVENTORY_LENGTH];
+    int player_inventory_hotbar_slot_selected;
 
     s_vec_2d cam_pos;
 } s_game;
@@ -62,7 +64,7 @@ static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, con
     assert(quantity > 0);
 
     for (int i = 0; i < slot_cnt && quantity > 0; i++) {
-        if (slots[i].quantity > 0 && slots[i].item_id == item_id && slots[i].quantity < ITEM_QUANTITY_LIMIT) {
+        if (slots[i].quantity > 0 && slots[i].item_type == item_id && slots[i].quantity < ITEM_QUANTITY_LIMIT) {
             const int quant_to_add = MIN(ITEM_QUANTITY_LIMIT - slots[i].quantity, quantity);
             slots[i].quantity += quant_to_add;
             quantity -= quant_to_add;
@@ -87,7 +89,7 @@ static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt
     assert(quantity > 0);
 
     for (int i = 0; i < slot_cnt && quantity > 0; i++) {
-        if (slots[i].quantity > 0 && slots[i].item_id == item_id) {
+        if (slots[i].quantity > 0 && slots[i].item_type == item_id) {
             const int quant_to_remove = MIN(slots[i].quantity, quantity);
             slots[i].quantity -= quant_to_remove;
             quantity -= quant_to_remove;
@@ -311,6 +313,13 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
         game->player_inventory_open = !game->player_inventory_open;
     }
 
+    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
+        if (IsKeyPressed(ek_key_code_1 + i, func_data->input_state, func_data->input_state_last)) {
+            game->player_inventory_hotbar_slot_selected = i;
+            break;
+        }
+    }
+
     return true;
 }
 
@@ -377,11 +386,6 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
     ZeroOut(func_data->rendering_context.state->view_mat, sizeof(func_data->rendering_context.state->view_mat));
     InitIdenMatrix4x4(&func_data->rendering_context.state->view_mat);
 
-#define INVENTORY_SLOT_SIZE 64.0f
-#define INVENTORY_SLOT_GAP 80.0f
-#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.05f, 0.05f}
-#define PLAYER_INVENTORY_COLUMN_CNT 8
-
     // Render the player inventory.
     const s_vec_2d player_inv_pos = {
         func_data->rendering_context.display_size.x * PLAYER_INVENTORY_POS_PERC.x,
@@ -400,7 +404,10 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
             INVENTORY_SLOT_SIZE
         };
 
-        RenderRectOutline(&func_data->rendering_context, slot_rect, WHITE, 2.0f);
+        const s_color slot_outline_color = game->player_inventory_hotbar_slot_selected == i ? YELLOW : WHITE;
+
+        RenderRect(&func_data->rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
+        RenderRectOutline(&func_data->rendering_context, slot_rect, slot_outline_color, 1.0f);
     }
 
     // Render the cursor.
