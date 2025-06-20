@@ -347,6 +347,26 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
         }
     }
 
+    switch (func_data->input_state->mouse_scroll) {
+        case ek_mouse_scroll_state_down:
+            game->player_inventory_hotbar_slot_selected++;
+            game->player_inventory_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
+            break;
+
+        case ek_mouse_scroll_state_up:
+            game->player_inventory_hotbar_slot_selected--;
+
+            if (game->player_inventory_hotbar_slot_selected < 0) {
+                game->player_inventory_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
+            }
+
+            break;
+
+        default: break;
+    }
+
+    assert(game->player_inventory_hotbar_slot_selected >= 0 && game->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+
     return true;
 }
 
