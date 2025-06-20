@@ -1,8 +1,15 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <zfw_game.h>
 #include "game.h"
 #include "items.h"
 #include "zfw_math.h"
+
+typedef enum {
+    ek_font_eb_garamond_36,
+
+    eks_font_cnt
+} e_fonts;
 
 #define GRAVITY 0.15f
 
@@ -16,7 +23,7 @@
 #define TILEMAP_SURFACE_LEVEL 40
 static_assert(TILEMAP_SURFACE_LEVEL <= TILEMAP_HEIGHT, "Invalid tilemap surface level!");
 
-#define VIEW_SCALE 4.0f
+#define VIEW_SCALE 2.0f
 
 s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
     {1, 1, 14, 22}, // Player
@@ -41,6 +48,7 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count i
 
 typedef struct {
     s_textures textures;
+    s_fonts fonts;
 
     s_vec_2d player_pos;
     s_vec_2d player_vel;
@@ -58,13 +66,13 @@ typedef struct {
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
 // Returns the quantity that couldn't be added (0 if everything was added).
-static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const int item_id, int quantity) {
+static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
     assert(slots);
     assert(slot_cnt > 0);
     assert(quantity > 0);
 
     for (int i = 0; i < slot_cnt && quantity > 0; i++) {
-        if (slots[i].quantity > 0 && slots[i].item_type == item_id && slots[i].quantity < ITEM_QUANTITY_LIMIT) {
+        if (slots[i].quantity > 0 && slots[i].item_type == item_type && slots[i].quantity < ITEM_QUANTITY_LIMIT) {
             const int quant_to_add = MIN(ITEM_QUANTITY_LIMIT - slots[i].quantity, quantity);
             slots[i].quantity += quant_to_add;
             quantity -= quant_to_add;
@@ -83,13 +91,13 @@ static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, con
 }
 
 // Returns the quantity that couldn't be removed (0 if everything was removed).
-static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const int item_id, int quantity) {
+static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
     assert(slots);
     assert(slot_cnt > 0);
     assert(quantity > 0);
 
     for (int i = 0; i < slot_cnt && quantity > 0; i++) {
-        if (slots[i].quantity > 0 && slots[i].item_type == item_id) {
+        if (slots[i].quantity > 0 && slots[i].item_type == item_type) {
             const int quant_to_remove = MIN(slots[i].quantity, quantity);
             slots[i].quantity -= quant_to_remove;
             quantity -= quant_to_remove;
@@ -100,7 +108,20 @@ static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt
 }
 
 static const char* TextureIndexToFilePath(const int index) {
-    return "../assets/sprites.png";
+    return "assets/sprites.png";
+}
+
+static s_font_load_info FontIndexToLoadInfo(const int index) {
+    switch (index) {
+        case ek_font_eb_garamond_36:
+            return (s_font_load_info){
+                .file_path = "assets/fonts/eb_garamond.ttf",
+                .height = 36
+            };
+
+        default:
+            return (s_font_load_info){0};
+    }
 }
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
@@ -197,6 +218,12 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, 1, TextureIndexToFilePath)) {
         return false;
     }
+
+if (!LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+        return false;
+    }
+
+    AddToInventory(game->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_dirt_block, 2);
 
     for (int ty = TILEMAP_SURFACE_LEVEL; ty < TILEMAP_HEIGHT; ty++) {
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
@@ -370,7 +397,7 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
             }
 
             const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
-            RenderSprite(&func_data->rendering_context, ek_sprite_tile, &game->textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+            RenderSprite(&func_data->rendering_context, ek_sprite_dirt_tile, &game->textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
         }
     }
 
@@ -406,8 +433,27 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
         const s_color slot_outline_color = game->player_inventory_hotbar_slot_selected == i ? YELLOW : WHITE;
 
+        // Render the slot box.
         RenderRect(&func_data->rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
-        RenderRectOutline(&func_data->rendering_context, slot_rect, slot_outline_color, 1.0f);
+        RenderRectOutline(&func_data->rendering_context, slot_rect, slot_outline_color, VIEW_SCALE);
+
+        // Render the item icon.
+        if (slot->quantity > 0) {
+            RenderSprite(&func_data->rendering_context, g_items[slot->item_type].sprite, &game->textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){VIEW_SCALE, VIEW_SCALE}, 0.0f, WHITE);
+        }
+
+        // Render the quantity.
+        if (slot->quantity > 1) {
+            char quant_str_buf[4];
+            snprintf(quant_str_buf, sizeof(quant_str_buf), "%d", slot->quantity);
+
+            const s_vec_2d quant_pos = {
+                slot_rect.x + slot_rect.width - 14.0f,
+                slot_rect.y + slot_rect.height - 6.0f
+            };
+
+            RenderStr(&func_data->rendering_context, quant_str_buf, ek_font_eb_garamond_36, &game->fonts, quant_pos, ek_str_hor_align_right, ek_str_ver_align_bottom, WHITE, func_data->temp_mem_arena);
+        }
     }
 
     // Render the cursor.
