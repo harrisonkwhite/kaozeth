@@ -103,6 +103,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
+void RenderTilemap(const s_rendering_context* const rendering_context, const t_tilemap_activity* const tm_activity, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;

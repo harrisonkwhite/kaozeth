@@ -144,16 +144,24 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     ZeroOut(rendering_context->state->view_mat, sizeof(rendering_context->state->view_mat));
     InitCameraViewMatrix4x4(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
-    // Render tilemap.
-    for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            if (!IsTileActive(&world->tilemap_activity, (s_vec_2d_i){tx, ty})) {
-                continue;
-            }
+    {
+        const s_vec_2d cam_tl = CameraTopLeft(world->cam_pos, rendering_context->display_size);
+        const s_vec_2d cam_size = CameraSize(rendering_context->display_size);
 
-            const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
-            RenderSprite(rendering_context, ek_sprite_dirt_tile, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
-        }
+        s_rect_edges_i tilemap_render_range = {
+            .left = floorf(cam_tl.x / TILE_SIZE),
+            .top = floorf(cam_tl.y / TILE_SIZE),
+            .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
+            .bottom = ceilf((cam_tl.y + cam_size.y) / TILE_SIZE)
+        };
+
+        // Clamp the tilemap render range within tilemap bounds.
+        tilemap_render_range.left = CLAMP(tilemap_render_range.left, 0, TILEMAP_WIDTH - 1);
+        tilemap_render_range.top = CLAMP(tilemap_render_range.top, 0, TILEMAP_HEIGHT - 1);
+        tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
+        tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
+
+        RenderTilemap(rendering_context, &world->tilemap_activity, tilemap_render_range, textures);
     }
 
     // Render the player.

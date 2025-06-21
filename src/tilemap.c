@@ -65,3 +65,23 @@ void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tile
         vel->x = 0.0f;
     }
 }
+
+void RenderTilemap(const s_rendering_context* const rendering_context, const t_tilemap_activity* const tm_activity, const s_rect_edges_i range, const s_textures* const textures) {
+    assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
+    assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
+    assert(range.top >= 0 && range.top < TILEMAP_HEIGHT);
+    assert(range.bottom >= 0 && range.bottom <= TILEMAP_HEIGHT);
+    assert(range.left <= range.right);
+    assert(range.top <= range.bottom);
+
+    for (int ty = range.top; ty < range.bottom; ty++) {
+        for (int tx = range.left; tx < range.right; tx++) {
+            if (!IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+                continue;
+            }
+
+            const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
+            RenderSprite(rendering_context, ek_sprite_dirt_tile, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        }
+    }
+}
