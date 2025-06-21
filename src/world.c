@@ -1,19 +1,18 @@
 #include <stdio.h>
 #include "game.h"
-#include "zfw_math.h"
 
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IsZero(mat, sizeof(*mat)));
     assert(display_size.x > 0 && display_size.y > 0);
 
     const s_vec_2d view_pos = {
-        (-cam_pos.x * OVERALL_SCALE * CAMERA_SCALE) + (display_size.x / 2.0f),
-        (-cam_pos.y * OVERALL_SCALE * CAMERA_SCALE) + (display_size.y / 2.0f)
+        (-cam_pos.x * CAMERA_SCALE) + (display_size.x / 2.0f),
+        (-cam_pos.y * CAMERA_SCALE) + (display_size.y / 2.0f)
     };
 
     InitIdenMatrix4x4(mat);
     TranslateMatrix4x4(mat, view_pos);
-    ScaleMatrix4x4(mat, OVERALL_SCALE * CAMERA_SCALE);
+    ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
 void InitWorld(s_world* const world) {
@@ -139,12 +138,9 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(world->player_inventory_hotbar_slot_selected >= 0 && world->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 }
 
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    //
-    // World
-    //
     ZeroOut(rendering_context->state->view_mat, sizeof(rendering_context->state->view_mat));
     InitCameraViewMatrix4x4(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
@@ -175,18 +171,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     Flush(rendering_context);
 
-    //
-    // UI
-    //
-
-    {
-        t_matrix_4x4* const vm = &rendering_context->state->view_mat;
-        ZeroOut(vm, sizeof(*vm));
-        InitIdenMatrix4x4(&rendering_context->state->view_mat);
-        ScaleMatrix4x4(vm, OVERALL_SCALE);
-    }
-
-    // Render the player inventory.
+#if 0
     const s_vec_2d player_inv_pos = {
         rendering_context->display_size.x * PLAYER_INVENTORY_POS_PERC.x,
         rendering_context->display_size.y * PLAYER_INVENTORY_POS_PERC.y
@@ -227,5 +212,57 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
             RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_36, fonts, quant_pos, ek_str_hor_align_right, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
         }
+    }
+#endif
+}
+
+static void RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    const s_rect slot_rect = {pos.x, pos.y, INVENTORY_SLOT_SIZE, INVENTORY_SLOT_SIZE};
+
+    // Render the slot box.
+    RenderRect(rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
+    RenderRectOutline(rendering_context, slot_rect, outline_color, 1.0f);
+
+    // Render the item icon.
+    if (slot.quantity > 0) {
+        RenderSprite(rendering_context, g_items[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE, CAMERA_SCALE}, 0.0f, WHITE);
+    }
+
+    // Render the quantity.
+    if (slot.quantity > 1) {
+        char quant_str_buf[4];
+        snprintf(quant_str_buf, sizeof(quant_str_buf), "%d", slot.quantity);
+
+        const s_vec_2d quant_pos = {
+            slot_rect.x + slot_rect.width - 14.0f,
+            slot_rect.y + slot_rect.height - 6.0f
+        };
+
+        RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_36, fonts, quant_pos, ek_str_hor_align_right, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
+    }
+}
+
+void RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+
+    //
+    // Player Inventory
+    //
+
+    // Draw a backdrop if the player inventory is open.
+    if (world->player_inventory_open) {
+        const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+        const s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
+        RenderRect(rendering_context, bg_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
+    }
+
+    // Render hotbar.
+    const s_vec_2d hotbar_pos = {ui_size.x / 2.0f, ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS};
+    const float hotbar_left = hotbar_pos.x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+
+    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
+        const s_inventory_slot* const slot = &world->player_inventory_slots[i];
+        const float slot_x = hotbar_left + (INVENTORY_SLOT_GAP * i);
+        RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_pos.y}, WHITE, textures, fonts, temp_mem_arena);
     }
 }

@@ -70,15 +70,23 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
 static bool RenderGame(const s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
-    ZeroOut(vm, sizeof(*vm));
-    InitIdenMatrix4x4(vm);
-    ScaleMatrix4x4(vm, OVERALL_SCALE);
+    RenderWorld(&func_data->rendering_context, &game->world, &game->textures);
 
-    RenderWorld(&func_data->rendering_context, &game->world, &game->textures, &game->fonts, func_data->temp_mem_arena);
+    //
+    // UI
+    //
+    {
+        t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
+        ZeroOut(vm, sizeof(*vm));
+        InitIdenMatrix4x4(vm);
+        ScaleMatrix4x4(vm, UI_SCALE);
+    }
+
+    RenderWorldUI(&func_data->rendering_context, &game->world, &game->textures, &game->fonts, func_data->temp_mem_arena);
 
     // Render the cursor.
-    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, Vec2DScalar(func_data->input_state->mouse_pos, 1.0f / OVERALL_SCALE), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+    const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
+    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
 
     Flush(&func_data->rendering_context);
 

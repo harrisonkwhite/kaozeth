@@ -1,8 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "zfw_utils.h"
 #include <zfw_game.h>
+#include <zfw_utils.h>
 
 #define GRAVITY 0.15f
 
@@ -10,18 +10,20 @@
 #define PLAYER_MOVE_SPD_LERP 0.2f
 #define PLAYER_JUMP_HEIGHT 3.0f
 
-#define OVERALL_SCALE 2.0f
-#define CAMERA_SCALE 2.0f
+#define CAMERA_SCALE 4.0f
+#define UI_SCALE 2.0f
 
 #define INVENTORY_SLOT_SIZE 48.0f
 #define INVENTORY_SLOT_GAP 72.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
-#define PLAYER_INVENTORY_LENGTH 32
-#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.05f, 0.075f}
 #define PLAYER_INVENTORY_COLUMN_CNT 8
-static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count is too large, as each hotbar slot needs an associated digit key.");
+static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count is too large - each hotbar slot needs an associated digit key.");
+#define PLAYER_INVENTORY_LENGTH 32
+static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player inventory needs at least one full row!");
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.3f
+#define PLAYER_INVENTORY_BG_ALPHA 0.6f
+#define PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS (INVENTORY_SLOT_SIZE * 2.0f)
 
 typedef enum {
     ek_font_eb_garamond_36,
@@ -142,7 +144,8 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
 
 void InitWorld(s_world* const world);
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
+void RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void RunNPCTicks(s_world* const world);
@@ -177,7 +180,7 @@ static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d
 
 static inline s_vec_2d CameraSize(const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
-    return (s_vec_2d){display_size.x / (OVERALL_SCALE * CAMERA_SCALE), display_size.y / (OVERALL_SCALE * CAMERA_SCALE)};
+    return (s_vec_2d){display_size.x / CAMERA_SCALE, display_size.y / CAMERA_SCALE};
 }
 
 static inline s_vec_2d CameraTopLeft(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
@@ -190,8 +193,8 @@ static inline s_vec_2d CameraToDisplayPos(const s_vec_2d pos, const s_vec_2d cam
     assert(display_size.x > 0 && display_size.y > 0);
     const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
     return (s_vec_2d) {
-        (pos.x - cam_tl.x) * OVERALL_SCALE * CAMERA_SCALE,
-        (pos.y - cam_tl.y) * OVERALL_SCALE * CAMERA_SCALE
+        (pos.x - cam_tl.x) * CAMERA_SCALE,
+        (pos.y - cam_tl.y) * CAMERA_SCALE
     };
 }
 
@@ -199,9 +202,18 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
     assert(display_size.x > 0 && display_size.y > 0);
     const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
     return (s_vec_2d) {
-        cam_tl.x + (pos.x / (OVERALL_SCALE * CAMERA_SCALE)),
-        cam_tl.y + (pos.y / (OVERALL_SCALE * CAMERA_SCALE))
+        cam_tl.x + (pos.x / CAMERA_SCALE),
+        cam_tl.y + (pos.y / CAMERA_SCALE)
     };
+}
+
+static inline s_vec_2d_i UISize(const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+    return Vec2DIScaled(display_size, 1.0f / UI_SCALE);
+}
+
+static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
+    return Vec2DScaled(pos, 1.0f / UI_SCALE);
 }
 
 #endif
