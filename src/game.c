@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "game.h"
+#include "zfw_math.h"
 
 typedef struct {
     s_textures textures;
@@ -69,10 +70,15 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
 static bool RenderGame(const s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
+    t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
+    ZeroOut(vm, sizeof(*vm));
+    InitIdenMatrix4x4(vm);
+    ScaleMatrix4x4(vm, OVERALL_SCALE);
+
     RenderWorld(&func_data->rendering_context, &game->world, &game->textures, &game->fonts, func_data->temp_mem_arena);
 
     // Render the cursor.
-    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, func_data->input_state->mouse_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, Vec2DScalar(func_data->input_state->mouse_pos, 1.0f / OVERALL_SCALE), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
 
     Flush(&func_data->rendering_context);
 
@@ -87,7 +93,7 @@ int main() {
         .user_mem_size = sizeof(s_game),
         .user_mem_alignment = alignof(s_game),
 
-        .window_init_size = {1280, 720},
+        .window_init_size = {1920, 1080},
         .window_title = "Terraria Clone",
         .window_flags = ek_window_flag_hide_cursor | ek_window_flag_resizable,
 

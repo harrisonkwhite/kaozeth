@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_math.h"
 
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IsZero(mat, sizeof(*mat)));
     assert(display_size.x > 0 && display_size.y > 0);
 
     const s_vec_2d view_pos = {
-        (-cam_pos.x * CAMERA_SCALE) + (display_size.x / 2.0f),
-        (-cam_pos.y * CAMERA_SCALE) + (display_size.y / 2.0f)
+        (-cam_pos.x * OVERALL_SCALE * CAMERA_SCALE) + (display_size.x / 2.0f),
+        (-cam_pos.y * OVERALL_SCALE * CAMERA_SCALE) + (display_size.y / 2.0f)
     };
 
     InitIdenMatrix4x4(mat);
     TranslateMatrix4x4(mat, view_pos);
-    ScaleMatrix4x4(mat, CAMERA_SCALE);
+    ScaleMatrix4x4(mat, OVERALL_SCALE * CAMERA_SCALE);
 }
 
 void InitWorld(s_world* const world) {
@@ -178,8 +179,12 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     // UI
     //
 
-    ZeroOut(rendering_context->state->view_mat, sizeof(rendering_context->state->view_mat));
-    InitIdenMatrix4x4(&rendering_context->state->view_mat);
+    {
+        t_matrix_4x4* const vm = &rendering_context->state->view_mat;
+        ZeroOut(vm, sizeof(*vm));
+        InitIdenMatrix4x4(&rendering_context->state->view_mat);
+        ScaleMatrix4x4(vm, OVERALL_SCALE);
+    }
 
     // Render the player inventory.
     const s_vec_2d player_inv_pos = {

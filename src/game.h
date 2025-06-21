@@ -10,6 +10,7 @@
 #define PLAYER_MOVE_SPD_LERP 0.2f
 #define PLAYER_JUMP_HEIGHT 3.0f
 
+#define OVERALL_SCALE 2.0f
 #define CAMERA_SCALE 2.0f
 
 #define INVENTORY_SLOT_SIZE 48.0f
@@ -176,7 +177,7 @@ static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d
 
 static inline s_vec_2d CameraSize(const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
-    return (s_vec_2d){display_size.x / CAMERA_SCALE, display_size.y / CAMERA_SCALE};
+    return (s_vec_2d){display_size.x / (OVERALL_SCALE * CAMERA_SCALE), display_size.y / (OVERALL_SCALE * CAMERA_SCALE)};
 }
 
 static inline s_vec_2d CameraTopLeft(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
@@ -189,8 +190,8 @@ static inline s_vec_2d CameraToDisplayPos(const s_vec_2d pos, const s_vec_2d cam
     assert(display_size.x > 0 && display_size.y > 0);
     const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
     return (s_vec_2d) {
-        (pos.x - cam_tl.x) * CAMERA_SCALE,
-        (pos.y - cam_tl.y) * CAMERA_SCALE
+        (pos.x - cam_tl.x) * OVERALL_SCALE * CAMERA_SCALE,
+        (pos.y - cam_tl.y) * OVERALL_SCALE * CAMERA_SCALE
     };
 }
 
@@ -198,8 +199,8 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
     assert(display_size.x > 0 && display_size.y > 0);
     const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
     return (s_vec_2d) {
-        cam_tl.x + (pos.x / CAMERA_SCALE),
-        cam_tl.y + (pos.y / CAMERA_SCALE)
+        cam_tl.x + (pos.x / (OVERALL_SCALE * CAMERA_SCALE)),
+        cam_tl.y + (pos.y / (OVERALL_SCALE * CAMERA_SCALE))
     };
 }
 
