@@ -15,6 +15,16 @@ const s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
     {24, 0, 8, 8} // Cursor
 };
 
+s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin) {
+    const s_rect_i src_rect = g_sprite_src_rects[sprite];
+    return (s_rect){
+        pos.x - (src_rect.width * origin.x),
+        pos.y - (src_rect.height * origin.y),
+        src_rect.width,
+        src_rect.height
+    };
+}
+
 static const char* TextureIndexToFilePath(const int index) {
     return "assets/sprites.png";
 }

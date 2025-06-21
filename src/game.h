@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "zfw_utils.h"
 #include <zfw_game.h>
 
 #define GRAVITY 0.15f
@@ -36,6 +37,8 @@ typedef enum {
     eks_sprite_cnt
 } e_sprite;
 
+s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
+
 #define TILE_SIZE 8
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 60
@@ -54,10 +57,52 @@ typedef struct {
     int quantity;
 } s_inventory_slot;
 
+#define NPC_LIMIT 256
+
+typedef enum {
+    ek_npc_type_slime,
+
+    eks_npc_type_cnt
+} e_npc_type;
+
 typedef struct {
+    int jump_time;
+} s_slime_npc;
+
+typedef union {
+    s_slime_npc slime;
+} u_npc_type_data;
+
+typedef struct {
+    s_vec_2d pos;
+    s_vec_2d vel;
+
+    e_npc_type type;
+    u_npc_type_data type_data;
+} s_npc;
+
+typedef t_byte t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
+
+typedef struct world s_world;
+
+typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
+
+typedef struct {
+    e_sprite spr;
+    t_npc_tick_func tick_func;
+} s_npc_type;
+
+typedef struct {
+    s_npc buf[NPC_LIMIT];
+    t_npc_activity activity;
+} s_npcs;
+
+typedef struct world {
     s_vec_2d player_pos;
     s_vec_2d player_vel;
     bool player_jumping;
+
+    s_npcs npcs;
 
     t_tilemap_activity tilemap_activity;
 
@@ -68,26 +113,24 @@ typedef struct {
     s_vec_2d cam_pos;
 } s_world;
 
-typedef enum {
-    ek_npc_slime
-} e_npc;
-
 // NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
 typedef struct {
     const char* name;
-    const e_sprite sprite;
+    const e_sprite spr;
 } s_item;
+
+extern const s_npc_type g_npc_types[eks_npc_type_cnt];
 
 extern const s_item g_items[eks_item_type_cnt];
 
 extern const s_rect_i g_sprite_src_rects[eks_sprite_cnt];
 
-static inline void RenderSprite(const s_rendering_context* const context, const int sprite_index, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
+static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
     RenderTexture(
         context,
         0,
         textures,
-        g_sprite_src_rects[sprite_index],
+        g_sprite_src_rects[spr],
         pos,
         origin,
         scale,
@@ -99,6 +142,10 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
 void InitWorld(s_world* const world);
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+
+int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
+void RunNPCTicks(s_world* const world);
+void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);

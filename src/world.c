@@ -1,16 +1,6 @@
 #include <stdio.h>
 #include "game.h"
 
-static s_rect PlayerCollider(const s_vec_2d player_pos) {
-    const s_rect_i src_rect = g_sprite_src_rects[ek_sprite_player];
-    return (s_rect){
-        player_pos.x - (src_rect.width / 2.0f),
-        player_pos.y - (src_rect.height / 2.0f),
-        src_rect.width,
-        src_rect.height,
-    };
-}
-
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IsZero(mat, sizeof(*mat)));
     assert(display_size.x > 0 && display_size.y > 0);
@@ -30,11 +20,19 @@ void InitWorld(s_world* const world) {
 
     world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
+    SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
+
     for (int ty = TILEMAP_HEIGHT / 2; ty < TILEMAP_HEIGHT; ty++) {
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
             ActivateTile(&world->tilemap_activity, (s_vec_2d_i){tx, ty});
         }
     }
+}
+
+#define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
+
+static s_rect PlayerCollider(const s_vec_2d pos) {
+    return ColliderFromSprite(ek_sprite_player, pos, PLAYER_ORIGIN);
 }
 
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
@@ -83,6 +81,11 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     // Camera
     //
     world->cam_pos = world->player_pos;
+
+    //
+    // NPCs
+    //
+    RunNPCTicks(world);
 
     //
     // Tilemap Interaction
@@ -165,7 +168,9 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     }
 
     // Render the player.
-    RenderSprite(rendering_context, ek_sprite_player, textures, world->player_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+    RenderSprite(rendering_context, ek_sprite_player, textures, world->player_pos, PLAYER_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+
+    RenderNPCs(rendering_context, &world->npcs, textures);
 
     Flush(rendering_context);
 
@@ -202,7 +207,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
         // Render the item icon.
         if (slot->quantity > 0) {
-            RenderSprite(rendering_context, g_items[slot->item_type].sprite, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE, CAMERA_SCALE}, 0.0f, WHITE);
+            RenderSprite(rendering_context, g_items[slot->item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE, CAMERA_SCALE}, 0.0f, WHITE);
         }
 
         // Render the quantity.
