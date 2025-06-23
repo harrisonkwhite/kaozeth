@@ -19,11 +19,12 @@
 
 #define PLAYER_INVENTORY_COLUMN_CNT 8
 static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count is too large - each hotbar slot needs an associated digit key.");
-#define PLAYER_INVENTORY_LENGTH 32
+#define PLAYER_INVENTORY_LENGTH (PLAYER_INVENTORY_COLUMN_CNT * 4)
 static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player inventory needs at least one full row!");
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.3f
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
-#define PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS (INVENTORY_SLOT_SIZE * 2.0f)
+#define PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS (INVENTORY_SLOT_SIZE * 1.75f)
+#define PLAYER_INVENTORY_BODY_Y_PERC 0.45f
 
 typedef enum {
     ek_font_eb_garamond_36,

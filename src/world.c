@@ -217,7 +217,12 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 }
 
 static void RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
-    const s_rect slot_rect = {pos.x, pos.y, INVENTORY_SLOT_SIZE, INVENTORY_SLOT_SIZE};
+    const s_rect slot_rect = {
+        pos.x - (INVENTORY_SLOT_SIZE / 2.0f),
+        pos.y - (INVENTORY_SLOT_SIZE / 2.0f),
+        INVENTORY_SLOT_SIZE,
+        INVENTORY_SLOT_SIZE
+    };
 
     // Render the slot box.
     RenderRect(rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
@@ -256,13 +261,40 @@ void RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         RenderRect(rendering_context, bg_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     }
 
+    const float player_inv_mid_x = ui_size.x / 2.0f;
+
+    const float player_inv_left = player_inv_mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+
     // Render hotbar.
-    const s_vec_2d hotbar_pos = {ui_size.x / 2.0f, ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS};
-    const float hotbar_left = hotbar_pos.x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
 
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
         const s_inventory_slot* const slot = &world->player_inventory_slots[i];
-        const float slot_x = hotbar_left + (INVENTORY_SLOT_GAP * i);
-        RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_pos.y}, WHITE, textures, fonts, temp_mem_arena);
+        const float slot_x = player_inv_left + (INVENTORY_SLOT_GAP * i);
+        RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, WHITE, textures, fonts, temp_mem_arena);
     }
+
+    // Render the rest of the inventory if open.
+    if (world->player_inventory_open) {
+        const int player_inv_body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
+        const float player_inv_body_top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (player_inv_body_row_cnt - 1) * 0.5f);
+
+        const int player_inv_body_len = PLAYER_INVENTORY_LENGTH - PLAYER_INVENTORY_COLUMN_CNT;
+
+        for (int i = 0; i < player_inv_body_len; i++) {
+            const s_inventory_slot* const slot = &world->player_inventory_slots[PLAYER_INVENTORY_COLUMN_CNT + i];
+
+            const int c = i % PLAYER_INVENTORY_COLUMN_CNT;
+            const int r = i / PLAYER_INVENTORY_COLUMN_CNT;
+
+            const s_vec_2d slot_pos = {
+                player_inv_left + (INVENTORY_SLOT_GAP * c),
+                player_inv_body_top + (INVENTORY_SLOT_GAP * r)
+            };
+
+            RenderInventorySlot(rendering_context, *slot, slot_pos, WHITE, textures, fonts, temp_mem_arena);
+        }
+    }
+
+    //assert(false); // NOTE: Strange issue with pressing escape? Try on low power?
 }
