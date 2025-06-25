@@ -1,8 +1,29 @@
 #include <stdio.h>
 #include "game.h"
 
+#define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
+
+static bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
+    assert(world);
+    assert(item_quantity > 0);
+
+    if (world->item_drop_active_cnt == ITEM_DROP_LIMIT) {
+        return false;
+    }
+
+    s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
+    assert(IS_ZERO(*drop));
+    drop->item_type = item_type;
+    drop->quantity = item_quantity;
+    drop->pos = pos;
+
+    world->item_drop_active_cnt++;
+
+    return true;
+}
+
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
-    assert(mat && IsZero(mat, sizeof(*mat)));
+    assert(mat && IS_ZERO(*mat));
     assert(display_size.x > 0 && display_size.y > 0);
 
     const s_vec_2d view_pos = {
@@ -16,9 +37,11 @@ static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_
 }
 
 void InitWorld(s_world* const world) {
-    assert(world && IsZero(world, sizeof(*world)));
+    assert(world && IS_ZERO(*world));
 
     world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
+
+    SpawnItemDrop(world, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_item_type_dirt_block, 3);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
 
@@ -29,10 +52,50 @@ void InitWorld(s_world* const world) {
     }
 }
 
-#define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
-
 static s_rect PlayerCollider(const s_vec_2d pos) {
     return ColliderFromSprite(ek_sprite_player, pos, PLAYER_ORIGIN);
+}
+
+static s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
+    return ColliderFromSprite(g_items[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
+}
+
+static void UpdateItemDrops(s_world* const world) {
+    assert(world);
+
+    const s_rect player_collider = PlayerCollider(world->player_pos);
+
+    for (int i = 0; i < world->item_drop_active_cnt; i++) {
+        s_item_drop* const drop = &world->item_drops[i];
+
+        // Process movement.
+        drop->vel.y += GRAVITY;
+
+        {
+            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
+            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->tilemap_activity);
+        }
+
+        drop->pos = Vec2DSum(drop->pos, drop->vel);
+
+        // Process collection.
+        const bool collectable = DoesInventoryHaveRoomFor(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
+
+        if (collectable) {
+            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
+
+            if (DoRectsInters(player_collider, drop_collider)) {
+                AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
+
+                // Remove this item drop.
+                world->item_drop_active_cnt--;
+                world->item_drops[i] = world->item_drops[world->item_drop_active_cnt];
+                ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
+
+                i--;
+            }
+        }
+    }
 }
 
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
@@ -104,6 +167,11 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     }
 
     //
+    // Item Drops
+    //
+    UpdateItemDrops(world);
+
+    //
     // Player Inventory
     //
     if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
@@ -141,7 +209,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    ZeroOut(rendering_context->state->view_mat, sizeof(rendering_context->state->view_mat));
+    ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix4x4(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
     {
@@ -169,51 +237,16 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     RenderNPCs(rendering_context, &world->npcs, textures);
 
-    Flush(rendering_context);
+    // Render item drops.
+    for (int i = 0; i < world->item_drop_active_cnt; i++) {
+        const s_item_drop* const drop = &world->item_drops[i];
 
-#if 0
-    const s_vec_2d player_inv_pos = {
-        rendering_context->display_size.x * PLAYER_INVENTORY_POS_PERC.x,
-        rendering_context->display_size.y * PLAYER_INVENTORY_POS_PERC.y
-    };
+        const e_sprite spr = g_items[drop->item_type].spr;
 
-    const int slot_display_cnt = world->player_inventory_open ? PLAYER_INVENTORY_LENGTH : PLAYER_INVENTORY_COLUMN_CNT;
-
-    for (int i = 0; i < slot_display_cnt; i++) {
-        const s_inventory_slot* const slot = &world->player_inventory_slots[i];
-
-        const s_rect slot_rect = {
-            player_inv_pos.x + (INVENTORY_SLOT_GAP * (i % PLAYER_INVENTORY_COLUMN_CNT)),
-            player_inv_pos.y + ((int)(i / PLAYER_INVENTORY_COLUMN_CNT) * INVENTORY_SLOT_GAP),
-            INVENTORY_SLOT_SIZE,
-            INVENTORY_SLOT_SIZE
-        };
-
-        const s_color slot_outline_color = world->player_inventory_hotbar_slot_selected == i ? YELLOW : WHITE;
-
-        // Render the slot box.
-        RenderRect(rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
-        RenderRectOutline(rendering_context, slot_rect, slot_outline_color, CAMERA_SCALE);
-
-        // Render the item icon.
-        if (slot->quantity > 0) {
-            RenderSprite(rendering_context, g_items[slot->item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE, CAMERA_SCALE}, 0.0f, WHITE);
-        }
-
-        // Render the quantity.
-        if (slot->quantity > 1) {
-            char quant_str_buf[4];
-            snprintf(quant_str_buf, sizeof(quant_str_buf), "%d", slot->quantity);
-
-            const s_vec_2d quant_pos = {
-                slot_rect.x + slot_rect.width - 14.0f,
-                slot_rect.y + slot_rect.height - 6.0f
-            };
-
-            RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_36, fonts, quant_pos, ek_str_hor_align_right, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
-        }
+        RenderSprite(rendering_context, spr, textures, drop->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
-#endif
+
+    Flush(rendering_context);
 }
 
 static void RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
@@ -230,7 +263,7 @@ static void RenderInventorySlot(const s_rendering_context* const rendering_conte
 
     // Render the item icon.
     if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_items[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE, CAMERA_SCALE}, 0.0f, WHITE);
+        RenderSprite(rendering_context, g_items[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 
     // Render the quantity.
@@ -295,6 +328,4 @@ void RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
             RenderInventorySlot(rendering_context, *slot, slot_pos, WHITE, textures, fonts, temp_mem_arena);
         }
     }
-
-    //assert(false); // NOTE: Strange issue with pressing escape? Try on low power?
 }

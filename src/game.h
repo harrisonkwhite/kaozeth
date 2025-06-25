@@ -101,12 +101,24 @@ typedef struct {
     t_npc_activity activity;
 } s_npcs;
 
+typedef struct {
+    e_item_type item_type;
+    int quantity;
+    s_vec_2d pos;
+    s_vec_2d vel;
+} s_item_drop;
+
+#define ITEM_DROP_LIMIT 1024
+
 typedef struct world {
     s_vec_2d player_pos;
     s_vec_2d player_vel;
     bool player_jumping;
 
     s_npcs npcs;
+
+    s_item_drop item_drops[ITEM_DROP_LIMIT];
+    int item_drop_active_cnt;
 
     t_tilemap_activity tilemap_activity;
 
@@ -155,6 +167,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
+void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void RenderTilemap(const s_rendering_context* const rendering_context, const t_tilemap_activity* const tm_activity, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
@@ -178,6 +191,13 @@ static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d
     assert(IsTilePosInBounds(pos));
     DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
+
+// Returns the quantity that couldn't be added (0 if everything was added).
+int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
+
+// Returns the quantity that couldn't be removed (0 if everything was removed).
+int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
+bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
 
 static inline s_vec_2d CameraSize(const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);

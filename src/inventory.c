@@ -1,7 +1,6 @@
 #include "game.h"
 
-// Returns the quantity that couldn't be added (0 if everything was added).
-static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
+int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
     assert(slots);
     assert(slot_cnt > 0);
     assert(quantity > 0);
@@ -21,12 +20,12 @@ static int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, con
             quantity -= quant_to_add;
         }
     }
-    
+
+    assert(quantity >= 0);
     return quantity;
 }
 
-// Returns the quantity that couldn't be removed (0 if everything was removed).
-static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
+int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
     assert(slots);
     assert(slot_cnt > 0);
     assert(quantity > 0);
@@ -40,4 +39,18 @@ static int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt
     }
 
     return quantity;
+}
+
+bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
+    for (int i = 0; i < slot_cnt && quantity > 0; i++) {
+        s_inventory_slot* const slot = &slots[i];
+
+        if (slot->quantity == 0 || slot->item_type == item_type) {
+            const int remaining = ITEM_QUANTITY_LIMIT - slot->quantity;
+            quantity = MAX(quantity - remaining, 0);
+        }
+    }
+
+    assert(quantity >= 0);
+    return quantity == 0;
 }

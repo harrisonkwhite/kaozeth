@@ -53,16 +53,24 @@ void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tile
         vel->x = 0.0f;
     }
 
-    const s_rect ver_rect = RectTranslated(collider, (s_vec_2d){0.0f, vel->y});
-
-    if (TileCollisionCheck(tm_activity, ver_rect)) {
-        vel->y = 0.0f;
-    }
+    ProcVerTileCollisions(&vel->y, collider, tm_activity);
 
     const s_rect diag_rect = RectTranslated(collider, *vel);
 
     if (TileCollisionCheck(tm_activity, diag_rect)) {
         vel->x = 0.0f;
+    }
+}
+
+void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity) {
+    assert(vel_y);
+    assert(collider.width > 0 && collider.height > 0);
+    assert(tm_activity);
+
+    const s_rect ver_rect = RectTranslated(collider, (s_vec_2d){0.0f, *vel_y});
+
+    if (TileCollisionCheck(tm_activity, ver_rect)) {
+        *vel_y = 0.0f;
     }
 }
 
