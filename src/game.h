@@ -27,7 +27,7 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define PLAYER_INVENTORY_BODY_Y_PERC 0.45f
 
 typedef enum {
-    ek_font_eb_garamond_36,
+    ek_font_eb_garamond_24,
 
     eks_font_cnt
 } e_fonts;

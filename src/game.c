@@ -32,10 +32,10 @@ static const char* TextureIndexToFilePath(const int index) {
 
 static s_font_load_info FontIndexToLoadInfo(const int index) {
     switch (index) {
-        case ek_font_eb_garamond_36:
+        case ek_font_eb_garamond_24:
             return (s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 36
+                .height = 24
             };
 
         default:

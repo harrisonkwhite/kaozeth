@@ -272,11 +272,11 @@ static void RenderInventorySlot(const s_rendering_context* const rendering_conte
         snprintf(quant_str_buf, sizeof(quant_str_buf), "%d", slot.quantity);
 
         const s_vec_2d quant_pos = {
-            slot_rect.x + slot_rect.width - 14.0f,
-            slot_rect.y + slot_rect.height - 6.0f
+            slot_rect.x + (slot_rect.width / 2.0f),
+            slot_rect.y + slot_rect.height - 2.0f
         };
 
-        RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_36, fonts, quant_pos, ek_str_hor_align_right, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
+        RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_24, fonts, quant_pos, ek_str_hor_align_center, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
     }
 }
 
