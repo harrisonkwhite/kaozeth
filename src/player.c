@@ -8,6 +8,8 @@
 #define PLAYER_JUMP_HEIGHT 3.0f
 
 #define PLAYER_INV_DUR 30
+#define PLAYER_INV_ALPHA_LOW 0.5f
+#define PLAYER_INV_ALPHA_HIGH 0.7f
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -103,8 +105,14 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
     return true;
 }
 
-void RenderPlayer(const s_rendering_context* const rendering_context, const s_vec_2d player_pos, const s_textures* const textures) {
-    RenderSprite(rendering_context, ek_sprite_player, textures, player_pos, PLAYER_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
+    float alpha = 1.0f;
+
+    if (world->player_inv_time > 0) {
+        alpha = world->player_inv_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
+    }
+
+    RenderSprite(rendering_context, ek_sprite_player, textures, world->player_pos, PLAYER_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, (s_color){1.0f, 1.0f, 1.0f, alpha});
 }
 
 s_rect PlayerCollider(const s_vec_2d pos) {

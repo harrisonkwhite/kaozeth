@@ -185,7 +185,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
-void RenderPlayer(const s_rendering_context* const rendering_context, const s_vec_2d player_pos, const s_textures* const textures);
+void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 s_rect PlayerCollider(const s_vec_2d pos);
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.

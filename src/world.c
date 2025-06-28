@@ -220,7 +220,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         RenderTilemap(rendering_context, &world->tilemap_activity, tilemap_render_range, textures);
     }
 
-    RenderPlayer(rendering_context, world->player_pos, textures);
+    RenderPlayer(rendering_context, world, textures);
     RenderNPCs(rendering_context, &world->npcs, textures);
 
     // Render item drops.
