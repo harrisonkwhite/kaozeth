@@ -6,10 +6,6 @@
 
 #define GRAVITY 0.15f
 
-#define PLAYER_MOVE_SPD 1.5f
-#define PLAYER_MOVE_SPD_LERP 0.2f
-#define PLAYER_JUMP_HEIGHT 3.0f
-
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
@@ -128,6 +124,8 @@ typedef struct world {
     s_vec_2d player_pos;
     s_vec_2d player_vel;
     bool player_jumping;
+    int player_hp;
+    int player_inv_time;
 
     s_npcs npcs;
 

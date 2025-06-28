@@ -1,8 +1,39 @@
+#include <stdio.h>
 #include "game.h"
+
+#define PLAYER_MOVE_SPD 1.5f
+#define PLAYER_MOVE_SPD_LERP 0.2f
+#define PLAYER_JUMP_HEIGHT 3.0f
+
+#define PLAYER_INV_DUR 30
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
+// Returns true if successful, false otherwise.
+static bool HurtPlayer(s_world* const world, const int dmg) {
+    assert(dmg > 0);
+
+    world->player_hp = MAX(world->player_hp - dmg, 0);
+    world->player_inv_time = PLAYER_INV_DUR;
+
+    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, -8.0f);
+
+    if (!dmg_popup) {
+        return false;
+    }
+
+    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", dmg);
+
+    return true;
+}
+
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
+    if (IsKeyPressed(ek_key_code_tab, input_state, input_state_last)) {
+        if (!HurtPlayer(world, 4)) {
+            printf("bad!\n");
+        }
+    }
+
     const float move_axis = IsKeyDown(ek_key_code_d, input_state) - IsKeyDown(ek_key_code_a, input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
     world->player_vel.x = Lerp(world->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);

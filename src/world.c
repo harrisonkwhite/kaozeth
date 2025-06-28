@@ -98,10 +98,6 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(input_state);
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
-    
-    if (IsKeyPressed(ek_key_code_tab, input_state, input_state_last)) {
-        SpawnPopupText(world, world->player_pos, -8.0f);
-    }
 
     ProcPlayerMovement(world, input_state, input_state_last);
 
@@ -285,7 +281,9 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         const s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, world->cam_pos, rendering_context->display_size);
         const s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos);
 
-        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_24, fonts, VEC_2D_ZERO, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
+
+        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_24, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
         }
     }
@@ -357,7 +355,11 @@ s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const flo
         popup->pos = pos;
         popup->alpha = 1.0f;
         popup->vel_y = vel_y;
+
+        return popup;
     }
+
+    fprintf(stderr, "Failed to spawn popup text due to insufficient space!\n");
 
     return NULL;
 }
