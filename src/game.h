@@ -176,6 +176,10 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
+void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
+void RenderPlayer(const s_rendering_context* const rendering_context, const s_vec_2d player_pos, const s_textures* const textures);
+s_rect PlayerCollider(const s_vec_2d pos);
+
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void RunNPCTicks(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
