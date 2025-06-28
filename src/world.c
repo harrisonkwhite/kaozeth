@@ -40,7 +40,8 @@ void InitWorld(s_world* const world) {
 
     world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
-    InitPlayer(world);
+    world->player_hp_max = 10;
+    world->player_hp = world->player_hp_max;
 
     SpawnItemDrop(world, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_item_type_dirt_block, 3);
 
@@ -101,11 +102,15 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
 
-    ProcPlayerMovement(world, input_state, input_state_last);
-    ProcPlayerCollisionsWithNPCs(world);
+    if (!world->player_killed) {
+        ProcPlayerMovement(world, input_state, input_state_last);
+        ProcPlayerCollisionsWithNPCs(world);
 
-    if (world->player_inv_time > 0) {
-        world->player_inv_time--;
+        if (world->player_inv_time > 0) {
+            world->player_inv_time--;
+        }
+
+        ProcPlayerDeath(world);
     }
 
     //
@@ -222,7 +227,10 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         RenderTilemap(rendering_context, &world->tilemap_activity, tilemap_render_range, textures);
     }
 
-    RenderPlayer(rendering_context, world, textures);
+    if (!world->player_killed) {
+        RenderPlayer(rendering_context, world, textures);
+    }
+
     RenderNPCs(rendering_context, &world->npcs, textures);
 
     // Render item drops.

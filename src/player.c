@@ -11,8 +11,6 @@
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
-#define PLAYER_HP_MAX_INIT 100
-
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
 // Returns true if successful, false otherwise.
@@ -35,14 +33,9 @@ static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     return true;
 }
 
-void InitPlayer(s_world* const world) {
-    assert(world);
-
-    world->player_hp_max = PLAYER_HP_MAX_INIT;
-    world->player_hp = world->player_hp_max;
-}
-
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
+    assert(!world->player_killed);
+
     const float move_axis = IsKeyDown(ek_key_code_d, input_state) - IsKeyDown(ek_key_code_a, input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
     world->player_vel.x = Lerp(world->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
@@ -76,7 +69,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 }
 
 bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
-    assert(world);
+    assert(!world->player_killed);
 
     if (world->player_inv_time > 0) {
         return true;
@@ -114,7 +107,18 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
     return true;
 }
 
+void ProcPlayerDeath(s_world* const world) {
+    assert(!world->player_killed);
+
+    if (world->player_hp == 0) {
+        // TODO: Do some magic stuff!
+        world->player_killed = true;
+    }
+}
+
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
+    assert(!world->player_killed);
+
     float alpha = 1.0f;
 
     if (world->player_inv_time > 0) {
