@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_rendering.h"
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -103,6 +104,10 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(input_state);
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
+    
+    if (IsKeyPressed(ek_key_code_tab, input_state, input_state_last)) {
+        SpawnPopupText(world, world->player_pos, -8.0f);
+    }
 
     //
     // Player Movement
@@ -204,6 +209,28 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     }
 
     assert(world->player_inventory_hotbar_slot_selected >= 0 && world->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+
+    //
+    // Popup Texts
+    //
+    for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
+        s_popup_text* const popup = &world->popup_texts[i];
+
+        assert(IsNullTerminated(popup->str, POPUP_TEXT_STR_BUF_SIZE));
+        assert(popup->alpha >= 0.0f && popup->alpha <= 1.0f);
+
+        if (popup->alpha <= POPUP_TEXT_INACTIVITY_ALPHA_THRESH) {
+            continue;
+        }
+
+        if (fabs(popup->vel_y) <= POPUP_TEXT_FADE_VEL_Y_ABS_THRESH) {
+            popup->alpha *= POPUP_TEXT_ALPHA_MULT;
+        }
+
+        popup->pos.y += popup->vel_y;
+
+        popup->vel_y *= POPUP_TEXT_FADE_VEL_Y_ABS_THRESH;
+    }
 }
 
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
@@ -249,7 +276,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     Flush(rendering_context);
 }
 
-static void RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_rect slot_rect = {
         pos.x - (INVENTORY_SLOT_SIZE / 2.0f),
         pos.y - (INVENTORY_SLOT_SIZE / 2.0f),
@@ -276,12 +303,34 @@ static void RenderInventorySlot(const s_rendering_context* const rendering_conte
             slot_rect.y + slot_rect.height - 2.0f
         };
 
-        RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_24, fonts, quant_pos, ek_str_hor_align_center, ek_str_ver_align_bottom, WHITE, temp_mem_arena);
+        if (!RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_24, fonts, quant_pos, ek_str_hor_align_center, ek_str_ver_align_bottom, WHITE, temp_mem_arena)) {
+            return false;
+        }
     }
+
+    return true;
 }
 
-void RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+
+    //
+    // Popup Texts
+    //
+    for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
+        const s_popup_text* const popup = &world->popup_texts[i];
+
+        if (popup->alpha <= POPUP_TEXT_INACTIVITY_ALPHA_THRESH) {
+            continue;
+        }
+
+        const s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, world->cam_pos, rendering_context->display_size);
+        const s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos);
+
+        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_24, fonts, VEC_2D_ZERO, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+            return false;
+        }
+    }
 
     //
     // Player Inventory
@@ -304,7 +353,10 @@ void RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
         const s_inventory_slot* const slot = &world->player_inventory_slots[i];
         const float slot_x = player_inv_left + (INVENTORY_SLOT_GAP * i);
-        RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, WHITE, textures, fonts, temp_mem_arena);
+        
+        if (!RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, WHITE, textures, fonts, temp_mem_arena)) {
+            return false;
+        }
     }
 
     // Render the rest of the inventory if open.
@@ -325,7 +377,29 @@ void RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
                 player_inv_body_top + (INVENTORY_SLOT_GAP * r)
             };
 
-            RenderInventorySlot(rendering_context, *slot, slot_pos, WHITE, textures, fonts, temp_mem_arena);
+            if (!RenderInventorySlot(rendering_context, *slot, slot_pos, WHITE, textures, fonts, temp_mem_arena)) {
+                return false;
+            }
         }
     }
+
+    return true;
+}
+
+s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y) {
+    for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
+        s_popup_text* const popup = &world->popup_texts[i];
+
+        if (popup->alpha > POPUP_TEXT_INACTIVITY_ALPHA_THRESH) {
+            continue;
+        }
+
+        ZERO_OUT(*popup);
+
+        popup->pos = pos;
+        popup->alpha = 1.0f;
+        popup->vel_y = vel_y;
+    }
+
+    return NULL;
 }

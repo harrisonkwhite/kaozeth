@@ -50,7 +50,7 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-if (!LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+    if (!LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
         return false;
     }
 
@@ -82,7 +82,9 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
         ScaleMatrix4x4(vm, UI_SCALE);
     }
 
-    RenderWorldUI(&func_data->rendering_context, &game->world, &game->textures, &game->fonts, func_data->temp_mem_arena);
+    if (!RenderWorldUI(&func_data->rendering_context, &game->world, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        return false;
+    }
 
     // Render the cursor.
     const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);

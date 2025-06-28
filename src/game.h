@@ -108,6 +108,20 @@ typedef struct {
     s_vec_2d vel;
 } s_item_drop;
 
+#define POPUP_TEXT_LIMIT 1024
+#define POPUP_TEXT_STR_BUF_SIZE 32
+#define POPUP_TEXT_INACTIVITY_ALPHA_THRESH 0.001f
+#define POPUP_TEXT_VEL_Y_MULT 0.8f
+#define POPUP_TEXT_FADE_VEL_Y_ABS_THRESH 0.001f
+#define POPUP_TEXT_ALPHA_MULT 0.8f
+
+typedef struct {
+    char str[POPUP_TEXT_STR_BUF_SIZE];
+    s_vec_2d pos;
+    float vel_y;
+    float alpha;
+} s_popup_text;
+
 #define ITEM_DROP_LIMIT 1024
 
 typedef struct world {
@@ -125,6 +139,8 @@ typedef struct world {
     bool player_inventory_open;
     s_inventory_slot player_inventory_slots[PLAYER_INVENTORY_LENGTH];
     int player_inventory_hotbar_slot_selected;
+
+    s_popup_text popup_texts[POPUP_TEXT_LIMIT];
 
     s_vec_2d cam_pos;
 } s_world;
@@ -158,11 +174,14 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
 void InitWorld(s_world* const world);
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
-void RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void RunNPCTicks(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
+
+// NOTE: Make sure, at some point, to assert that the popup text string is not empty.
+s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
