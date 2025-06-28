@@ -40,6 +40,8 @@ void InitWorld(s_world* const world) {
 
     world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
+    InitPlayer(world);
+
     SpawnItemDrop(world, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_item_type_dirt_block, 3);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
@@ -290,6 +292,23 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
         if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_28, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
+            return false;
+        }
+    }
+
+    //
+    // Player Health
+    //
+    {
+        const s_vec_2d hp_text_pos = {
+            ui_size.x / 2.0f,
+            64.0f
+        };
+
+        char hp_str[8] = {0};
+        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player_hp, world->player_hp_max);
+
+        if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
         }
     }

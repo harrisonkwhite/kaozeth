@@ -11,6 +11,8 @@
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
+#define PLAYER_HP_MAX_INIT 100
+
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
 // Returns true if successful, false otherwise.
@@ -31,6 +33,13 @@ static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", -dmg);
 
     return true;
+}
+
+void InitPlayer(s_world* const world) {
+    assert(world);
+
+    world->player_hp_max = PLAYER_HP_MAX_INIT;
+    world->player_hp = world->player_hp_max;
 }
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {

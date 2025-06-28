@@ -134,6 +134,7 @@ typedef struct world {
     s_vec_2d player_vel;
     bool player_jumping;
     int player_hp;
+    int player_hp_max;
     int player_inv_time;
 
     s_npcs npcs;
@@ -183,6 +184,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
+void InitPlayer(s_world* const world);
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
