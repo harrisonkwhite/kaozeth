@@ -89,7 +89,11 @@ typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
 
 typedef struct {
     e_sprite spr;
+
     t_npc_tick_func tick_func;
+
+    int contact_dmg;
+    float contact_kb;
 } s_npc_type;
 
 typedef struct {
@@ -175,12 +179,15 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
+bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_vec_2d player_pos, const s_textures* const textures);
 s_rect PlayerCollider(const s_vec_2d pos);
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void RunNPCTicks(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
+s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
+bool IsNPCActive(const t_npc_activity* const activity, const int index);
 
 // NOTE: Make sure, at some point, to assert that the popup text string is not empty.
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);

@@ -4,16 +4,6 @@
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
-static inline s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type) {
-    return ColliderFromSprite(g_npc_types[npc_type].spr, npc_pos, NPC_ORIGIN);
-}
-
-static inline bool IsNPCActive(const t_npc_activity* const activity, const int index) {
-    assert(activity);
-    assert(index >= 0 && index < NPC_LIMIT);
-    return IsBitActive(index, (t_byte*)activity, NPC_LIMIT);
-}
-
 static void SlimeNPCTick(s_world* const world, const int npc_index) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
@@ -43,7 +33,9 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 const s_npc_type g_npc_types[eks_npc_type_cnt] = {
     {
         .spr = ek_sprite_slime,
-        .tick_func = SlimeNPCTick
+        .tick_func = SlimeNPCTick,
+        .contact_dmg = 8,
+        .contact_kb = 2.0f
     }
 };
 
@@ -88,4 +80,14 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 
         RenderSprite(rendering_context, spr, textures, npc->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
+}
+
+s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type) {
+    return ColliderFromSprite(g_npc_types[npc_type].spr, npc_pos, NPC_ORIGIN);
+}
+
+bool IsNPCActive(const t_npc_activity* const activity, const int index) {
+    assert(activity);
+    assert(index >= 0 && index < NPC_LIMIT);
+    return IsBitActive(index, (t_byte*)activity, NPC_LIMIT);
 }

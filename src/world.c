@@ -100,6 +100,11 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(display_size.x > 0 && display_size.y > 0);
 
     ProcPlayerMovement(world, input_state, input_state_last);
+    ProcPlayerCollisionsWithNPCs(world);
+
+    if (world->player_inv_time > 0) {
+        world->player_inv_time--;
+    }
 
     //
     // Camera

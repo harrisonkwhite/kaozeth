@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_math.h"
 
 #define PLAYER_MOVE_SPD 1.5f
 #define PLAYER_MOVE_SPD_LERP 0.2f
@@ -10,10 +11,12 @@
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
 // Returns true if successful, false otherwise.
-static bool HurtPlayer(s_world* const world, const int dmg) {
+static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     assert(dmg > 0);
+    assert(world->player_inv_time == 0);
 
     world->player_hp = MAX(world->player_hp - dmg, 0);
+    world->player_vel = Vec2DSum(world->player_vel, kb);
     world->player_inv_time = PLAYER_INV_DUR;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, -8.0f);
@@ -28,12 +31,6 @@ static bool HurtPlayer(s_world* const world, const int dmg) {
 }
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
-    if (IsKeyPressed(ek_key_code_tab, input_state, input_state_last)) {
-        if (!HurtPlayer(world, 4)) {
-            printf("bad!\n");
-        }
-    }
-
     const float move_axis = IsKeyDown(ek_key_code_d, input_state) - IsKeyDown(ek_key_code_a, input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
     world->player_vel.x = Lerp(world->player_vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
@@ -64,6 +61,45 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
     if (TileCollisionCheck(&world->tilemap_activity, below_collider)) {
         world->player_jumping = false;
     }
+}
+
+bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
+    assert(world);
+
+    if (world->player_inv_time > 0) {
+        return true;
+    }
+
+    const s_rect player_collider = PlayerCollider(world->player_pos);
+
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        const s_npc* const npc = &world->npcs.buf[i]; // NOTE: Constant probably temporarily.
+
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        const s_npc_type* const npc_type = &g_npc_types[npc->type];
+
+        if (npc_type->contact_dmg == 0) {
+            continue;
+        }
+
+        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+        if (DoRectsInters(player_collider, npc_collider)) {
+            const s_vec_2d dir = Vec2DDir(npc->pos, world->player_pos);
+            const s_vec_2d kb = Vec2DScaled(dir, npc_type->contact_kb);
+
+            if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
+                return false;
+            }
+
+            break;
+        }
+    }
+
+    return true;
 }
 
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_vec_2d player_pos, const s_textures* const textures) {
