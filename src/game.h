@@ -9,6 +9,10 @@
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
+#define DMG_POPUP_TEXT_VEL_Y_MIN -4.0f
+#define DMG_POPUP_TEXT_VEL_Y_MAX -2.5f
+static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid range.");
+
 #define INVENTORY_SLOT_SIZE 48.0f
 #define INVENTORY_SLOT_GAP 72.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
@@ -24,6 +28,7 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 
 typedef enum {
     ek_font_eb_garamond_24,
+    ek_font_eb_garamond_28,
 
     eks_font_cnt
 } e_fonts;
@@ -111,9 +116,9 @@ typedef struct {
 #define POPUP_TEXT_LIMIT 1024
 #define POPUP_TEXT_STR_BUF_SIZE 32
 #define POPUP_TEXT_INACTIVITY_ALPHA_THRESH 0.001f
-#define POPUP_TEXT_VEL_Y_MULT 0.8f
-#define POPUP_TEXT_FADE_VEL_Y_ABS_THRESH 0.001f
-#define POPUP_TEXT_ALPHA_MULT 0.8f
+#define POPUP_TEXT_VEL_Y_MULT 0.9f
+#define POPUP_TEXT_FADE_VEL_Y_ABS_THRESH 0.002f
+#define POPUP_TEXT_ALPHA_MULT 0.9f
 
 typedef struct {
     char str[POPUP_TEXT_STR_BUF_SIZE];

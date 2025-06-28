@@ -10,10 +10,10 @@ typedef struct {
 } s_game;
 
 const s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
-    {1, 1, 14, 22}, // Player
-    {17, 9, 14, 14}, // Slime
-    {16, 0, 8, 8}, // Tile
-    {24, 0, 8, 8} // Cursor
+    [ek_sprite_player] = {1, 1, 14, 22},
+    [ek_sprite_slime] = {17, 9, 14, 14},
+    [ek_sprite_dirt_tile] = {16, 0, 8, 8},
+    [ek_sprite_cursor] = {24, 0, 8, 8}
 };
 
 s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin) {
@@ -36,6 +36,12 @@ static s_font_load_info FontIndexToLoadInfo(const int index) {
             return (s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 24
+            };
+
+        case ek_font_eb_garamond_28:
+            return (s_font_load_info){
+                .file_path = "assets/fonts/eb_garamond.ttf",
+                .height = 28
             };
 
         default:

@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <zfw_math.h>
+#include <zfw_random.h>
 #include "game.h"
-#include "zfw_math.h"
 
 #define PLAYER_MOVE_SPD 1.5f
 #define PLAYER_MOVE_SPD_LERP 0.2f
@@ -19,13 +20,13 @@ static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     world->player_vel = Vec2DSum(world->player_vel, kb);
     world->player_inv_time = PLAYER_INV_DUR;
 
-    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, -8.0f);
+    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 
     if (!dmg_popup) {
         return false;
     }
 
-    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", dmg);
+    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", -dmg);
 
     return true;
 }

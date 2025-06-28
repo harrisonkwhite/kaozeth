@@ -190,7 +190,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 
         popup->pos.y += popup->vel_y;
 
-        popup->vel_y *= POPUP_TEXT_FADE_VEL_Y_ABS_THRESH;
+        popup->vel_y *= POPUP_TEXT_VEL_Y_MULT;
     }
 }
 
@@ -285,10 +285,11 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
         const s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, world->cam_pos, rendering_context->display_size);
         const s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos);
+        const s_color popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
-        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_24, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_28, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
             return false;
         }
     }
