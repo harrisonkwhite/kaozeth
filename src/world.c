@@ -98,50 +98,6 @@ static void UpdateItemDrops(s_world* const world) {
     }
 }
 
-#if 0
-static float PlayerInventoryLeft(const s_vec_2d_i ui_size) {
-    assert(ui_size.x > 0 && ui_size.y > 0);
-
-    const float player_inv_mid_x = ui_size.x / 2.0f;
-    return player_inv_mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
-}
-
-static void LoadPlayerInventoryHotbarSlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_COLUMN_CNT], const s_vec_2d_i ui_size) {
-    assert(positions);
-    assert(ui_size.x > 0 && ui_size.y > 0);
-
-    const float left = PlayerInventoryLeft(ui_size);
-    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
-
-    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * i),
-            hotbar_y
-        };
-    }
-}
-
-static void LoadPlayerInventoryBodySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
-    assert(positions);
-    assert(ui_size.x > 0 && ui_size.y > 0);
-
-    const float left = PlayerInventoryLeft(ui_size);
-    const int body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
-    const float top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (body_row_cnt - 1) * 0.5f);
-
-    for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
-        const int bi = i - PLAYER_INVENTORY_COLUMN_CNT;
-        const int c = bi % PLAYER_INVENTORY_COLUMN_CNT;
-        const int r = bi / PLAYER_INVENTORY_COLUMN_CNT;
-
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * c),
-            top + (INVENTORY_SLOT_GAP * r)
-        };
-    }
-}
-#endif
-
 static void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
     assert(positions);
     assert(ui_size.x > 0 && ui_size.y > 0);
@@ -283,7 +239,11 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             };
 
             if (IsPointInRect(cursor_ui_pos, slot_collider)) {
-                snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_items[slot->item_type].name);
+                if (slot->quantity == 1) {
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_items[slot->item_type].name);
+                } else {
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_items[slot->item_type].name, slot->quantity);
+                }
             }
         }
     }
