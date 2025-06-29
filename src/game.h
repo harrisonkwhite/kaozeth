@@ -18,7 +18,8 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
 #define PLAYER_INVENTORY_COLUMN_CNT 8
-static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Player inventory column count is too large - each hotbar slot needs an associated digit key.");
+#define PLAYER_INVENTORY_HOTBAR_LENGTH 8
+static_assert(PLAYER_INVENTORY_HOTBAR_LENGTH <= 9, "Too large since each hotbar slot needs an associated digit key.");
 #define PLAYER_INVENTORY_LENGTH (PLAYER_INVENTORY_COLUMN_CNT * 4)
 static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player inventory needs at least one full row!");
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.3f
@@ -129,6 +130,8 @@ typedef struct {
 
 #define ITEM_DROP_LIMIT 1024
 
+#define CURSOR_HOVER_STR_BUF_SIZE 32
+
 typedef struct world {
     bool player_killed;
     s_vec_2d player_pos;
@@ -136,7 +139,7 @@ typedef struct world {
     bool player_jumping;
     int player_hp;
     int player_hp_max;
-    int player_inv_time;
+    int player_invinc_time;
 
     s_npcs npcs;
 
@@ -152,6 +155,8 @@ typedef struct world {
     s_popup_text popup_texts[POPUP_TEXT_LIMIT];
 
     s_vec_2d cam_pos;
+
+    char cursor_hover_str[CURSOR_HOVER_STR_BUF_SIZE];
 } s_world;
 
 // NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
@@ -183,7 +188,7 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
 void InitWorld(s_world* const world);
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_math.h"
 #include "zfw_rendering.h"
+#include "zfw_utils.h"
 
 static bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
     assert(world);
@@ -40,7 +42,7 @@ void InitWorld(s_world* const world) {
 
     world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
-    world->player_hp_max = 10;
+    world->player_hp_max = 100;
     world->player_hp = world->player_hp_max;
 
     SpawnItemDrop(world, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_item_type_dirt_block, 3);
@@ -96,18 +98,101 @@ static void UpdateItemDrops(s_world* const world) {
     }
 }
 
+#if 0
+static float PlayerInventoryLeft(const s_vec_2d_i ui_size) {
+    assert(ui_size.x > 0 && ui_size.y > 0);
+
+    const float player_inv_mid_x = ui_size.x / 2.0f;
+    return player_inv_mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+}
+
+static void LoadPlayerInventoryHotbarSlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_COLUMN_CNT], const s_vec_2d_i ui_size) {
+    assert(positions);
+    assert(ui_size.x > 0 && ui_size.y > 0);
+
+    const float left = PlayerInventoryLeft(ui_size);
+    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
+
+    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
+        (*positions)[i] = (s_vec_2d){
+            left + (INVENTORY_SLOT_GAP * i),
+            hotbar_y
+        };
+    }
+}
+
+static void LoadPlayerInventoryBodySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
+    assert(positions);
+    assert(ui_size.x > 0 && ui_size.y > 0);
+
+    const float left = PlayerInventoryLeft(ui_size);
+    const int body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
+    const float top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (body_row_cnt - 1) * 0.5f);
+
+    for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
+        const int bi = i - PLAYER_INVENTORY_COLUMN_CNT;
+        const int c = bi % PLAYER_INVENTORY_COLUMN_CNT;
+        const int r = bi / PLAYER_INVENTORY_COLUMN_CNT;
+
+        (*positions)[i] = (s_vec_2d){
+            left + (INVENTORY_SLOT_GAP * c),
+            top + (INVENTORY_SLOT_GAP * r)
+        };
+    }
+}
+#endif
+
+static void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
+    assert(positions);
+    assert(ui_size.x > 0 && ui_size.y > 0);
+
+    const float mid_x = ui_size.x / 2.0f;
+    const float left = mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+
+    //
+    // Hotbar
+    //
+    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
+
+    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
+        (*positions)[i] = (s_vec_2d){
+            left + (INVENTORY_SLOT_GAP * i),
+            hotbar_y
+        };
+    }
+
+    //
+    // Body
+    //
+    const int body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
+    const float top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (body_row_cnt - 1) * 0.5f);
+
+    for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
+        const int bi = i - PLAYER_INVENTORY_COLUMN_CNT;
+        const int c = bi % PLAYER_INVENTORY_COLUMN_CNT;
+        const int r = bi / PLAYER_INVENTORY_COLUMN_CNT;
+
+        (*positions)[i] = (s_vec_2d){
+            left + (INVENTORY_SLOT_GAP * c),
+            top + (INVENTORY_SLOT_GAP * r)
+        };
+    }
+}
+
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(world);
     assert(input_state);
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
 
+    ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
+
     if (!world->player_killed) {
         ProcPlayerMovement(world, input_state, input_state_last);
         ProcPlayerCollisionsWithNPCs(world);
 
-        if (world->player_inv_time > 0) {
-            world->player_inv_time--;
+        if (world->player_invinc_time > 0) {
+            world->player_invinc_time--;
         }
 
         ProcPlayerDeath(world);
@@ -174,6 +259,33 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             break;
 
         default: break;
+    }
+
+    if (world->player_inventory_open) {
+        const s_vec_2d_i ui_size = UISize(display_size);
+        const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
+
+        s_vec_2d inv_slot_positions[PLAYER_INVENTORY_LENGTH];
+        LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
+
+        for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
+            const s_inventory_slot* const slot = &world->player_inventory_slots[i];
+
+            if (slot->quantity == 0) {
+                continue;
+            }
+
+            const s_rect slot_collider = {
+                inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
+                inv_slot_positions[i].y - (INVENTORY_SLOT_SIZE / 2.0f),
+                INVENTORY_SLOT_SIZE,
+                INVENTORY_SLOT_SIZE
+            };
+
+            if (IsPointInRect(cursor_ui_pos, slot_collider)) {
+                snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_items[slot->item_type].name);
+            }
+        }
     }
 
     assert(world->player_inventory_hotbar_slot_selected >= 0 && world->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
@@ -280,7 +392,7 @@ static bool RenderInventorySlot(const s_rendering_context* const rendering_conte
     return true;
 }
 
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
 
     //
@@ -332,45 +444,38 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         RenderRect(rendering_context, bg_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     }
 
-    const float player_inv_mid_x = ui_size.x / 2.0f;
+    // Get positions of all slots.
+    s_vec_2d player_inv_slot_positions[PLAYER_INVENTORY_LENGTH];
+    LoadPlayerInventorySlotPositions(&player_inv_slot_positions, ui_size);
 
-    const float player_inv_left = player_inv_mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
-
-    // Render hotbar.
-    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
-
+    // Render the hotbar.
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
         const s_inventory_slot* const slot = &world->player_inventory_slots[i];
-        const float slot_x = player_inv_left + (INVENTORY_SLOT_GAP * i);
-        
-        const s_color slot_color = world->player_inventory_hotbar_slot_selected == i ? YELLOW : WHITE;
 
-        if (!RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, slot_color, textures, fonts, temp_mem_arena)) {
+        const s_color slot_color = i == world->player_inventory_hotbar_slot_selected ? YELLOW : WHITE;
+
+        if (!RenderInventorySlot(rendering_context, *slot, player_inv_slot_positions[i], slot_color, textures, fonts, temp_mem_arena)) {
             return false;
         }
     }
 
-    // Render the rest of the inventory if open.
+    // Render the body if open.
     if (world->player_inventory_open) {
-        const int player_inv_body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
-        const float player_inv_body_top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (player_inv_body_row_cnt - 1) * 0.5f);
+        for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
+            const s_inventory_slot* const slot = &world->player_inventory_slots[i];
 
-        const int player_inv_body_len = PLAYER_INVENTORY_LENGTH - PLAYER_INVENTORY_COLUMN_CNT;
-
-        for (int i = 0; i < player_inv_body_len; i++) {
-            const s_inventory_slot* const slot = &world->player_inventory_slots[PLAYER_INVENTORY_COLUMN_CNT + i];
-
-            const int c = i % PLAYER_INVENTORY_COLUMN_CNT;
-            const int r = i / PLAYER_INVENTORY_COLUMN_CNT;
-
-            const s_vec_2d slot_pos = {
-                player_inv_left + (INVENTORY_SLOT_GAP * c),
-                player_inv_body_top + (INVENTORY_SLOT_GAP * r)
-            };
-
-            if (!RenderInventorySlot(rendering_context, *slot, slot_pos, WHITE, textures, fonts, temp_mem_arena)) {
+            if (!RenderInventorySlot(rendering_context, *slot, player_inv_slot_positions[i], WHITE, textures, fonts, temp_mem_arena)) {
                 return false;
             }
+        }
+    }
+
+    //
+    // Cursor Hover String
+    //
+    if (world->cursor_hover_str[0]) {
+        if (!RenderStr(rendering_context, world->cursor_hover_str, ek_font_eb_garamond_24, fonts, cursor_ui_pos, ek_str_hor_align_left, ek_str_ver_align_top, WHITE, temp_mem_arena)) {
+            return false;
         }
     }
 

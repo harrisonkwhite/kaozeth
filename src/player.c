@@ -16,11 +16,11 @@
 // Returns true if successful, false otherwise.
 static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     assert(dmg > 0);
-    assert(world->player_inv_time == 0);
+    assert(world->player_invinc_time == 0);
 
     world->player_hp = MAX(world->player_hp - dmg, 0);
     world->player_vel = Vec2DSum(world->player_vel, kb);
-    world->player_inv_time = PLAYER_INV_DUR;
+    world->player_invinc_time = PLAYER_INV_DUR;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 
@@ -71,7 +71,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
     assert(!world->player_killed);
 
-    if (world->player_inv_time > 0) {
+    if (world->player_invinc_time > 0) {
         return true;
     }
 
@@ -121,8 +121,8 @@ void RenderPlayer(const s_rendering_context* const rendering_context, const s_wo
 
     float alpha = 1.0f;
 
-    if (world->player_inv_time > 0) {
-        alpha = world->player_inv_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
+    if (world->player_invinc_time > 0) {
+        alpha = world->player_invinc_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
     }
 
     RenderSprite(rendering_context, ek_sprite_player, textures, world->player_pos, PLAYER_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, (s_color){1.0f, 1.0f, 1.0f, alpha});
