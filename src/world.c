@@ -343,7 +343,9 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         const s_inventory_slot* const slot = &world->player_inventory_slots[i];
         const float slot_x = player_inv_left + (INVENTORY_SLOT_GAP * i);
         
-        if (!RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, WHITE, textures, fonts, temp_mem_arena)) {
+        const s_color slot_color = world->player_inventory_hotbar_slot_selected == i ? YELLOW : WHITE;
+
+        if (!RenderInventorySlot(rendering_context, *slot, (s_vec_2d){slot_x, hotbar_y}, slot_color, textures, fonts, temp_mem_arena)) {
             return false;
         }
     }
