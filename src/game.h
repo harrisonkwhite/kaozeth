@@ -94,6 +94,8 @@ typedef struct world s_world;
 typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
 
 typedef struct {
+    const char* name;
+
     e_sprite spr;
 
     t_npc_tick_func tick_func;

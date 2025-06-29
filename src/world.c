@@ -271,6 +271,28 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 
         popup->vel_y *= POPUP_TEXT_VEL_Y_MULT;
     }
+
+    //
+    // NPC Hovering
+    //
+
+    // TODO: Clean up messy state system. No need to check for the below if we're in the inventory - unless we want to perfectly model Terraria.
+
+    const s_vec_2d cursor_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        const s_npc* const npc = &world->npcs.buf[i];
+
+        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+        if (IsPointInRect(cursor_cam_pos, npc_collider)) {
+            snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_npc_types[npc->type].name);
+        }
+    }
 }
 
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {

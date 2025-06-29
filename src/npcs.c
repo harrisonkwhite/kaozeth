@@ -32,6 +32,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
 const s_npc_type g_npc_types[eks_npc_type_cnt] = {
     [ek_npc_type_slime] = {
+        .name = "Slime",
         .spr = ek_sprite_slime,
         .tick_func = SlimeNPCTick,
         .contact_dmg = 8,
