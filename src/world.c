@@ -4,25 +4,6 @@
 #include "zfw_rendering.h"
 #include "zfw_utils.h"
 
-static bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
-    assert(world);
-    assert(item_quantity > 0);
-
-    if (world->item_drop_active_cnt == ITEM_DROP_LIMIT) {
-        return false;
-    }
-
-    s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
-    assert(IS_ZERO(*drop));
-    drop->item_type = item_type;
-    drop->quantity = item_quantity;
-    drop->pos = pos;
-
-    world->item_drop_active_cnt++;
-
-    return true;
-}
-
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IS_ZERO(*mat));
     assert(display_size.x > 0 && display_size.y > 0);
@@ -175,8 +156,8 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             floorf(mouse_cam_pos.y / TILE_SIZE)
         };
 
-        if (IsTilePosInBounds(mouse_tile_pos)) {
-            DeactivateTile(&world->tilemap_activity, mouse_tile_pos);
+        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap_activity, mouse_tile_pos)) {
+            DestroyTile(world, mouse_tile_pos);
         }
     }
 
@@ -460,6 +441,25 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
             return false;
         }
     }
+
+    return true;
+}
+
+bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
+    assert(world);
+    assert(item_quantity > 0);
+
+    if (world->item_drop_active_cnt == ITEM_DROP_LIMIT) {
+        return false;
+    }
+
+    s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
+    assert(IS_ZERO(*drop));
+    drop->item_type = item_type;
+    drop->quantity = item_quantity;
+    drop->pos = pos;
+
+    world->item_drop_active_cnt++;
 
     return true;
 }

@@ -3,7 +3,7 @@
 const s_item g_items[eks_item_type_cnt] = {
     {
         .name = "Dirt Block",
-        .spr = ek_sprite_dirt_tile
+        .spr = ek_sprite_dirt_tile_item
     },
     {
         .name = "Wooden Sword",

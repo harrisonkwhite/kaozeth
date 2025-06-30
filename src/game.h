@@ -38,6 +38,9 @@ typedef enum {
     ek_sprite_player,
     ek_sprite_slime,
     ek_sprite_dirt_tile,
+    ek_sprite_stone_tile,
+    ek_sprite_dirt_tile_item,
+    ek_sprite_stone_tile_item,
     ek_sprite_cursor,
 
     eks_sprite_cnt
@@ -191,6 +194,7 @@ void InitWorld(s_world* const world);
 void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
@@ -208,6 +212,7 @@ bool IsNPCActive(const t_npc_activity* const activity, const int index);
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
+void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);

@@ -14,6 +14,16 @@ s_rect_edges_i RectTilemapSpan(const s_rect rect) {
     );
 }
 
+void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
+    assert(world);
+    assert(IsTilePosInBounds(pos));
+
+    DeactivateTile(&world->tilemap_activity, pos);
+
+    const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
+    SpawnItemDrop(world, drop_pos, ek_item_type_dirt_block, 1);
+}
+
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider) {
     assert(tm_activity);
     assert(collider.width > 0.0f && collider.height > 0.0f);
