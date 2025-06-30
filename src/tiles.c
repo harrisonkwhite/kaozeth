@@ -1,4 +1,30 @@
 #include "game.h"
+#include "zfw_utils.h"
+
+const s_tile_type g_tile_types[] = {
+    [ek_tile_type_dirt] = {
+        .spr = ek_sprite_dirt_tile,
+        .drop_item = ek_item_type_dirt_block
+    },
+    [ek_tile_type_stone] = {
+        .spr = ek_sprite_stone_tile,
+        .drop_item = ek_item_type_stone_block
+    }
+};
+
+static_assert(STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
+
+static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
+    assert(tm_activity);
+    assert(IsTilePosInBounds(pos));
+    ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+}
+
+static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
+    assert(tm_activity);
+    assert(IsTilePosInBounds(pos));
+    DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+}
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect) {
     assert(rect.width >= 0.0f && rect.height >= 0.0f);
@@ -14,14 +40,25 @@ s_rect_edges_i RectTilemapSpan(const s_rect rect) {
     );
 }
 
+void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type) {
+    assert(tilemap);
+    assert(IsTilePosInBounds(pos));
+    assert(!IsTileActive(&tilemap->activity, pos));
+
+    ActivateTile(&tilemap->activity, pos);
+    tilemap->tile_types[pos.y][pos.x] = tile_type;
+}
+
 void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
     assert(world);
     assert(IsTilePosInBounds(pos));
+    assert(IsTileActive(&world->tilemap.activity, pos));
 
-    DeactivateTile(&world->tilemap_activity, pos);
+    DeactivateTile(&world->tilemap.activity, pos);
 
+    const s_tile_type* const tile_type = &g_tile_types[world->tilemap.tile_types[pos.y][pos.x]];
     const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
-    SpawnItemDrop(world, drop_pos, ek_item_type_dirt_block, 1);
+    SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
 }
 
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider) {
@@ -84,7 +121,7 @@ void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_ti
     }
 }
 
-void RenderTilemap(const s_rendering_context* const rendering_context, const t_tilemap_activity* const tm_activity, const s_rect_edges_i range, const s_textures* const textures) {
+void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap* const tilemap, const s_rect_edges_i range, const s_textures* const textures) {
     assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
     assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
     assert(range.top >= 0 && range.top < TILEMAP_HEIGHT);
@@ -94,12 +131,13 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const t_t
 
     for (int ty = range.top; ty < range.bottom; ty++) {
         for (int tx = range.left; tx < range.right; tx++) {
-            if (!IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+            if (!IsTileActive(&tilemap->activity, (s_vec_2d_i){tx, ty})) {
                 continue;
             }
 
+            const s_tile_type* const tile_type = &g_tile_types[tilemap->tile_types[ty][tx]];
             const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
-            RenderSprite(rendering_context, ek_sprite_dirt_tile, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+            RenderSprite(rendering_context, tile_type->spr, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
         }
     }
 }

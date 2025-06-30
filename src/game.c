@@ -9,7 +9,7 @@ typedef struct {
     s_world world;
 } s_game;
 
-const s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
+const s_rect_i g_sprite_src_rects[] = {
     [ek_sprite_player] = {1, 1, 14, 22},
     [ek_sprite_slime] = {17, 9, 14, 14},
     [ek_sprite_dirt_tile] = {16, 0, 8, 8},
@@ -18,6 +18,8 @@ const s_rect_i g_sprite_src_rects[eks_sprite_cnt] = {
     [ek_sprite_stone_tile_item] = {41, 1, 6, 6},
     [ek_sprite_cursor] = {24, 0, 8, 8}
 };
+
+static_assert(STATIC_ARRAY_LEN(g_sprite_src_rects) == eks_sprite_cnt, "Invalid array length!");
 
 s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin) {
     const s_rect_i src_rect = g_sprite_src_rects[sprite];

@@ -48,6 +48,14 @@ typedef enum {
 
 s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
 
+typedef enum {
+    ek_item_type_dirt_block,
+    ek_item_type_stone_block,
+    ek_item_type_wooden_sword,
+
+    eks_item_type_cnt
+} e_item_type;
+
 #define TILE_SIZE 8
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 60
@@ -55,11 +63,16 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
 
 typedef enum {
-    ek_item_type_dirt_block,
-    ek_item_type_wooden_sword,
+    ek_tile_type_dirt,
+    ek_tile_type_stone,
 
-    eks_item_type_cnt
-} e_item_type;
+    eks_tile_type_cnt
+} e_tile_type;
+
+typedef struct {
+    e_sprite spr;
+    e_item_type drop_item;
+} s_tile_type;
 
 typedef struct {
     e_item_type item_type;
@@ -137,6 +150,11 @@ typedef struct {
 
 #define CURSOR_HOVER_STR_BUF_SIZE 32
 
+typedef struct {
+    t_tilemap_activity activity;
+    e_tile_type tile_types[TILEMAP_HEIGHT][TILEMAP_WIDTH];
+} s_tilemap;
+
 typedef struct world {
     bool player_killed;
     s_vec_2d player_pos;
@@ -151,7 +169,7 @@ typedef struct world {
     s_item_drop item_drops[ITEM_DROP_LIMIT];
     int item_drop_active_cnt;
 
-    t_tilemap_activity tilemap_activity;
+    s_tilemap tilemap;
 
     bool player_inventory_open;
     s_inventory_slot player_inventory_slots[PLAYER_INVENTORY_LENGTH];
@@ -170,11 +188,13 @@ typedef struct {
     const e_sprite spr;
 } s_item;
 
-extern const s_npc_type g_npc_types[eks_npc_type_cnt];
+extern const s_rect_i g_sprite_src_rects[];
 
-extern const s_item g_items[eks_item_type_cnt];
+extern const s_npc_type g_npc_types[];
 
-extern const s_rect_i g_sprite_src_rects[eks_sprite_cnt];
+extern const s_item g_items[];
+
+extern const s_tile_type g_tile_types[];
 
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
     RenderTexture(
@@ -212,11 +232,12 @@ bool IsNPCActive(const t_npc_activity* const activity, const int index);
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
+void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
 void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
-void RenderTilemap(const s_rendering_context* const rendering_context, const t_tilemap_activity* const tm_activity, const s_rect_edges_i range, const s_textures* const textures);
+void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap* const tilemap, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
@@ -226,18 +247,6 @@ static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_ve
     assert(tm_activity);
     assert(IsTilePosInBounds(pos));
     return IsBitActive(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
-}
-
-static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
-    assert(tm_activity);
-    assert(IsTilePosInBounds(pos));
-    ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
-}
-
-static void DeactivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
-    assert(tm_activity);
-    assert(IsTilePosInBounds(pos));
-    DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 // Returns the quantity that couldn't be added (0 if everything was added).

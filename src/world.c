@@ -30,9 +30,17 @@ void InitWorld(s_world* const world) {
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
 
-    for (int ty = TILEMAP_HEIGHT / 2; ty < TILEMAP_HEIGHT; ty++) {
+    int ty = TILEMAP_HEIGHT / 3;
+
+    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            ActivateTile(&world->tilemap_activity, (s_vec_2d_i){tx, ty});
+            PlaceTile(&world->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+        }
+    }
+
+    for (; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            PlaceTile(&world->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
         }
     }
 }
@@ -54,7 +62,7 @@ static void UpdateItemDrops(s_world* const world) {
 
         {
             const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->tilemap_activity);
+            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->tilemap.activity);
         }
 
         drop->pos = Vec2DSum(drop->pos, drop->vel);
@@ -156,7 +164,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             floorf(mouse_cam_pos.y / TILE_SIZE)
         };
 
-        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap_activity, mouse_tile_pos)) {
+        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
             DestroyTile(world, mouse_tile_pos);
         }
     }
@@ -299,7 +307,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
         tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
 
-        RenderTilemap(rendering_context, &world->tilemap_activity, tilemap_render_range, textures);
+        RenderTilemap(rendering_context, &world->tilemap, tilemap_render_range, textures);
     }
 
     if (!world->player_killed) {

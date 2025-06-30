@@ -25,7 +25,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
     }
 
     const s_rect collider = NPCCollider(npc->pos, npc->type);
-    ProcTileCollisions(&npc->vel, collider, &world->tilemap_activity);
+    ProcTileCollisions(&npc->vel, collider, &world->tilemap.activity);
 
     npc->pos = Vec2DSum(npc->pos, npc->vel);
 }
@@ -39,6 +39,8 @@ const s_npc_type g_npc_types[eks_npc_type_cnt] = {
         .contact_kb = 5.0f
     }
 };
+
+static_assert(sizeof(g_npc_types) == sizeof(s_npc_type) * eks_npc_type_cnt, "Invalid array length!");
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
     const int index = FirstInactiveBitIndex(npcs->activity, NPC_LIMIT);
