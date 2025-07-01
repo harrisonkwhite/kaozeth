@@ -13,26 +13,6 @@
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
-// Returns true if successful, false otherwise.
-static bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
-    assert(dmg > 0);
-    assert(world->player_invinc_time == 0);
-
-    world->player_hp = MAX(world->player_hp - dmg, 0);
-    world->player_vel = Vec2DSum(world->player_vel, kb);
-    world->player_invinc_time = PLAYER_INV_DUR;
-
-    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
-
-    if (!dmg_popup) {
-        return false;
-    }
-
-    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", -dmg);
-
-    return true;
-}
-
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
     assert(!world->player_killed);
 
@@ -130,4 +110,24 @@ void RenderPlayer(const s_rendering_context* const rendering_context, const s_wo
 
 s_rect PlayerCollider(const s_vec_2d pos) {
     return ColliderFromSprite(ek_sprite_player, pos, PLAYER_ORIGIN);
+}
+
+// Returns true if successful, false otherwise.
+bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
+    assert(dmg > 0);
+    assert(world->player_invinc_time == 0);
+
+    world->player_hp = MAX(world->player_hp - dmg, 0);
+    world->player_vel = Vec2DSum(world->player_vel, kb);
+    world->player_invinc_time = PLAYER_INV_DUR;
+
+    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player_pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
+
+    if (!dmg_popup) {
+        return false;
+    }
+
+    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", -dmg);
+
+    return true;
 }

@@ -22,8 +22,9 @@ static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_
     return GenSpanningRect(colliders, 2);
 }
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const s_vec_2d pos, const s_vec_2d vel) {
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel) {
     assert(world);
+    assert(dmg > 0);
 
     if (world->proj_cnt == PROJECTILE_LIMIT) {
         fprintf(stderr, "Failed to spawn projectile due to insufficient space!");
@@ -34,6 +35,7 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
     assert(IS_ZERO(*proj));
     proj->type = type;
     proj->friendly = friendly;
+    proj->dmg = dmg;
     proj->pos = pos;
     proj->vel = vel;
 
@@ -42,7 +44,7 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
     return proj;
 }
 
-void UpdateProjectiles(s_world* const world) {
+bool UpdateProjectiles(s_world* const world) {
     assert(world);
 
     // Store the colliders we'll need to test against.
@@ -87,11 +89,19 @@ void UpdateProjectiles(s_world* const world) {
                 s_npc* const npc = &world->npcs.buf[j];
                 
                 if (DoRectsInters(proj_trans_collider, npc_colliders[j])) {
+                    if (!HurtNPC(world, j, proj->dmg, proj->vel)) {
+                        return false;
+                    }
+
                     destroy = true;
                 }
             }
         } else {
             if (DoRectsInters(proj_trans_collider, player_collider)) {
+                if (!HurtPlayer(world, proj->dmg, proj->vel)) {
+                    return false;
+                }
+
                 destroy = true;
             }
         }
@@ -101,9 +111,12 @@ void UpdateProjectiles(s_world* const world) {
             // Replace the current projectile with the one at the end.
             world->proj_cnt--;
             world->projectiles[i] = world->projectiles[world->proj_cnt];
+            ZERO_OUT(world->projectiles[world->proj_cnt]);
             i--; // Make sure to still update the one at the end we just moved.
         }
     }
+
+    return true;
 }
 
 void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures) {

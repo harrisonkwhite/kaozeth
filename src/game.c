@@ -75,7 +75,9 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
 static bool GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size);
+    if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size)) {
+        return false;
+    }
 
     return true;
 }

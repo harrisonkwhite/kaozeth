@@ -102,6 +102,8 @@ typedef struct {
     s_vec_2d pos;
     s_vec_2d vel;
 
+    int hp;
+
     e_npc_type type;
     u_npc_type_data type_data;
 } s_npc;
@@ -146,6 +148,7 @@ typedef struct {
 typedef struct {
     e_projectile_type type;
     bool friendly;
+    int dmg;
     s_vec_2d pos;
     s_vec_2d vel;
     float rot;
@@ -256,7 +259,7 @@ static inline void RenderSprite(const s_rendering_context* const context, const 
 }
 
 void InitWorld(s_world* const world);
-void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
@@ -266,15 +269,17 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 s_rect PlayerCollider(const s_vec_2d pos);
+bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb);
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void RunNPCTicks(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
+bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const s_vec_2d pos, const s_vec_2d vel);
-void UpdateProjectiles(s_world* const world);
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel);
+bool UpdateProjectiles(s_world* const world);
 void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures);
 
 // NOTE: Make sure, at some point, to assert that the popup text string is not empty.

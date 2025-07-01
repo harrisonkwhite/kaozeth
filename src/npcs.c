@@ -1,6 +1,6 @@
-#include "game.h"
-
 #include <stdio.h>
+#include <zfw_random.h>
+#include "game.h"
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -83,6 +83,28 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 
         RenderSprite(rendering_context, spr, textures, npc->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
+}
+
+// Returns true if successful, false otherwise.
+bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb) {
+    assert(world);
+    assert(npc_index >= 0 && npc_index < NPC_LIMIT);
+    assert(IsNPCActive(&world->npcs.activity, npc_index));
+    assert(dmg > 0);
+
+    s_npc* const npc = &world->npcs.buf[npc_index];
+    npc->hp = MAX(npc->hp - dmg, 0);
+    npc->vel = Vec2DSum(npc->vel, kb);
+
+    s_popup_text* const dmg_popup = SpawnPopupText(world, npc->pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
+
+    if (!dmg_popup) {
+        return false;
+    }
+
+    snprintf(dmg_popup->str, sizeof(dmg_popup->str), "%d", -dmg);
+
+    return true;
 }
 
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type) {

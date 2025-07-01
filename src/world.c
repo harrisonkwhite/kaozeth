@@ -29,7 +29,7 @@ void InitWorld(s_world* const world) {
 
     AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
 
-    SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
+    SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.4f, 0.0f}, ek_npc_type_slime);
 
     int ty = TILEMAP_HEIGHT / 3;
 
@@ -125,14 +125,14 @@ static void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER
     }
 }
 
-void WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(world);
     assert(input_state);
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
 
     if (IsKeyPressed(ek_key_code_g, input_state, input_state_last)) {
-        SpawnProjectile(world, ek_projectile_type_wooden_arrow, false, world->player_pos, (s_vec_2d){12.0f, 0.0f});
+        SpawnProjectile(world, ek_projectile_type_wooden_arrow, true, 1, world->player_pos, (s_vec_2d){4.0f, 0.0f});
     }
 
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
@@ -293,7 +293,9 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     // Projectiles
     //
-    UpdateProjectiles(world);
+    if (!UpdateProjectiles(world)) {
+        return false;
+    }
 
     //
     // Popup Texts
@@ -338,6 +340,8 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_npc_types[npc->type].name);
         }
     }
+
+    return true;
 }
 
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
