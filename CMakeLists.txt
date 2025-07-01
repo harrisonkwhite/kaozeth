@@ -10,6 +10,7 @@ add_executable(terraria_clone
     src/player.c
     src/npcs.c
     src/tiles.c
+    src/projectiles.c
 )
 
 target_include_directories(terraria_clone PRIVATE zeta_framework/include)

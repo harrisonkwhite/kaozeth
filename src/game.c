@@ -17,6 +17,7 @@ const s_rect_i g_sprite_src_rects[] = {
     [ek_sprite_dirt_tile_item] = {33, 1, 6, 6},
     [ek_sprite_stone_tile_item] = {41, 1, 6, 6},
     [ek_sprite_pickaxe_item] = {49, 1, 14, 14},
+    [ek_sprite_projectile] = {48, 18, 16, 4},
     [ek_sprite_cursor] = {24, 0, 8, 8}
 };
 

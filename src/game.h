@@ -42,6 +42,7 @@ typedef enum {
     ek_sprite_dirt_tile_item,
     ek_sprite_stone_tile_item,
     ek_sprite_pickaxe_item,
+    ek_sprite_projectile,
     ek_sprite_cursor,
 
     eks_sprite_cnt
@@ -127,6 +128,30 @@ typedef struct {
     t_npc_activity activity;
 } s_npcs;
 
+typedef enum {
+    ek_projectile_type_wooden_arrow,
+
+    eks_projectile_type_cnt
+} e_projectile_type;
+
+typedef enum {
+    ek_projectile_type_flags_falls = 1 << 0
+} e_projectile_type_flags;
+
+typedef struct {
+    e_sprite spr;
+    e_projectile_type_flags flags;
+} s_projectile_type;
+
+typedef struct {
+    e_projectile_type type;
+    s_vec_2d pos;
+    s_vec_2d vel;
+    float rot;
+} s_projectile;
+
+#define PROJECTILE_LIMIT 1024
+
 typedef struct {
     e_item_type item_type;
     int quantity;
@@ -168,6 +193,9 @@ typedef struct world {
 
     s_npcs npcs;
 
+    s_projectile projectiles[PROJECTILE_LIMIT];
+    int proj_cnt;
+
     s_item_drop item_drops[ITEM_DROP_LIMIT];
     int item_drop_active_cnt;
 
@@ -208,6 +236,8 @@ extern const s_npc_type g_npc_types[];
 
 extern const s_item_type g_item_types[];
 
+extern const s_projectile_type g_projectile_types[];
+
 extern const s_tile_type g_tile_types[];
 
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
@@ -241,6 +271,10 @@ void RunNPCTicks(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
+
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const s_vec_2d pos, const s_vec_2d vel);
+void UpdateProjectiles(s_world* const world);
+void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures);
 
 // NOTE: Make sure, at some point, to assert that the popup text string is not empty.
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);

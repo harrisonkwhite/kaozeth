@@ -131,6 +131,10 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0);
 
+    if (IsKeyPressed(ek_key_code_g, input_state, input_state_last)) {
+        SpawnProjectile(world, ek_projectile_type_wooden_arrow, world->player_pos, (s_vec_2d){12.0f, 0.0f});
+    }
+
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
 
     if (!world->player_killed) {
@@ -276,7 +280,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
                         }
 
                         break;
-                }
+               }
 
                 // Handle consuming the item.
                 if (used && active_item->consume_on_use) {
@@ -285,6 +289,11 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             }
         }
     }
+
+    //
+    // Projectiles
+    //
+    UpdateProjectiles(world);
 
     //
     // Popup Texts
@@ -362,6 +371,8 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     }
 
     RenderNPCs(rendering_context, &world->npcs, textures);
+
+    RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
 
     // Render item drops.
     for (int i = 0; i < world->item_drop_active_cnt; i++) {
