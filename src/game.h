@@ -182,17 +182,27 @@ typedef struct world {
     char cursor_hover_str[CURSOR_HOVER_STR_BUF_SIZE];
 } s_world;
 
+typedef enum {
+    ek_item_use_type_tile_place,
+    ek_item_use_type_tile_destroy
+} e_item_use_type;
+
 // NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
 typedef struct {
     const char* name;
     const e_sprite spr;
-} s_item;
+
+    e_item_use_type use_type;
+    bool consume_on_use;
+
+    e_tile_type tile_place_type;
+} s_item_type;
 
 extern const s_rect_i g_sprite_src_rects[];
 
 extern const s_npc_type g_npc_types[];
 
-extern const s_item g_items[];
+extern const s_item_type g_item_types[];
 
 extern const s_tile_type g_tile_types[];
 

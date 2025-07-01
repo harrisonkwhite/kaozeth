@@ -46,7 +46,7 @@ void InitWorld(s_world* const world) {
 }
 
 static s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
-    return ColliderFromSprite(g_items[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
+    return ColliderFromSprite(g_item_types[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
 }
 
 static void UpdateItemDrops(s_world* const world) {
@@ -153,21 +153,12 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     RunNPCTicks(world);
 
+#if 0
     //
     // Tilemap Interaction
     //
-    if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
-        const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-
-        const s_vec_2d_i mouse_tile_pos = {
-            floorf(mouse_cam_pos.x / TILE_SIZE),
-            floorf(mouse_cam_pos.y / TILE_SIZE)
-        };
-
-        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
-            DestroyTile(world, mouse_tile_pos);
-        }
-    }
+    
+#endif
 
     //
     // Item Drops
@@ -229,15 +220,61 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
 
             if (IsPointInRect(cursor_ui_pos, slot_collider)) {
                 if (slot->quantity == 1) {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_items[slot->item_type].name);
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
                 } else {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_items[slot->item_type].name, slot->quantity);
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
                 }
             }
         }
     }
 
     assert(world->player_inventory_hotbar_slot_selected >= 0 && world->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+
+    //
+    // Item Usage
+    //
+    {
+        s_inventory_slot* const cur_slot = &world->player_inventory_slots[world->player_inventory_hotbar_slot_selected];
+
+        if (cur_slot->quantity > 0) {
+            const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
+
+            if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
+                const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+
+                const s_vec_2d_i mouse_tile_pos = {
+                    floorf(mouse_cam_pos.x / TILE_SIZE),
+                    floorf(mouse_cam_pos.y / TILE_SIZE)
+                };
+
+                // Perform unique action based on the item use type.
+                bool used = false; // Did we use the item?
+
+                switch (active_item->use_type) {
+                    case ek_item_use_type_tile_place:
+                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
+                            PlaceTile(&world->tilemap, mouse_tile_pos, active_item->tile_place_type);
+                            used = true;
+                        }
+
+                        break;
+
+                    case ek_item_use_type_tile_destroy:
+                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
+                            DestroyTile(world, mouse_tile_pos);
+                            used = true;
+                        }
+
+                        break;
+                }
+
+                // Handle consuming the item.
+                if (used && active_item->consume_on_use) {
+                    cur_slot->quantity--;
+                }
+            }
+        }
+    }
 
     //
     // Popup Texts
@@ -320,7 +357,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     for (int i = 0; i < world->item_drop_active_cnt; i++) {
         const s_item_drop* const drop = &world->item_drops[i];
 
-        const e_sprite spr = g_items[drop->item_type].spr;
+        const e_sprite spr = g_item_types[drop->item_type].spr;
 
         RenderSprite(rendering_context, spr, textures, drop->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
@@ -342,7 +379,7 @@ static bool RenderInventorySlot(const s_rendering_context* const rendering_conte
 
     // Render the item icon.
     if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_items[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, g_item_types[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 
     // Render the quantity.
