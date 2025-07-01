@@ -182,6 +182,8 @@ typedef struct world {
     s_vec_2d cam_pos;
 
     char cursor_hover_str[CURSOR_HOVER_STR_BUF_SIZE];
+    e_item_type cursor_item_held_type;
+    int cursor_item_held_quantity;
 } s_world;
 
 typedef enum {

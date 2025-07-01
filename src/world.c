@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_game.h"
 #include "zfw_math.h"
 #include "zfw_rendering.h"
 #include "zfw_utils.h"
@@ -153,13 +154,6 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     RunNPCTicks(world);
 
-#if 0
-    //
-    // Tilemap Interaction
-    //
-    
-#endif
-
     //
     // Item Drops
     //
@@ -205,11 +199,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
         LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
 
         for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
-            const s_inventory_slot* const slot = &world->player_inventory_slots[i];
-
-            if (slot->quantity == 0) {
-                continue;
-            }
+            s_inventory_slot* const slot = &world->player_inventory_slots[i];
 
             const s_rect slot_collider = {
                 inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
@@ -219,11 +209,31 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
             };
 
             if (IsPointInRect(cursor_ui_pos, slot_collider)) {
-                if (slot->quantity == 1) {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
+                const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
+
+                if (slot->quantity > 0) {
+                    if (slot->quantity == 1) {
+                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
+                    } else {
+                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
+                    }
+
+                    if (clicked) {
+                        world->cursor_item_held_type = slot->item_type;
+                        world->cursor_item_held_quantity = slot->quantity;
+
+                        slot->quantity = 0;
+                    }
                 } else {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
+                    if (clicked && world->cursor_item_held_quantity > 0) {
+                        slot->item_type = world->cursor_item_held_type;
+                        slot->quantity = world->cursor_item_held_quantity;
+
+                        world->cursor_item_held_quantity = 0;
+                    }
                 }
+
+                break;
             }
         }
     }
@@ -233,7 +243,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     // Item Usage
     //
-    {
+    if (!world->player_inventory_open) {
         s_inventory_slot* const cur_slot = &world->player_inventory_slots[world->player_inventory_hotbar_slot_selected];
 
         if (cur_slot->quantity > 0) {
@@ -479,12 +489,16 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     }
 
     //
-    // Cursor Hover String
+    // Cursor Hover String and Item
     //
     if (world->cursor_hover_str[0]) {
         if (!RenderStr(rendering_context, world->cursor_hover_str, ek_font_eb_garamond_24, fonts, cursor_ui_pos, ek_str_hor_align_left, ek_str_ver_align_top, WHITE, temp_mem_arena)) {
             return false;
         }
+    }
+
+    if (world->cursor_item_held_quantity > 0) {
+        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 
     return true;
