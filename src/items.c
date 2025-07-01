@@ -16,6 +16,11 @@ const s_item_type g_item_types[] = {
         .consume_on_use = true,
         .tile_place_type = ek_tile_type_stone
     },
+    [ek_item_type_copper_pickaxe] = {
+        .name = "Copper Pickaxe",
+        .spr = ek_sprite_pickaxe_item,
+        .use_type = ek_item_use_type_tile_destroy
+    },
     [ek_item_type_wooden_sword] = {
         .name = "Wooden Sword",
         .spr = ek_sprite_dirt_tile,

@@ -41,6 +41,7 @@ typedef enum {
     ek_sprite_stone_tile,
     ek_sprite_dirt_tile_item,
     ek_sprite_stone_tile_item,
+    ek_sprite_pickaxe_item,
     ek_sprite_cursor,
 
     eks_sprite_cnt
@@ -51,6 +52,7 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 typedef enum {
     ek_item_type_dirt_block,
     ek_item_type_stone_block,
+    ek_item_type_copper_pickaxe,
     ek_item_type_wooden_sword,
 
     eks_item_type_cnt

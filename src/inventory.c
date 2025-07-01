@@ -16,6 +16,7 @@ int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_it
     for (int i = 0; i < slot_cnt && quantity > 0; i++) {
         if (slots[i].quantity == 0) {
             const int quant_to_add = MIN(ITEM_QUANTITY_LIMIT, quantity);
+            slots[i].item_type = item_type;
             slots[i].quantity += quant_to_add;
             quantity -= quant_to_add;
         }

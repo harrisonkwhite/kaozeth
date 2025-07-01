@@ -26,7 +26,7 @@ void InitWorld(s_world* const world) {
     world->player_hp_max = 100;
     world->player_hp = world->player_hp_max;
 
-    SpawnItemDrop(world, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_item_type_dirt_block, 3);
+    AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.25f, 0.0f}, ek_npc_type_slime);
 
