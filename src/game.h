@@ -145,6 +145,7 @@ typedef struct {
 
 typedef struct {
     e_projectile_type type;
+    bool friendly;
     s_vec_2d pos;
     s_vec_2d vel;
     float rot;
@@ -272,7 +273,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const s_vec_2d pos, const s_vec_2d vel);
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const s_vec_2d pos, const s_vec_2d vel);
 void UpdateProjectiles(s_world* const world);
 void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures);
 

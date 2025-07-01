@@ -132,7 +132,7 @@ void WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(display_size.x > 0 && display_size.y > 0);
 
     if (IsKeyPressed(ek_key_code_g, input_state, input_state_last)) {
-        SpawnProjectile(world, ek_projectile_type_wooden_arrow, world->player_pos, (s_vec_2d){12.0f, 0.0f});
+        SpawnProjectile(world, ek_projectile_type_wooden_arrow, false, world->player_pos, (s_vec_2d){12.0f, 0.0f});
     }
 
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.

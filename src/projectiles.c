@@ -9,15 +9,20 @@ const s_projectile_type g_projectile_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
 
-static void DestroyProjectile(s_world* const world, const int index) {
-    assert(world);
-    assert(index >= 0 && index < world->proj_cnt);
-
-    world->proj_cnt--;
-    world->projectiles[index] = world->projectiles[world->proj_cnt];
+static inline s_rect ProjectileCollider(const e_projectile_type proj_type, const s_vec_2d pos) {
+    return ColliderFromSprite(g_projectile_types[proj_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
 }
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const s_vec_2d pos, const s_vec_2d vel) {
+static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_vec_2d pos_before, const s_vec_2d pos_after) {
+    const s_rect colliders[2] = {
+        ProjectileCollider(proj_type, pos_before),
+        ProjectileCollider(proj_type, pos_after)
+    };
+
+    return GenSpanningRect(colliders, 2);
+}
+
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const s_vec_2d pos, const s_vec_2d vel) {
     assert(world);
 
     if (world->proj_cnt == PROJECTILE_LIMIT) {
@@ -26,6 +31,9 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
     }
 
     s_projectile* const proj = &world->projectiles[world->proj_cnt];
+    assert(IS_ZERO(*proj));
+    proj->type = type;
+    proj->friendly = friendly;
     proj->pos = pos;
     proj->vel = vel;
 
@@ -37,16 +45,64 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
 void UpdateProjectiles(s_world* const world) {
     assert(world);
 
+    // Store the colliders we'll need to test against.
+    const s_rect player_collider = PlayerCollider(world->player_pos);
+
+    s_rect npc_colliders[NPC_LIMIT];
+
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        const s_npc* const npc = &world->npcs.buf[i];
+        npc_colliders[i] = NPCCollider(npc->pos, npc->type);
+    }
+
+    // Perform an update on each projectile.
     for (int i = 0; i < world->proj_cnt; i++) {
         s_projectile* const proj = &world->projectiles[i]; 
 
+        bool destroy = false; // Do we destroy this projectile at the end of this update?
+
         const s_projectile_type* const proj_type = &g_projectile_types[proj->type];
 
+        // Perform movement.
         if (proj_type->flags & ek_projectile_type_flags_falls) {
             proj->vel.y += GRAVITY;
         }
 
+        const s_vec_2d pos_before_trans = proj->pos;
         proj->pos = Vec2DSum(proj->pos, proj->vel);
+
+        // Perform collision detection.
+        const s_rect proj_trans_collider = ProjectileTranslationCollider(proj->type, pos_before_trans, proj->pos);
+
+        if (proj->friendly) {
+            for (int j = 0; j < NPC_LIMIT; j++) {
+                if (!IsNPCActive(&world->npcs.activity, j)) {
+                    continue;
+                }
+
+                s_npc* const npc = &world->npcs.buf[j];
+                
+                if (DoRectsInters(proj_trans_collider, npc_colliders[j])) {
+                    destroy = true;
+                }
+            }
+        } else {
+            if (DoRectsInters(proj_trans_collider, player_collider)) {
+                destroy = true;
+            }
+        }
+
+        // Handle destruction.
+        if (destroy) {
+            // Replace the current projectile with the one at the end.
+            world->proj_cnt--;
+            world->projectiles[i] = world->projectiles[world->proj_cnt];
+            i--; // Make sure to still update the one at the end we just moved.
+        }
     }
 }
 
