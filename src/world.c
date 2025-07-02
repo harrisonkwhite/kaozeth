@@ -334,11 +334,11 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
 
         const s_npc* const npc = &world->npcs.buf[i];
-
+        const s_npc_type* const npc_type = &g_npc_types[npc->type];
         const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
 
         if (IsPointInRect(cursor_cam_pos, npc_collider)) {
-            snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_npc_types[npc->type].name);
+            snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d/%d)", npc_type->name, npc->hp, npc_type->hp_max);
         }
     }
 
