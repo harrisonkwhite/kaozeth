@@ -157,6 +157,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     // NPCs
     //
     RunNPCTicks(world);
+    ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
     //
     // Item Drops

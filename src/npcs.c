@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <zfw_random.h>
 #include "game.h"
+#include "zfw_utils.h"
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -14,6 +15,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     s_slime_npc* const slime = &npc->type_data.slime;
 
+    npc->vel.x = Lerp(npc->vel.x, 0.0f, 0.2f);
     npc->vel.y += GRAVITY;
 
     // TEMP: Slime should only jump when grounded, and at a more random interval.
@@ -35,12 +37,18 @@ const s_npc_type g_npc_types[eks_npc_type_cnt] = {
         .name = "Slime",
         .spr = ek_sprite_slime,
         .tick_func = SlimeNPCTick,
+        .hp_max = 10,
         .contact_dmg = 8,
         .contact_kb = 5.0f
     }
 };
 
 static_assert(sizeof(g_npc_types) == sizeof(s_npc_type) * eks_npc_type_cnt, "Invalid array length!");
+
+static bool IsNPCValid(const s_npc* const npc) {
+    assert(npc);
+    return npc->type >= 0 && npc->type < eks_npc_type_cnt && npc->hp >= 0 && npc->hp <= g_npc_types[npc->type].hp_max;
+}
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
     const int index = FirstInactiveBitIndex(npcs->activity, NPC_LIMIT);
@@ -49,9 +57,10 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
         ActivateBit(index, npcs->activity, NPC_LIMIT);
 
         s_npc* const npc = &npcs->buf[index];
-        assert(IsZero(npc, sizeof(*npc))); // Should have been cleared when the NPC slot was deactivated.
+        assert(IS_ZERO(*npc)); // Should have been cleared when the NPC slot was deactivated.
 
         npc->pos = pos;
+        npc->hp = g_npc_types[type].hp_max;
         npc->type = type;
     } else {
         fprintf(stderr, "Failed to spawn NPC due to insufficient space!\n");
@@ -61,14 +70,34 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
 }
 
 void RunNPCTicks(s_world* const world) {
+    assert(world);
+
     for (int i = 0; i < NPC_LIMIT; i++) {
         if (!IsNPCActive(&world->npcs.activity, i)) {
             continue;
         }
 
         s_npc* const npc = &world->npcs.buf[i];
+        assert(IsNPCValid(npc));
         const s_npc_type npc_type = g_npc_types[npc->type];
         npc_type.tick_func(world, i);
+    }
+}
+
+void ProcNPCDeaths(s_world* const world) {
+    assert(world);
+
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        s_npc* const npc = &world->npcs.buf[i];
+        assert(IsNPCValid(npc));
+
+        if (npc->hp == 0) {
+            DeactivateBit(i, world->npcs.activity, NPC_LIMIT);
+        }
     }
 }
 
