@@ -25,6 +25,14 @@ const s_item_type g_item_types[] = {
         .name = "Wooden Sword",
         .spr = ek_sprite_dirt_tile,
         .use_type = ek_item_use_type_tile_place
+    },
+    [ek_item_type_wooden_bow] = {
+        .name = "Wooden Bow",
+        .spr = ek_sprite_dirt_tile,
+        .use_type = ek_item_use_type_shoot,
+        .shoot_proj_type = ek_projectile_type_wooden_arrow,
+        .shoot_proj_spd = 7.0f,
+        .shoot_proj_dmg = 3
     }
 };
 

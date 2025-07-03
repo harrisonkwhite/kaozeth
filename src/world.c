@@ -28,6 +28,7 @@ void InitWorld(s_world* const world) {
     world->player_hp = world->player_hp_max;
 
     AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
+    AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.4f, 0.0f}, ek_npc_type_slime);
 
@@ -129,11 +130,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     assert(world);
     assert(input_state);
     assert(input_state_last);
-    assert(display_size.x > 0 && display_size.y > 0);
-
-    if (IsKeyPressed(ek_key_code_g, input_state, input_state_last)) {
-        SpawnProjectile(world, ek_projectile_type_wooden_arrow, true, 1, world->player_pos, (s_vec_2d){4.0f, 0.0f});
-    }
+    assert(display_size.x > 0 && display_size.y > 0); 
 
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
 
@@ -277,6 +274,20 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
                     case ek_item_use_type_tile_destroy:
                         if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
                             DestroyTile(world, mouse_tile_pos);
+                            used = true;
+                        }
+
+                        break;
+
+                    case ek_item_use_type_shoot:
+                        {
+                            const s_vec_2d dir = Vec2DDir(world->player_pos, mouse_cam_pos);
+                            const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
+
+                            if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player_pos, vel)) {
+                                return false;
+                            }
+
                             used = true;
                         }
 

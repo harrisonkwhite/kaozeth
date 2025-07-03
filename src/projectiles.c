@@ -3,7 +3,8 @@
 
 const s_projectile_type g_projectile_types[] = {
     [ek_projectile_type_wooden_arrow] = {
-        .spr = ek_sprite_projectile
+        .spr = ek_sprite_projectile,
+        .flags = ek_projectile_type_flags_rot_is_dir
     }
 };
 
@@ -76,6 +77,11 @@ bool UpdateProjectiles(s_world* const world) {
 
         const s_vec_2d pos_before_trans = proj->pos;
         proj->pos = Vec2DSum(proj->pos, proj->vel);
+
+        // Update rotation in accordance with direction if flag is set.
+        if (proj_type->flags & ek_projectile_type_flags_rot_is_dir) {
+            proj->rot = Dir(proj->vel);
+        }
 
         // Perform collision detection.
         const s_rect proj_trans_collider = ProjectileTranslationCollider(proj->type, pos_before_trans, proj->pos);

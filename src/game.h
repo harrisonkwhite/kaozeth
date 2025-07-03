@@ -55,6 +55,7 @@ typedef enum {
     ek_item_type_stone_block,
     ek_item_type_copper_pickaxe,
     ek_item_type_wooden_sword,
+    ek_item_type_wooden_bow,
 
     eks_item_type_cnt
 } e_item_type;
@@ -140,7 +141,8 @@ typedef enum {
 } e_projectile_type;
 
 typedef enum {
-    ek_projectile_type_flags_falls = 1 << 0
+    ek_projectile_type_flags_falls = 1 << 0,
+    ek_projectile_type_flags_rot_is_dir = 1 << 1
 } e_projectile_type_flags;
 
 typedef struct {
@@ -223,7 +225,8 @@ typedef struct world {
 
 typedef enum {
     ek_item_use_type_tile_place,
-    ek_item_use_type_tile_destroy
+    ek_item_use_type_tile_destroy,
+    ek_item_use_type_shoot
 } e_item_use_type;
 
 // NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
@@ -235,6 +238,10 @@ typedef struct {
     bool consume_on_use;
 
     e_tile_type tile_place_type;
+
+    e_projectile_type shoot_proj_type;
+    float shoot_proj_spd;
+    int shoot_proj_dmg;
 } s_item_type;
 
 extern const s_rect_i g_sprite_src_rects[];
