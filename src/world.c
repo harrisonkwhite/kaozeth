@@ -15,35 +15,91 @@ static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-void InitWorld(s_world_state* const world) {
+static void GenWorld(s_world_pers* const world_pers) {
+    assert(world_pers && IS_ZERO(*world_pers));
+
+    world_pers->player_hp_max = 100;
+
+    // Generate the tilemap.
+    int ty = TILEMAP_HEIGHT / 3;
+
+    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            PlaceTile(&world_pers->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+        }
+    }
+
+    for (; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            PlaceTile(&world_pers->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
+        }
+    }
+}
+
+static bool LoadWorldPersFromFile(s_world_pers* const world_pers, const char* const filename) {
+    assert(world_pers && IS_ZERO(*world_pers));
+    assert(filename);
+
+    FILE* const fs = fopen(filename, "rb");
+
+    if (!fs) {
+        return false;
+    }
+
+    if (fread(world_pers, sizeof(*world_pers), 1, fs) == 0) {
+        fclose(fs);
+        return false;
+    }
+
+    fclose(fs);
+
+    return true;
+}
+
+static bool WriteWorldPersToFile(const s_world_pers* const world_pers, const char* const filename) {
+    assert(world_pers);
+    assert(filename);
+
+    FILE* const fs = fopen(filename, "wb");
+
+    if (!fs) {
+        return false;
+    }
+
+    if (fwrite(world_pers, sizeof(*world_pers), 1, fs) == 0) {
+        fclose(fs);
+        return false;
+    }
+
+    fclose(fs);
+
+    return true;
+}
+
+bool InitWorld(s_world* const world, const char* const filename) {
     assert(world && IS_ZERO(*world));
+
+    if (filename) {
+        if (!LoadWorldPersFromFile(&world->pers, filename)) {
+            return false;
+        }
+    } else {
+        GenWorld(&world->pers);
+    }
 
     world->player.pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
-    world->player_hp_max = 100;
-    world->player.hp = world->player_hp_max;
+    world->player.hp = world->pers.player_hp_max;
 
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.4f, 0.0f}, ek_npc_type_slime);
 
-    int ty = TILEMAP_HEIGHT / 3;
-
-    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
-        }
-    }
-
-    for (; ty < TILEMAP_HEIGHT; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
-        }
-    }
+    return true;
 }
 
-bool WorldTick(s_world_state* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(world);
     assert(input_state);
     assert(input_state_last);
@@ -181,15 +237,15 @@ bool WorldTick(s_world_state* const world, const s_input_state* const input_stat
 
                 switch (active_item->use_type) {
                     case ek_item_use_type_tile_place:
-                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
-                            PlaceTile(&world->tilemap, mouse_tile_pos, active_item->tile_place_type);
+                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->pers.tilemap.activity, mouse_tile_pos)) {
+                            PlaceTile(&world->pers.tilemap, mouse_tile_pos, active_item->tile_place_type);
                             used = true;
                         }
 
                         break;
 
                     case ek_item_use_type_tile_destroy:
-                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->tilemap.activity, mouse_tile_pos)) {
+                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->pers.tilemap.activity, mouse_tile_pos)) {
                             DestroyTile(world, mouse_tile_pos);
                             used = true;
                         }
@@ -273,7 +329,7 @@ bool WorldTick(s_world_state* const world, const s_input_state* const input_stat
     return true;
 }
 
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_textures* const textures) {
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
     ZERO_OUT(rendering_context->state->view_mat);
@@ -296,7 +352,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
         tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
 
-        RenderTilemap(rendering_context, &world->tilemap, tilemap_render_range, textures);
+        RenderTilemap(rendering_context, &world->pers.tilemap, tilemap_render_range, textures);
     }
 
     if (!world->player.killed) {
@@ -319,7 +375,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     Flush(rendering_context);
 }
 
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
 
     //
@@ -353,7 +409,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         };
 
         char hp_str[8] = {0};
-        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->player_hp_max);
+        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->pers.player_hp_max);
 
         if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
@@ -413,7 +469,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     return true;
 }
 
-s_popup_text* SpawnPopupText(s_world_state* const world, const s_vec_2d pos, const float vel_y) {
+s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y) {
     for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
         s_popup_text* const popup = &world->popup_texts[i];
 

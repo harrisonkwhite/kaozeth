@@ -23,7 +23,7 @@ static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_
     return GenSpanningRect(colliders, 2);
 }
 
-s_projectile* SpawnProjectile(s_world_state* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel) {
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel) {
     assert(world);
     assert(dmg > 0);
 
@@ -45,7 +45,7 @@ s_projectile* SpawnProjectile(s_world_state* const world, const e_projectile_typ
     return proj;
 }
 
-bool UpdateProjectiles(s_world_state* const world) {
+bool UpdateProjectiles(s_world* const world) {
     assert(world);
 
     // Store the colliders we'll need to test against.

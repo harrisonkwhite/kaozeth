@@ -37,7 +37,7 @@ const s_item_type g_item_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
-bool SpawnItemDrop(s_world_state* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
+bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
     assert(world);
     assert(item_quantity > 0);
 
@@ -56,7 +56,7 @@ bool SpawnItemDrop(s_world_state* const world, const s_vec_2d pos, const e_item_
     return true;
 }
 
-void UpdateItemDrops(s_world_state* const world) {
+void UpdateItemDrops(s_world* const world) {
     assert(world);
 
     const s_rect player_collider = PlayerCollider(world->player.pos);
@@ -69,7 +69,7 @@ void UpdateItemDrops(s_world_state* const world) {
 
         {
             const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->tilemap.activity);
+            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->pers.tilemap.activity);
         }
 
         drop->pos = Vec2DSum(drop->pos, drop->vel);

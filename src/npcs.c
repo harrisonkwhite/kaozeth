@@ -15,7 +15,7 @@ static inline bool IsNPCOnGround(const s_vec_2d npc_pos, const e_npc_type npc_ty
     return TileCollisionCheck(tilemap_activity, below_collider);
 }
 
-static void SlimeNPCTick(s_world_state* const world, const int npc_index) {
+static void SlimeNPCTick(s_world* const world, const int npc_index) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
     assert(IsNPCActive(&world->npcs.activity, npc_index));
@@ -29,7 +29,7 @@ static void SlimeNPCTick(s_world_state* const world, const int npc_index) {
 
     float vel_x_dest = 0.0f;
 
-    if (IsNPCOnGround(npc->pos, npc->type, &world->tilemap.activity)) {
+    if (IsNPCOnGround(npc->pos, npc->type, &world->pers.tilemap.activity)) {
         if (slime->jump_time < 60) {
             slime->jump_time++;
         } else {
@@ -44,7 +44,7 @@ static void SlimeNPCTick(s_world_state* const world, const int npc_index) {
     npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
     const s_rect collider = NPCCollider(npc->pos, npc->type);
-    ProcTileCollisions(&npc->vel, collider, &world->tilemap.activity);
+    ProcTileCollisions(&npc->vel, collider, &world->pers.tilemap.activity);
 
     npc->pos = Vec2DSum(npc->pos, npc->vel);
 }
@@ -86,7 +86,7 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
     return index;
 }
 
-void RunNPCTicks(s_world_state* const world) {
+void RunNPCTicks(s_world* const world) {
     assert(world);
 
     for (int i = 0; i < NPC_LIMIT; i++) {
@@ -101,7 +101,7 @@ void RunNPCTicks(s_world_state* const world) {
     }
 }
 
-void ProcNPCDeaths(s_world_state* const world) {
+void ProcNPCDeaths(s_world* const world) {
     assert(world);
 
     for (int i = 0; i < NPC_LIMIT; i++) {
@@ -132,7 +132,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 }
 
 // Returns true if successful, false otherwise.
-bool HurtNPC(s_world_state* const world, const int npc_index, const int dmg, const s_vec_2d kb) {
+bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
     assert(IsNPCActive(&world->npcs.activity, npc_index));

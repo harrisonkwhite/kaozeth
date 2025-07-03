@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include "game.h"
-#include "zfw_math.h"
 
 typedef struct {
     s_textures textures;
     s_fonts fonts;
 
-    s_world_state world;
+    s_world world;
 } s_game;
 
 const s_rect_i g_sprite_src_rects[] = {
@@ -67,7 +66,9 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    InitWorld(&game->world);
+    if (!InitWorld(&game->world, NULL)) {
+        return false;
+    }
 
     return true;
 }

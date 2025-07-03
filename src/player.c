@@ -13,7 +13,7 @@
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
-void ProcPlayerMovement(s_world_state* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
+void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
     assert(!world->player.killed);
 
     const float move_axis = IsKeyDown(ek_key_code_d, input_state) - IsKeyDown(ek_key_code_a, input_state);
@@ -35,7 +35,7 @@ void ProcPlayerMovement(s_world_state* const world, const s_input_state* const i
 
     {
         const s_rect collider = PlayerCollider(world->player.pos);
-        ProcTileCollisions(&world->player.vel, collider, &world->tilemap.activity);
+        ProcTileCollisions(&world->player.vel, collider, &world->pers.tilemap.activity);
     }
 
     world->player.pos = Vec2DSum(world->player.pos, world->player.vel);
@@ -43,12 +43,12 @@ void ProcPlayerMovement(s_world_state* const world, const s_input_state* const i
     // Leave jumping state if tile is below.
     const s_rect below_collider = RectTranslated(PlayerCollider(world->player.pos), (s_vec_2d){0.0f, 1.0f});
 
-    if (TileCollisionCheck(&world->tilemap.activity, below_collider)) {
+    if (TileCollisionCheck(&world->pers.tilemap.activity, below_collider)) {
         world->player.jumping = false;
     }
 }
 
-bool ProcPlayerCollisionsWithNPCs(s_world_state* const world) {
+bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
     assert(!world->player.killed);
 
     if (world->player.invinc_time > 0) {
@@ -87,7 +87,7 @@ bool ProcPlayerCollisionsWithNPCs(s_world_state* const world) {
     return true;
 }
 
-void ProcPlayerDeath(s_world_state* const world) {
+void ProcPlayerDeath(s_world* const world) {
     assert(!world->player.killed);
 
     if (world->player.hp == 0) {
@@ -96,7 +96,7 @@ void ProcPlayerDeath(s_world_state* const world) {
     }
 }
 
-void RenderPlayer(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_textures* const textures) {
+void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
     assert(!world->player.killed);
 
     float alpha = 1.0f;
@@ -113,7 +113,7 @@ s_rect PlayerCollider(const s_vec_2d pos) {
 }
 
 // Returns true if successful, false otherwise.
-bool HurtPlayer(s_world_state* const world, const int dmg, const s_vec_2d kb) {
+bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     assert(dmg > 0);
     assert(world->player.invinc_time == 0);
 

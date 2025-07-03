@@ -125,9 +125,9 @@ typedef struct {
 
 typedef t_byte t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
 
-typedef struct world_state s_world_state;
+typedef struct world s_world;
 
-typedef void (*t_npc_tick_func)(s_world_state* const world, const int npc_index);
+typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
 
 typedef struct {
     const char* name;
@@ -200,9 +200,15 @@ typedef struct {
     int invinc_time;
 } s_player_ent;
 
-typedef struct world_state {
-    s_player_ent player;
+typedef struct {
     int player_hp_max;
+    s_tilemap tilemap;
+} s_world_pers;
+
+typedef struct world {
+    s_world_pers pers;
+
+    s_player_ent player;
 
     s_npcs npcs;
 
@@ -212,7 +218,7 @@ typedef struct world_state {
     s_item_drop item_drops[ITEM_DROP_LIMIT];
     int item_drop_active_cnt;
 
-    s_tilemap tilemap;
+    //int tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 
     bool player_inv_open;
     s_inventory_slot player_inv_slots[PLAYER_INVENTORY_LENGTH];
@@ -225,7 +231,7 @@ typedef struct world_state {
     char cursor_hover_str[CURSOR_HOVER_STR_BUF_SIZE];
     e_item_type cursor_item_held_type;
     int cursor_item_held_quantity;
-} s_world_state;
+} s_world;
 
 typedef enum {
     ek_item_use_type_tile_place,
@@ -238,8 +244,8 @@ typedef struct {
     const char* name;
     const e_sprite spr;
 
-    e_item_use_type use_type;
     bool consume_on_use;
+    e_item_use_type use_type;
 
     e_tile_type tile_place_type;
 
@@ -276,12 +282,12 @@ static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
 //
 // world.c
 //
-void InitWorld(s_world_state* const world);
-bool WorldTick(s_world_state* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_textures* const textures);
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool InitWorld(s_world* const world, const char* const filename);
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
-s_popup_text* SpawnPopupText(s_world_state* const world, const s_vec_2d pos, const float vel_y);
+s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
 static inline s_vec_2d CameraSize(const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
@@ -317,8 +323,8 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
 //
 extern const s_item_type g_item_types[];
 
-bool SpawnItemDrop(s_world_state* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
-void UpdateItemDrops(s_world_state* const world);
+bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
+void UpdateItemDrops(s_world* const world);
 
 static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
     return ColliderFromSprite(g_item_types[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
@@ -327,12 +333,12 @@ static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item
 //
 // player.c
 //
-void ProcPlayerMovement(s_world_state* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
-bool ProcPlayerCollisionsWithNPCs(s_world_state* const world);
-void ProcPlayerDeath(s_world_state* const world);
-void RenderPlayer(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_textures* const textures);
+void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
+bool ProcPlayerCollisionsWithNPCs(s_world* const world);
+void ProcPlayerDeath(s_world* const world);
+void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 s_rect PlayerCollider(const s_vec_2d pos);
-bool HurtPlayer(s_world_state* const world, const int dmg, const s_vec_2d kb);
+bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb);
 
 //
 // npcs.c
@@ -340,10 +346,10 @@ bool HurtPlayer(s_world_state* const world, const int dmg, const s_vec_2d kb);
 extern const s_npc_type g_npc_types[];
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
-void RunNPCTicks(s_world_state* const world);
-void ProcNPCDeaths(s_world_state* const world);
+void RunNPCTicks(s_world* const world);
+void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
-bool HurtNPC(s_world_state* const world, const int npc_index, const int dmg, const s_vec_2d kb);
+bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
 
@@ -352,8 +358,8 @@ bool IsNPCActive(const t_npc_activity* const activity, const int index);
 //
 extern const s_projectile_type g_projectile_types[];
 
-s_projectile* SpawnProjectile(s_world_state* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel);
-bool UpdateProjectiles(s_world_state* const world);
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_vec_2d pos, const s_vec_2d vel);
+bool UpdateProjectiles(s_world* const world);
 void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures);
 
 //
@@ -363,7 +369,7 @@ extern const s_tile_type g_tile_types[];
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
-void DestroyTile(s_world_state* const world, const s_vec_2d_i pos);
+void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
