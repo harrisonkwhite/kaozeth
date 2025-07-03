@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <zfw_random.h>
 #include "game.h"
-#include "zfw_utils.h"
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -16,7 +15,7 @@ static inline bool IsNPCOnGround(const s_vec_2d npc_pos, const e_npc_type npc_ty
     return TileCollisionCheck(tilemap_activity, below_collider);
 }
 
-static void SlimeNPCTick(s_world* const world, const int npc_index) {
+static void SlimeNPCTick(s_world_state* const world, const int npc_index) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
     assert(IsNPCActive(&world->npcs.activity, npc_index));
@@ -36,7 +35,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
         } else {
             npc->vel.y = -4.0f;
             slime->jump_time = 0;
-            slime->jump_hor_sign = SIGN(world->player_pos.x - npc->pos.x);
+            slime->jump_hor_sign = SIGN(world->player.pos.x - npc->pos.x);
         }
     } else {
         vel_x_dest = slime->jump_hor_sign * SLIME_AERIAL_HOR_MOVE_SPD;
@@ -87,7 +86,7 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
     return index;
 }
 
-void RunNPCTicks(s_world* const world) {
+void RunNPCTicks(s_world_state* const world) {
     assert(world);
 
     for (int i = 0; i < NPC_LIMIT; i++) {
@@ -102,7 +101,7 @@ void RunNPCTicks(s_world* const world) {
     }
 }
 
-void ProcNPCDeaths(s_world* const world) {
+void ProcNPCDeaths(s_world_state* const world) {
     assert(world);
 
     for (int i = 0; i < NPC_LIMIT; i++) {
@@ -133,7 +132,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 }
 
 // Returns true if successful, false otherwise.
-bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb) {
+bool HurtNPC(s_world_state* const world, const int npc_index, const int dmg, const s_vec_2d kb) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
     assert(IsNPCActive(&world->npcs.activity, npc_index));

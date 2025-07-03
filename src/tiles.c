@@ -1,5 +1,4 @@
 #include "game.h"
-#include "zfw_utils.h"
 
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
@@ -49,7 +48,7 @@ void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type
     tilemap->tile_types[pos.y][pos.x] = tile_type;
 }
 
-void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
+void DestroyTile(s_world_state* const world, const s_vec_2d_i pos) {
     assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->tilemap.activity, pos));

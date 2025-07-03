@@ -6,7 +6,7 @@ typedef struct {
     s_textures textures;
     s_fonts fonts;
 
-    s_world world;
+    s_world_state world;
 } s_game;
 
 const s_rect_i g_sprite_src_rects[] = {

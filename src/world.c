@@ -1,9 +1,5 @@
 #include <stdio.h>
 #include "game.h"
-#include "zfw_game.h"
-#include "zfw_math.h"
-#include "zfw_rendering.h"
-#include "zfw_utils.h"
 
 static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IS_ZERO(*mat));
@@ -19,16 +15,16 @@ static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-void InitWorld(s_world* const world) {
+void InitWorld(s_world_state* const world) {
     assert(world && IS_ZERO(*world));
 
-    world->player_pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
+    world->player.pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
     world->player_hp_max = 100;
-    world->player_hp = world->player_hp_max;
+    world->player.hp = world->player_hp_max;
 
-    AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
-    AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
+    AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
+    AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
 
     SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.4f, 0.0f}, ek_npc_type_slime);
 
@@ -47,86 +43,7 @@ void InitWorld(s_world* const world) {
     }
 }
 
-static s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
-    return ColliderFromSprite(g_item_types[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
-}
-
-static void UpdateItemDrops(s_world* const world) {
-    assert(world);
-
-    const s_rect player_collider = PlayerCollider(world->player_pos);
-
-    for (int i = 0; i < world->item_drop_active_cnt; i++) {
-        s_item_drop* const drop = &world->item_drops[i];
-
-        // Process movement.
-        drop->vel.y += GRAVITY;
-
-        {
-            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->tilemap.activity);
-        }
-
-        drop->pos = Vec2DSum(drop->pos, drop->vel);
-
-        // Process collection.
-        const bool collectable = DoesInventoryHaveRoomFor(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
-
-        if (collectable) {
-            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-
-            if (DoRectsInters(player_collider, drop_collider)) {
-                AddToInventory(world->player_inventory_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
-
-                // Remove this item drop.
-                world->item_drop_active_cnt--;
-                world->item_drops[i] = world->item_drops[world->item_drop_active_cnt];
-                ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
-
-                i--;
-            }
-        }
-    }
-}
-
-static void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
-    assert(positions);
-    assert(ui_size.x > 0 && ui_size.y > 0);
-
-    const float mid_x = ui_size.x / 2.0f;
-    const float left = mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
-
-    //
-    // Hotbar
-    //
-    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
-
-    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * i),
-            hotbar_y
-        };
-    }
-
-    //
-    // Body
-    //
-    const int body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
-    const float top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (body_row_cnt - 1) * 0.5f);
-
-    for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
-        const int bi = i - PLAYER_INVENTORY_COLUMN_CNT;
-        const int c = bi % PLAYER_INVENTORY_COLUMN_CNT;
-        const int r = bi / PLAYER_INVENTORY_COLUMN_CNT;
-
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * c),
-            top + (INVENTORY_SLOT_GAP * r)
-        };
-    }
-}
-
-bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
+bool WorldTick(s_world_state* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(world);
     assert(input_state);
     assert(input_state_last);
@@ -134,12 +51,12 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
 
-    if (!world->player_killed) {
+    if (!world->player.killed) {
         ProcPlayerMovement(world, input_state, input_state_last);
         ProcPlayerCollisionsWithNPCs(world);
 
-        if (world->player_invinc_time > 0) {
-            world->player_invinc_time--;
+        if (world->player.invinc_time > 0) {
+            world->player.invinc_time--;
         }
 
         ProcPlayerDeath(world);
@@ -148,7 +65,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     // Camera
     //
-    world->cam_pos = world->player_pos;
+    world->cam_pos = world->player.pos;
 
     //
     // NPCs
@@ -165,27 +82,27 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     // Player Inventory
     //
     if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
-        world->player_inventory_open = !world->player_inventory_open;
+        world->player_inv_open = !world->player_inv_open;
     }
 
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
         if (IsKeyPressed(ek_key_code_1 + i, input_state, input_state_last)) {
-            world->player_inventory_hotbar_slot_selected = i;
+            world->player_inv_hotbar_slot_selected = i;
             break;
         }
     }
 
     switch (input_state->mouse_scroll) {
         case ek_mouse_scroll_state_down:
-            world->player_inventory_hotbar_slot_selected++;
-            world->player_inventory_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
+            world->player_inv_hotbar_slot_selected++;
+            world->player_inv_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
             break;
 
         case ek_mouse_scroll_state_up:
-            world->player_inventory_hotbar_slot_selected--;
+            world->player_inv_hotbar_slot_selected--;
 
-            if (world->player_inventory_hotbar_slot_selected < 0) {
-                world->player_inventory_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
+            if (world->player_inv_hotbar_slot_selected < 0) {
+                world->player_inv_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
             }
 
             break;
@@ -193,7 +110,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         default: break;
     }
 
-    if (world->player_inventory_open) {
+    if (world->player_inv_open) {
         const s_vec_2d_i ui_size = UISize(display_size);
         const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
@@ -201,7 +118,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
 
         for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
-            s_inventory_slot* const slot = &world->player_inventory_slots[i];
+            s_inventory_slot* const slot = &world->player_inv_slots[i];
 
             const s_rect slot_collider = {
                 inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
@@ -240,13 +157,13 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
     }
 
-    assert(world->player_inventory_hotbar_slot_selected >= 0 && world->player_inventory_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+    assert(world->player_inv_hotbar_slot_selected >= 0 && world->player_inv_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 
     //
     // Item Usage
     //
-    if (!world->player_inventory_open) {
-        s_inventory_slot* const cur_slot = &world->player_inventory_slots[world->player_inventory_hotbar_slot_selected];
+    if (!world->player_inv_open) {
+        s_inventory_slot* const cur_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
 
         if (cur_slot->quantity > 0) {
             const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
@@ -281,10 +198,10 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
                     case ek_item_use_type_shoot:
                         {
-                            const s_vec_2d dir = Vec2DDir(world->player_pos, mouse_cam_pos);
+                            const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
                             const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
 
-                            if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player_pos, vel)) {
+                            if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player.pos, vel)) {
                                 return false;
                             }
 
@@ -356,7 +273,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     return true;
 }
 
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_textures* const textures) {
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
     ZERO_OUT(rendering_context->state->view_mat);
@@ -382,7 +299,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         RenderTilemap(rendering_context, &world->tilemap, tilemap_render_range, textures);
     }
 
-    if (!world->player_killed) {
+    if (!world->player.killed) {
         RenderPlayer(rendering_context, world, textures);
     }
 
@@ -402,42 +319,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     Flush(rendering_context);
 }
 
-static bool RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
-    const s_rect slot_rect = {
-        pos.x - (INVENTORY_SLOT_SIZE / 2.0f),
-        pos.y - (INVENTORY_SLOT_SIZE / 2.0f),
-        INVENTORY_SLOT_SIZE,
-        INVENTORY_SLOT_SIZE
-    };
-
-    // Render the slot box.
-    RenderRect(rendering_context, slot_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
-    RenderRectOutline(rendering_context, slot_rect, outline_color, 1.0f);
-
-    // Render the item icon.
-    if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
-    }
-
-    // Render the quantity.
-    if (slot.quantity > 1) {
-        char quant_str_buf[4];
-        snprintf(quant_str_buf, sizeof(quant_str_buf), "%d", slot.quantity);
-
-        const s_vec_2d quant_pos = {
-            slot_rect.x + (slot_rect.width / 2.0f),
-            slot_rect.y + slot_rect.height - 2.0f
-        };
-
-        if (!RenderStr(rendering_context, quant_str_buf, ek_font_eb_garamond_24, fonts, quant_pos, ek_str_hor_align_center, ek_str_ver_align_bottom, WHITE, temp_mem_arena)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world_state* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
 
     //
@@ -471,7 +353,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         };
 
         char hp_str[8] = {0};
-        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player_hp, world->player_hp_max);
+        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->player_hp_max);
 
         if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
@@ -483,7 +365,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     //
 
     // Draw a backdrop if the player inventory is open.
-    if (world->player_inventory_open) {
+    if (world->player_inv_open) {
         const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
         const s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
         RenderRect(rendering_context, bg_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
@@ -495,9 +377,9 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
     // Render the hotbar.
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
-        const s_inventory_slot* const slot = &world->player_inventory_slots[i];
+        const s_inventory_slot* const slot = &world->player_inv_slots[i];
 
-        const s_color slot_color = i == world->player_inventory_hotbar_slot_selected ? YELLOW : WHITE;
+        const s_color slot_color = i == world->player_inv_hotbar_slot_selected ? YELLOW : WHITE;
 
         if (!RenderInventorySlot(rendering_context, *slot, player_inv_slot_positions[i], slot_color, textures, fonts, temp_mem_arena)) {
             return false;
@@ -505,9 +387,9 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     }
 
     // Render the body if open.
-    if (world->player_inventory_open) {
+    if (world->player_inv_open) {
         for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
-            const s_inventory_slot* const slot = &world->player_inventory_slots[i];
+            const s_inventory_slot* const slot = &world->player_inv_slots[i];
 
             if (!RenderInventorySlot(rendering_context, *slot, player_inv_slot_positions[i], WHITE, textures, fonts, temp_mem_arena)) {
                 return false;
@@ -531,26 +413,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     return true;
 }
 
-bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
-    assert(world);
-    assert(item_quantity > 0);
-
-    if (world->item_drop_active_cnt == ITEM_DROP_LIMIT) {
-        return false;
-    }
-
-    s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
-    assert(IS_ZERO(*drop));
-    drop->item_type = item_type;
-    drop->quantity = item_quantity;
-    drop->pos = pos;
-
-    world->item_drop_active_cnt++;
-
-    return true;
-}
-
-s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y) {
+s_popup_text* SpawnPopupText(s_world_state* const world, const s_vec_2d pos, const float vel_y) {
     for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
         s_popup_text* const popup = &world->popup_texts[i];
 
