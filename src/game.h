@@ -92,6 +92,7 @@ typedef enum {
 
 typedef struct {
     int jump_time;
+    int jump_hor_sign;
 } s_slime_npc;
 
 typedef union {

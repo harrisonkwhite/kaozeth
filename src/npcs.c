@@ -5,6 +5,17 @@
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
+#define SLIME_VEL_X_LERP 0.2f
+#define SLIME_AERIAL_HOR_MOVE_SPD 1.5f
+
+static inline bool IsNPCOnGround(const s_vec_2d npc_pos, const e_npc_type npc_type, const t_tilemap_activity* const tilemap_activity) {
+    assert(tilemap_activity);
+
+    const s_rect collider = NPCCollider(npc_pos, npc_type);
+    const s_rect below_collider = RectTranslated(collider, (s_vec_2d){0.0f, 1.0f});
+    return TileCollisionCheck(tilemap_activity, below_collider);
+}
+
 static void SlimeNPCTick(s_world* const world, const int npc_index) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
@@ -15,16 +26,23 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     s_slime_npc* const slime = &npc->type_data.slime;
 
-    npc->vel.x = Lerp(npc->vel.x, 0.0f, 0.2f);
     npc->vel.y += GRAVITY;
 
-    // TEMP: Slime should only jump when grounded, and at a more random interval.
-    if (slime->jump_time < 60) {
-        slime->jump_time++;
+    float vel_x_dest = 0.0f;
+
+    if (IsNPCOnGround(npc->pos, npc->type, &world->tilemap.activity)) {
+        if (slime->jump_time < 60) {
+            slime->jump_time++;
+        } else {
+            npc->vel.y = -4.0f;
+            slime->jump_time = 0;
+            slime->jump_hor_sign = SIGN(world->player_pos.x - npc->pos.x);
+        }
     } else {
-        npc->vel.y = -4.0f;
-        slime->jump_time = 0;
+        vel_x_dest = slime->jump_hor_sign * SLIME_AERIAL_HOR_MOVE_SPD;
     }
+
+    npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
     const s_rect collider = NPCCollider(npc->pos, npc->type);
     ProcTileCollisions(&npc->vel, collider, &world->tilemap.activity);
