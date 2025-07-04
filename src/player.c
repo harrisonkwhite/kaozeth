@@ -4,7 +4,7 @@
 #include "game.h"
 
 #define PLAYER_MOVE_SPD 1.5f
-#define PLAYER_MOVE_SPD_LERP 0.2f
+#define PLAYER_MOVE_SPD_ACC 0.2f
 #define PLAYER_JUMP_HEIGHT 3.0f
 
 #define PLAYER_INV_DUR 30
@@ -13,17 +13,33 @@
 
 #define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
+static inline bool IsPlayerGrounded(const s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
+    const s_rect below_collider = RectTranslated(PlayerCollider(player_pos), (s_vec_2d){0.0f, 1.0f});
+    return TileCollisionCheck(tm_activity, below_collider);
+}
+
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
     assert(!world->player.killed);
 
     const float move_axis = IsKeyDown(ek_key_code_d, input_state) - IsKeyDown(ek_key_code_a, input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
-    world->player.vel.x = Lerp(world->player.vel.x, move_spd_dest, PLAYER_MOVE_SPD_LERP);
+
+    if (world->player.vel.x < move_spd_dest) {
+        world->player.vel.x += MIN(move_spd_dest - world->player.vel.x, PLAYER_MOVE_SPD_ACC);
+    } else if (world->player.vel.x > move_spd_dest) {
+        world->player.vel.x -= MIN(world->player.vel.x - move_spd_dest, PLAYER_MOVE_SPD_ACC);
+    }
 
     world->player.vel.y += GRAVITY;
 
+    const bool grounded = IsPlayerGrounded(world->player.pos, &world->core.tilemap.activity);
+
+    if (grounded) {
+        world->player.jumping = false;
+    }
+
     if (!world->player.jumping) {
-        if (IsKeyPressed(ek_key_code_space, input_state, input_state_last)) {
+        if (grounded && IsKeyPressed(ek_key_code_space, input_state, input_state_last)) {
             world->player.vel.y = -PLAYER_JUMP_HEIGHT;
             world->player.jumping = true;
         }
@@ -39,13 +55,6 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
     }
 
     world->player.pos = Vec2DSum(world->player.pos, world->player.vel);
-
-    // Leave jumping state if tile is below.
-    const s_rect below_collider = RectTranslated(PlayerCollider(world->player.pos), (s_vec_2d){0.0f, 1.0f});
-
-    if (TileCollisionCheck(&world->core.tilemap.activity, below_collider)) {
-        world->player.jumping = false;
-    }
 }
 
 bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
@@ -118,7 +127,8 @@ bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb) {
     assert(world->player.invinc_time == 0);
 
     world->player.hp = MAX(world->player.hp - dmg, 0);
-    world->player.vel = Vec2DSum(world->player.vel, kb);
+    world->player.vel = kb;
+    world->player.jumping = false;
     world->player.invinc_time = PLAYER_INV_DUR;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, world->player.pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));

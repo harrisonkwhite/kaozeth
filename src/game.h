@@ -6,7 +6,7 @@
 
 #define GAME_TITLE "Terraria"
 
-#define GRAVITY 0.15f
+#define GRAVITY 0.2f
 
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
@@ -204,7 +204,7 @@ typedef struct {
     bool jumping;
     int hp;
     int invinc_time;
-} s_player_ent;
+} s_player;
 
 typedef struct {
     int player_hp_max;
@@ -214,7 +214,7 @@ typedef struct {
 typedef struct world {
     s_world_core core;
 
-    s_player_ent player;
+    s_player player;
 
     s_npcs npcs;
 
@@ -323,7 +323,7 @@ typedef enum {
 typedef struct {
     e_title_screen_page page;
     int page_btn_hovered_index;
-    
+
     s_world_filenames world_filenames_cache;
 } s_title_screen;
 

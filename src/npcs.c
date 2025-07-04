@@ -5,6 +5,7 @@
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
 #define SLIME_VEL_X_LERP 0.2f
+#define SLIME_JUMP_HEIGHT 4.0f
 #define SLIME_AERIAL_HOR_MOVE_SPD 1.5f
 
 static inline bool IsNPCOnGround(const s_vec_2d npc_pos, const e_npc_type npc_type, const t_tilemap_activity* const tilemap_activity) {
@@ -33,7 +34,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
         if (slime->jump_time < 60) {
             slime->jump_time++;
         } else {
-            npc->vel.y = -4.0f;
+            npc->vel.y = -SLIME_JUMP_HEIGHT;
             slime->jump_time = 0;
             slime->jump_hor_sign = SIGN(world->player.pos.x - npc->pos.x);
         }
@@ -56,7 +57,7 @@ const s_npc_type g_npc_types[eks_npc_type_cnt] = {
         .tick_func = SlimeNPCTick,
         .hp_max = 10,
         .contact_dmg = 8,
-        .contact_kb = 5.0f
+        .contact_kb = 4.0f
     }
 };
 
@@ -140,7 +141,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_v
 
     s_npc* const npc = &world->npcs.buf[npc_index];
     npc->hp = MAX(npc->hp - dmg, 0);
-    npc->vel = Vec2DSum(npc->vel, kb);
+    npc->vel = kb;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, npc->pos, RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 
