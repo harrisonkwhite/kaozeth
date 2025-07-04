@@ -4,6 +4,8 @@
 #include <zfw_game.h>
 #include <zfw_utils.h>
 
+#define GAME_TITLE "Terraria"
+
 #define GRAVITY 0.15f
 
 #define CAMERA_SCALE 4.0f
@@ -52,7 +54,9 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 
 typedef enum {
     ek_font_eb_garamond_24,
-    ek_font_eb_garamond_28,
+    ek_font_eb_garamond_32,
+    ek_font_eb_garamond_48,
+    ek_font_eb_garamond_80,
 
     eks_font_cnt
 } e_fonts;
@@ -319,7 +323,7 @@ typedef enum {
 typedef struct {
     e_title_screen_page page;
     int page_btn_hovered_index;
-
+    
     s_world_filenames world_filenames_cache;
 } s_title_screen;
 

@@ -1,10 +1,8 @@
 #include <dirent.h>
 #include "game.h"
 
-#define BUTTON_FONT ek_font_eb_garamond_28
+#define BUTTON_FONT ek_font_eb_garamond_32
 #define BUTTON_GAP 64.0f
-
-#include <stdio.h>
 
 static s_world_filenames PushWorldFilenamesToMemArena(s_mem_arena* const mem_arena, const char* const dir_name) {
     // TODO: Make this cross-platform!
@@ -168,7 +166,8 @@ static s_vec_2d PageButtonPos(const int btn_index, const int btn_cnt, const e_ti
     assert(btn_index >= 0 && btn_index < btn_cnt);
 
     const float btn_ver_span = (btn_cnt - 1) * BUTTON_GAP;
-    const float btns_top = (ui_size.y - btn_ver_span) / 2.0f;
+    const float btns_top = (ui_size.y * 0.55f) - (btn_ver_span / 2.0f);
+
     return (s_vec_2d){
         ui_size.x / 2.0f,
         btns_top + (BUTTON_GAP * btn_index)
@@ -275,6 +274,16 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
             return false;
         }
     }
+
+    // Render logo.
+    const s_vec_2d logo_pos = {
+        ui_size.x / 2.0f,
+        ui_size.y * 0.25f
+    };
+
+    if (!RenderStr(rendering_context, GAME_TITLE, ek_font_eb_garamond_80, fonts, logo_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        return false;
+    } 
 
     return true;
 }

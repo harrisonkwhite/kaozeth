@@ -42,10 +42,12 @@ static bool WriteWorldCoreToFile(const s_world_core* const world_core, const cha
     FILE* const fs = fopen(filename, "wb");
 
     if (!fs) {
+        fprintf(stderr, "Failed to open \"%s\"!\n", filename);
         return false;
     }
 
     if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
+        fprintf(stderr, "Failed to write to world file \"%s\"!\n", filename);
         fclose(fs);
         return false;
     }
@@ -392,7 +394,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
-        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_28, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
+        if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_32, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
             return false;
         }
     }
@@ -409,7 +411,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         char hp_str[8] = {0};
         snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
-        if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_32, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
         }
     }

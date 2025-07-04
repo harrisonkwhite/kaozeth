@@ -47,10 +47,22 @@ static s_font_load_info FontIndexToLoadInfo(const int index) {
                 .height = 24
             };
 
-        case ek_font_eb_garamond_28:
+        case ek_font_eb_garamond_32:
             return (s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 28
+                .height = 32
+            };
+
+        case ek_font_eb_garamond_48:
+            return (s_font_load_info){
+                .file_path = "assets/fonts/eb_garamond.ttf",
+                .height = 48
+            };
+
+        case ek_font_eb_garamond_80:
+            return (s_font_load_info){
+                .file_path = "assets/fonts/eb_garamond.ttf",
+                .height = 80
             };
 
         default:
