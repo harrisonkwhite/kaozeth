@@ -235,58 +235,65 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     //
     // Item Usage
     //
-    if (!world->player_inv_open) {
-        s_inventory_slot* const cur_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
+    if (world->player.item_use_break > 0) {
+        world->player.item_use_break--;
+    } else {
+        if (!world->player_inv_open) {
+            s_inventory_slot* const cur_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
 
-        if (cur_slot->quantity > 0) {
-            const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
+            if (cur_slot->quantity > 0) {
+                const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
 
-            if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
-                const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+                if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
+                    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
 
-                const s_vec_2d_i mouse_tile_pos = {
-                    floorf(mouse_cam_pos.x / TILE_SIZE),
-                    floorf(mouse_cam_pos.y / TILE_SIZE)
-                };
+                    const s_vec_2d_i mouse_tile_pos = {
+                        floorf(mouse_cam_pos.x / TILE_SIZE),
+                        floorf(mouse_cam_pos.y / TILE_SIZE)
+                    };
 
-                // Perform unique action based on the item use type.
-                bool used = false; // Did we use the item?
+                    // Perform unique action based on the item use type.
+                    bool used = false; // Did we use the item?
 
-                switch (active_item->use_type) {
-                    case ek_item_use_type_tile_place:
-                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                            PlaceTile(&world->core.tilemap_core, mouse_tile_pos, active_item->tile_place_type);
-                            used = true;
-                        }
-
-                        break;
-
-                    case ek_item_use_type_tile_destroy:
-                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                            HurtTile(world, mouse_tile_pos);
-                            used = true;
-                        }
-
-                        break;
-
-                    case ek_item_use_type_shoot:
-                        {
-                            const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
-                            const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
-
-                            if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player.pos, vel)) {
-                                return false;
+                    switch (active_item->use_type) {
+                        case ek_item_use_type_tile_place:
+                            if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+                                PlaceTile(&world->core.tilemap_core, mouse_tile_pos, active_item->tile_place_type);
+                                used = true;
                             }
 
-                            used = true;
+                            break;
+
+                        case ek_item_use_type_tile_destroy:
+                            if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+                                HurtTile(world, mouse_tile_pos);
+                                used = true;
+                            }
+
+                            break;
+
+                        case ek_item_use_type_shoot:
+                            {
+                                const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
+                                const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
+
+                                if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player.pos, vel)) {
+                                    return false;
+                                }
+
+                                used = true;
+                            }
+
+                            break;
+                   }
+
+                    if (used) {
+                        if (active_item->consume_on_use) {
+                            cur_slot->quantity--;
                         }
 
-                        break;
-               }
-
-                // Handle consuming the item.
-                if (used && active_item->consume_on_use) {
-                    cur_slot->quantity--;
+                        world->player.item_use_break = active_item->use_break;
+                    }
                 }
             }
         }

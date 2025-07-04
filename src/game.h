@@ -215,6 +215,7 @@ typedef struct {
     bool jumping;
     int hp;
     int invinc_time;
+    int item_use_break;
 } s_player;
 
 typedef struct {
@@ -265,6 +266,7 @@ typedef struct {
 
     bool consume_on_use;
     e_item_use_type use_type;
+    int use_break;
 
     e_tile_type tile_place_type;
 

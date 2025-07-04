@@ -9,7 +9,7 @@ const s_tile_type g_tile_types[] = {
     [ek_tile_type_stone] = {
         .spr = ek_sprite_stone_tile,
         .drop_item = ek_item_type_stone_block,
-        .life = 30
+        .life = 60
     }
 };
 
