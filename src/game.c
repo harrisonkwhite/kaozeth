@@ -84,8 +84,27 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
             return false;
         }
     } else {
-        if (!TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena)) {
-            return false;
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena);
+
+        switch (tick_res.type) {
+            case ek_title_screen_tick_result_type_error:
+                return false;
+
+            case ek_title_screen_tick_result_type_load_world:
+                ZERO_OUT(game->title_screen);
+
+                game->in_world = true;
+
+                if (!InitWorld(&game->world, tick_res.world_filename)) {
+                    return false;
+                }
+
+                break;
+
+            case ek_title_screen_tick_result_type_exit:
+                break;
+
+            default: break;
         }
     }
 

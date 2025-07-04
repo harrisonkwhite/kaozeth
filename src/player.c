@@ -35,7 +35,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 
     {
         const s_rect collider = PlayerCollider(world->player.pos);
-        ProcTileCollisions(&world->player.vel, collider, &world->pers.tilemap.activity);
+        ProcTileCollisions(&world->player.vel, collider, &world->core.tilemap.activity);
     }
 
     world->player.pos = Vec2DSum(world->player.pos, world->player.vel);
@@ -43,7 +43,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
     // Leave jumping state if tile is below.
     const s_rect below_collider = RectTranslated(PlayerCollider(world->player.pos), (s_vec_2d){0.0f, 1.0f});
 
-    if (TileCollisionCheck(&world->pers.tilemap.activity, below_collider)) {
+    if (TileCollisionCheck(&world->core.tilemap.activity, below_collider)) {
         world->player.jumping = false;
     }
 }

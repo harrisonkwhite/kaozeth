@@ -51,11 +51,11 @@ void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type
 void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
     assert(world);
     assert(IsTilePosInBounds(pos));
-    assert(IsTileActive(&world->pers.tilemap.activity, pos));
+    assert(IsTileActive(&world->core.tilemap.activity, pos));
 
-    DeactivateTile(&world->pers.tilemap.activity, pos);
+    DeactivateTile(&world->core.tilemap.activity, pos);
 
-    const s_tile_type* const tile_type = &g_tile_types[world->pers.tilemap.tile_types[pos.y][pos.x]];
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap.tile_types[pos.y][pos.x]];
     const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
     SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
 }

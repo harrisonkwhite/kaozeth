@@ -201,10 +201,10 @@ typedef struct {
 typedef struct {
     int player_hp_max;
     s_tilemap tilemap;
-} s_world_pers;
+} s_world_core;
 
 typedef struct world {
-    s_world_pers pers;
+    s_world_core core;
 
     s_player_ent player;
 
@@ -286,6 +286,18 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 // titlescreen.c
 //
 typedef enum {
+    ek_title_screen_tick_result_type_default,
+    ek_title_screen_tick_result_type_error,
+    ek_title_screen_tick_result_type_load_world,
+    ek_title_screen_tick_result_type_exit
+} e_title_screen_tick_result_type;
+
+typedef struct {
+    e_title_screen_tick_result_type type;
+    const char* world_filename;
+} s_title_screen_tick_result;
+
+typedef enum {
     ek_title_screen_page_home,
     ek_title_screen_page_worlds,
     ek_title_screen_page_settings,
@@ -299,12 +311,13 @@ typedef struct {
 } s_title_screen;
 
 bool InitTitleScreen(s_title_screen* const ts);
-bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world.c
 //
+bool GenWorld(const char* const filename);
 bool InitWorld(s_world* const world, const char* const filename);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);

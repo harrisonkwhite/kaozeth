@@ -15,29 +15,8 @@ static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-static void GenWorld(s_world_pers* const world_pers) {
-    assert(world_pers && IS_ZERO(*world_pers));
-
-    world_pers->player_hp_max = 100;
-
-    // Generate the tilemap.
-    int ty = TILEMAP_HEIGHT / 3;
-
-    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world_pers->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
-        }
-    }
-
-    for (; ty < TILEMAP_HEIGHT; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world_pers->tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
-        }
-    }
-}
-
-static bool LoadWorldPersFromFile(s_world_pers* const world_pers, const char* const filename) {
-    assert(world_pers && IS_ZERO(*world_pers));
+static bool LoadWorldCoreFromFile(s_world_core* const world_core, const char* const filename) {
+    assert(world_core && IS_ZERO(*world_core));
     assert(filename);
 
     FILE* const fs = fopen(filename, "rb");
@@ -46,7 +25,7 @@ static bool LoadWorldPersFromFile(s_world_pers* const world_pers, const char* co
         return false;
     }
 
-    if (fread(world_pers, sizeof(*world_pers), 1, fs) == 0) {
+    if (fread(world_core, sizeof(*world_core), 1, fs) == 0) {
         fclose(fs);
         return false;
     }
@@ -56,8 +35,8 @@ static bool LoadWorldPersFromFile(s_world_pers* const world_pers, const char* co
     return true;
 }
 
-static bool WriteWorldPersToFile(const s_world_pers* const world_pers, const char* const filename) {
-    assert(world_pers);
+static bool WriteWorldCoreToFile(const s_world_core* const world_core, const char* const filename) {
+    assert(world_core);
     assert(filename);
 
     FILE* const fs = fopen(filename, "wb");
@@ -66,7 +45,7 @@ static bool WriteWorldPersToFile(const s_world_pers* const world_pers, const cha
         return false;
     }
 
-    if (fwrite(world_pers, sizeof(*world_pers), 1, fs) == 0) {
+    if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
         fclose(fs);
         return false;
     }
@@ -76,20 +55,41 @@ static bool WriteWorldPersToFile(const s_world_pers* const world_pers, const cha
     return true;
 }
 
+bool GenWorld(const char* const filename) {
+    s_world_core world_core = {0};
+
+    world_core.player_hp_max = 100;
+
+    // Generate the tilemap.
+    int ty = TILEMAP_HEIGHT / 3;
+
+    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            PlaceTile(&world_core.tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+        }
+    }
+
+    for (; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            PlaceTile(&world_core.tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
+        }
+    }
+
+    // Write the world core to a file.
+    return WriteWorldCoreToFile(&world_core, filename);
+}
+
 bool InitWorld(s_world* const world, const char* const filename) {
     assert(world && IS_ZERO(*world));
+    assert(filename);
 
-    if (filename) {
-        if (!LoadWorldPersFromFile(&world->pers, filename)) {
-            return false;
-        }
-    } else {
-        GenWorld(&world->pers);
+    if (!LoadWorldCoreFromFile(&world->core, filename)) {
+        return false;
     }
 
     world->player.pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
 
-    world->player.hp = world->pers.player_hp_max;
+    world->player.hp = world->core.player_hp_max;
 
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
@@ -237,15 +237,15 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
                 switch (active_item->use_type) {
                     case ek_item_use_type_tile_place:
-                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->pers.tilemap.activity, mouse_tile_pos)) {
-                            PlaceTile(&world->pers.tilemap, mouse_tile_pos, active_item->tile_place_type);
+                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap.activity, mouse_tile_pos)) {
+                            PlaceTile(&world->core.tilemap, mouse_tile_pos, active_item->tile_place_type);
                             used = true;
                         }
 
                         break;
 
                     case ek_item_use_type_tile_destroy:
-                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->pers.tilemap.activity, mouse_tile_pos)) {
+                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap.activity, mouse_tile_pos)) {
                             DestroyTile(world, mouse_tile_pos);
                             used = true;
                         }
@@ -350,7 +350,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
         tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
 
-        RenderTilemap(rendering_context, &world->pers.tilemap, tilemap_render_range, textures);
+        RenderTilemap(rendering_context, &world->core.tilemap, tilemap_render_range, textures);
     }
 
     if (!world->player.killed) {
@@ -407,7 +407,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         };
 
         char hp_str[8] = {0};
-        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->pers.player_hp_max);
+        snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
         if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;

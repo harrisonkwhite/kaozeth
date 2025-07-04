@@ -5,7 +5,9 @@
 
 typedef enum {
     ek_page_button_type_redirect,
-    ek_page_button_type_exit
+    ek_page_button_type_exit,
+    ek_page_button_type_new_world,
+    ek_page_button_type_load_world
 } e_page_button_type;
 
 typedef struct {
@@ -26,47 +28,11 @@ typedef union {
 
 static int g_page_button_cnts[] = {
     [ek_title_screen_page_home] = 3,
-    [ek_title_screen_page_worlds] = 1,
+    [ek_title_screen_page_worlds] = 2,
     [ek_title_screen_page_settings] = 1
 };
 
 static_assert(STATIC_ARRAY_LEN(g_page_button_cnts) == eks_title_screen_page_cnt, "Invalid array length!");
-
-#if 0
-static const char* PageButtonStr(const int index, const e_title_screen_page page) {
-    const int btn_cnt = g_page_menu_button_cnts[page];
-
-    assert(index >= 0 && index < btn_cnt);
-
-    switch (page) {
-        case ek_title_screen_page_home:
-            switch (index) {
-                case 0: return "Play";
-                case 1: return "Settings";
-                case 2: return "Exit";
-            }
-
-            break;
-
-        case ek_title_screen_page_worlds:
-            switch (index) {
-                case 0: return "Back";
-            }
-
-            break;
-
-        case ek_title_screen_page_options:
-            switch (index) {
-                case 0: return "Back";
-            }
-
-            break;
-    }
-
-    assert(false && "Unset button string!");
-    return NULL;
-}
-#endif
 
 static s_page_button* PushPageButtons(s_mem_arena* const mem_arena, const e_title_screen_page page) {
     AssertMemArenaValidity(mem_arena);
@@ -99,6 +65,16 @@ static s_page_button* PushPageButtons(s_mem_arena* const mem_arena, const e_titl
 
             case ek_title_screen_page_worlds:
                 btns[0] = (s_page_button){
+                    .str = "Load World",
+                    .type = ek_page_button_type_load_world
+                };
+
+                btns[1] = (s_page_button){
+                    .str = "Generate a New World",
+                    .type = ek_page_button_type_new_world
+                };
+
+                btns[2] = (s_page_button){
                     .str = "Back",
                     .type = ek_page_button_type_redirect,
                     .redir_page = ek_title_screen_page_home
@@ -141,14 +117,18 @@ bool InitTitleScreen(s_title_screen* const ts) {
     return true;
 }
 
-bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    s_title_screen_tick_result result = {0};
+
     const s_vec_2d_i ui_size = UISize(display_size);
     const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
     const s_page_button* const page_btns = PushPageButtons(temp_mem_arena, ts->page);
 
     if (!page_btns) {
-        return false;
+        return (s_title_screen_tick_result){
+            .type = ek_title_screen_tick_result_type_error
+        };
     }
 
     const int page_btn_cnt = g_page_button_cnts[ts->page];
@@ -163,7 +143,9 @@ bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_
         s_rect btn_str_collider = {0};
 
         if (!LoadStrCollider(&btn_str_collider, btn->str, BUTTON_FONT, fonts, btn_pos, ek_str_hor_align_center, ek_str_ver_align_center, temp_mem_arena)) {
-            return false;
+            return (s_title_screen_tick_result){
+                .type = ek_title_screen_tick_result_type_error
+            };
         }
 
         if (IsPointInRect(cursor_ui_pos, btn_str_collider)) {
@@ -176,6 +158,24 @@ bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_
                         break;
 
                     case ek_page_button_type_exit:
+                        result.world_filename = "sample.world";
+                        break;
+
+                    case ek_page_button_type_new_world:
+                        if (!GenWorld("sample.world")) {
+                            return (s_title_screen_tick_result){
+                                .type = ek_title_screen_tick_result_type_error
+                            };
+                        }
+
+                        break;
+
+                    case ek_page_button_type_load_world:
+                        result = (s_title_screen_tick_result){
+                            .type = ek_title_screen_tick_result_type_load_world,
+                            .world_filename = "sample.world"
+                        };
+
                         break;
                 }
             }
@@ -184,7 +184,7 @@ bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_
         }
     }
 
-    return true;
+    return result;
 }
 
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {

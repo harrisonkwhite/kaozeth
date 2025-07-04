@@ -29,7 +29,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     float vel_x_dest = 0.0f;
 
-    if (IsNPCOnGround(npc->pos, npc->type, &world->pers.tilemap.activity)) {
+    if (IsNPCOnGround(npc->pos, npc->type, &world->core.tilemap.activity)) {
         if (slime->jump_time < 60) {
             slime->jump_time++;
         } else {
@@ -44,7 +44,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
     npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
     const s_rect collider = NPCCollider(npc->pos, npc->type);
-    ProcTileCollisions(&npc->vel, collider, &world->pers.tilemap.activity);
+    ProcTileCollisions(&npc->vel, collider, &world->core.tilemap.activity);
 
     npc->pos = Vec2DSum(npc->pos, npc->vel);
 }
