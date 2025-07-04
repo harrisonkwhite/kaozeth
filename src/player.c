@@ -5,7 +5,7 @@
 
 #define PLAYER_MOVE_SPD 1.5f
 #define PLAYER_MOVE_SPD_ACC 0.2f
-#define PLAYER_JUMP_HEIGHT 3.0f
+#define PLAYER_JUMP_HEIGHT 3.5f
 
 #define PLAYER_INV_DUR 30
 #define PLAYER_INV_ALPHA_LOW 0.5f

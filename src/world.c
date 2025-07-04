@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <zfw_random.h>
 #include "game.h"
 
 #define RESPAWN_TIME 120
@@ -62,7 +63,7 @@ static bool WriteWorldCoreToFile(const s_world_core* const world_core, const cha
 bool GenWorld(const char* const filename) {
     s_world_core world_core = {0};
 
-    world_core.player_hp_max = 100;
+    world_core.player_hp_max = PLAYER_INIT_HP_MAX;
 
     // Generate the tilemap.
     int ty = TILEMAP_HEIGHT / 3;
@@ -95,8 +96,6 @@ bool InitWorld(s_world* const world, const char* const filename) {
 
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
-
-    SpawnNPC(&world->npcs, (s_vec_2d){TILE_SIZE * TILEMAP_WIDTH * 0.4f, 0.0f}, ek_npc_type_slime);
 
     return true;
 }
@@ -133,6 +132,13 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     // Camera
     //
     world->cam_pos = world->player.pos;
+
+    //
+    // NPC Spawning
+    //
+    if (!ProcEnemySpawning(world)) {
+        return false;
+    }
 
     //
     // NPCs

@@ -13,6 +13,8 @@
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
+#define PLAYER_INIT_HP_MAX 100
+
 #define WORLD_NAME_LEN_LIMIT 20
 #define WORLD_FILENAME_EXT ".wrld"
 #define WORLD_FILENAME_BUF_SIZE (WORLD_NAME_LEN_LIMIT + sizeof(WORLD_FILENAME_EXT))
@@ -66,6 +68,10 @@ typedef enum {
 typedef enum {
     ek_sprite_player,
     ek_sprite_slime,
+    ek_sprite_tile_break_0,
+    ek_sprite_tile_break_1,
+    ek_sprite_tile_break_2,
+    ek_sprite_tile_break_3,
     ek_sprite_dirt_tile,
     ek_sprite_stone_tile,
     ek_sprite_dirt_tile_item,
@@ -410,6 +416,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
 bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);
 s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
+bool ProcEnemySpawning(s_world* const world);
 
 //
 // projectiles.c

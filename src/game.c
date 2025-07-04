@@ -16,6 +16,10 @@ typedef struct {
 const s_rect_i g_sprite_src_rects[] = {
     [ek_sprite_player] = {1, 1, 14, 22},
     [ek_sprite_slime] = {17, 9, 14, 14},
+    [ek_sprite_tile_break_0] = {16, 24, 8, 8},
+    [ek_sprite_tile_break_1] = {24, 24, 8, 8},
+    [ek_sprite_tile_break_2] = {32, 24, 8, 8},
+    [ek_sprite_tile_break_3] = {40, 24, 8, 8},
     [ek_sprite_dirt_tile] = {16, 0, 8, 8},
     [ek_sprite_stone_tile] = {32, 8, 8, 8},
     [ek_sprite_dirt_tile_item] = {33, 1, 6, 6},

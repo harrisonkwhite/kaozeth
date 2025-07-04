@@ -163,3 +163,34 @@ bool IsNPCActive(const t_npc_activity* const activity, const int index) {
     assert(index >= 0 && index < NPC_LIMIT);
     return IsBitActive(index, (t_byte*)activity, NPC_LIMIT);
 }
+
+static int NPCCnt(const t_npc_activity* const activity) {
+    int cnt = 0;
+
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (IsNPCActive(activity, i)) {
+            cnt++;
+        }
+    }
+
+    return cnt;
+}
+
+bool ProcEnemySpawning(s_world* const world) {
+    const float spawn_rate = 0.002f;
+    const int spawn_limit = 5;
+
+    if (RandPerc() < spawn_rate) {
+        const int npc_cnt = NPCCnt(&world->npcs.activity);
+
+        if (npc_cnt < spawn_limit) {
+            const float spawn_x = RandPerc() * TILE_SIZE * TILEMAP_WIDTH;
+
+            if (!SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
