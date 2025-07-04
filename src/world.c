@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "game.h"
 
-static void InitCameraViewMatrix4x4(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IS_ZERO(*mat));
     assert(display_size.x > 0 && display_size.y > 0);
 
@@ -330,10 +330,8 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 }
 
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
-    RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
-
     ZERO_OUT(rendering_context->state->view_mat);
-    InitCameraViewMatrix4x4(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
+    InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
     {
         const s_vec_2d cam_tl = CameraTopLeft(world->cam_pos, rendering_context->display_size);

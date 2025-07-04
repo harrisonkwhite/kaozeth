@@ -5,6 +5,9 @@ typedef struct {
     s_textures textures;
     s_fonts fonts;
 
+    s_title_screen title_screen;
+
+    bool in_world;
     s_world world;
 } s_game;
 
@@ -66,7 +69,7 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    if (!InitWorld(&game->world, NULL)) {
+    if (!InitTitleScreen(&game->title_screen)) {
         return false;
     }
 
@@ -76,32 +79,49 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
 static bool GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size)) {
-        return false;
+    if (game->in_world) {
+        if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size)) {
+            return false;
+        }
+    } else {
+        if (!TitleScreenTick(&game->title_screen)) {
+            return false;
+        }
     }
 
     return true;
 }
 
+static void InitUIViewMatrix(t_matrix_4x4* const mat) {
+    assert(mat && IS_ZERO(*mat));
+
+    InitIdenMatrix4x4(mat);
+    ScaleMatrix4x4(mat, UI_SCALE);
+}
+
 static bool RenderGame(const s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    RenderWorld(&func_data->rendering_context, &game->world, &game->textures);
+    RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    //
-    // UI
-    //
     const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
 
-    {
-        t_matrix_4x4* const vm = &func_data->rendering_context.state->view_mat;
-        ZeroOut(vm, sizeof(*vm));
-        InitIdenMatrix4x4(vm);
-        ScaleMatrix4x4(vm, UI_SCALE);
-    }
+    if (game->in_world) {
+        RenderWorld(&func_data->rendering_context, &game->world, &game->textures);
 
-    if (!RenderWorldUI(&func_data->rendering_context, &game->world, cursor_ui_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
-        return false;
+        ZERO_OUT(func_data->rendering_context.state->view_mat);
+        InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
+
+        if (!RenderWorldUI(&func_data->rendering_context, &game->world, cursor_ui_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+            return false;
+        }
+    } else {
+        ZERO_OUT(func_data->rendering_context.state->view_mat);
+        InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
+
+        if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+            return false;
+        }
     }
 
     // Render the cursor.
@@ -113,6 +133,11 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 }
 
 static void CleanGame(void* const user_mem) {
+    s_game* const game = user_mem;
+
+    if (!game->in_world) {
+        CleanTitleScreen(&game->title_screen);
+    }
 }
 
 int main() {

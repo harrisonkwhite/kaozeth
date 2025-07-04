@@ -67,8 +67,6 @@ typedef enum {
     eks_sprite_cnt
 } e_sprite;
 
-s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
-
 typedef enum {
     ek_item_type_dirt_block,
     ek_item_type_stone_block,
@@ -278,6 +276,41 @@ static inline s_vec_2d_i UISize(const s_vec_2d_i display_size) {
 static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
     return Vec2DScaled(pos, 1.0f / UI_SCALE);
 }
+
+//
+// game.c
+//
+s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
+
+//
+// titlescreen.c
+//
+typedef enum {
+    ek_title_screen_page_home,
+    ek_title_screen_page_worlds,
+    ek_title_screen_page_options
+} e_title_screen_page;
+
+typedef struct {
+    const char* str;
+} s_button;
+
+typedef struct {
+    s_button* buf;
+    int cnt;
+} s_buttons;
+
+typedef struct {
+    s_mem_arena page_mem_arena;
+    e_title_screen_page page;
+    s_buttons btns;
+    int btn_hovered_index;
+} s_title_screen;
+
+bool InitTitleScreen(s_title_screen* const ts);
+void CleanTitleScreen(s_title_screen* const ts);
+bool TitleScreenTick(s_title_screen* const ts);
+bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world.c
