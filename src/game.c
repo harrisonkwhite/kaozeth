@@ -133,11 +133,6 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 }
 
 static void CleanGame(void* const user_mem) {
-    s_game* const game = user_mem;
-
-    if (!game->in_world) {
-        CleanTitleScreen(&game->title_screen);
-    }
 }
 
 int main() {
