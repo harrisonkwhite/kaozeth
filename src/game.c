@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "game.h"
 
+#define RESPAWN_TIME 120
+
 typedef struct {
     s_textures textures;
     s_fonts fonts;

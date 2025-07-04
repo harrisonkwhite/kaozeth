@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "game.h"
 
+#define RESPAWN_TIME 120
+
 static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(mat && IS_ZERO(*mat));
     assert(display_size.x > 0 && display_size.y > 0);
@@ -89,9 +91,7 @@ bool InitWorld(s_world* const world, const char* const filename) {
         return false;
     }
 
-    world->player.pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
-
-    world->player.hp = world->core.player_hp_max;
+    InitPlayer(&world->player, world->core.player_hp_max);
 
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
@@ -118,6 +118,15 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
 
         ProcPlayerDeath(world);
+    }
+
+    if (world->player.killed) {
+        if (world->respawn_time < RESPAWN_TIME) {
+            world->respawn_time++;
+        } else {
+            ZERO_OUT(world->player);
+            InitPlayer(&world->player, world->core.player_hp_max);
+        }
     }
 
     //
@@ -395,6 +404,15 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
         if (!RenderStr(rendering_context, popup->str, ek_font_eb_garamond_32, fonts, popup_ui_pos, ek_str_hor_align_center, ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
+            return false;
+        }
+    }
+
+    //
+    // Death Text
+    //
+    if (world->player.killed) {
+        if (!RenderStr(rendering_context, DEATH_TEXT, ek_font_eb_garamond_48, fonts, (s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
         }
     }

@@ -6,6 +6,8 @@
 
 #define GAME_TITLE "Terraria"
 
+#define DEATH_TEXT "You were slain..."
+
 #define GRAVITY 0.2f
 
 #define CAMERA_SCALE 4.0f
@@ -214,6 +216,8 @@ typedef struct {
 typedef struct world {
     s_world_core core;
 
+    int respawn_time;
+
     s_player player;
 
     s_npcs npcs;
@@ -386,6 +390,7 @@ static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item
 //
 // player.c
 //
+void InitPlayer(s_player* const player, const int hp_max);
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);

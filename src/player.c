@@ -18,6 +18,14 @@ static inline bool IsPlayerGrounded(const s_vec_2d player_pos, const t_tilemap_a
     return TileCollisionCheck(tm_activity, below_collider);
 }
 
+void InitPlayer(s_player* const player, const int hp_max) {
+    assert(player && IS_ZERO(*player));
+    assert(hp_max >= 0);
+
+    player->pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
+    player->hp = hp_max;
+}
+
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last) {
     assert(!world->player.killed);
 
