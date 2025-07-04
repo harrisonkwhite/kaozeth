@@ -9,6 +9,10 @@
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
+#define WORLD_NAME_LEN_LIMIT 20
+#define WORLD_FILENAME_EXT ".wrld"
+#define WORLD_FILENAME_BUF_SIZE (WORLD_NAME_LEN_LIMIT + sizeof(WORLD_FILENAME_EXT))
+
 #define DMG_POPUP_TEXT_VEL_Y_MIN -4.0f
 #define DMG_POPUP_TEXT_VEL_Y_MAX -2.5f
 static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid range.");
@@ -252,6 +256,13 @@ typedef struct {
     int shoot_proj_dmg;
 } s_item_type;
 
+typedef char t_world_filename[WORLD_FILENAME_BUF_SIZE];
+
+typedef struct {
+    t_world_filename* buf;
+    int cnt;
+} s_world_filenames;
+
 extern const s_rect_i g_sprite_src_rects[];
 
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
@@ -308,9 +319,11 @@ typedef enum {
 typedef struct {
     e_title_screen_page page;
     int page_btn_hovered_index;
+
+    s_world_filenames world_filenames_cache;
 } s_title_screen;
 
-bool InitTitleScreen(s_title_screen* const ts);
+bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const perm_mem_arena);
 s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 

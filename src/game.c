@@ -69,7 +69,7 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    if (!InitTitleScreen(&game->title_screen)) {
+    if (!InitTitleScreen(&game->title_screen, func_data->perm_mem_arena)) {
         return false;
     }
 
