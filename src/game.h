@@ -391,6 +391,7 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
 //
 extern const s_item_type g_item_types[];
 
+bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 void UpdateItemDrops(s_world* const world);
 
@@ -415,7 +416,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb);
 extern const s_npc_type g_npc_types[];
 
 int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
-void RunNPCTicks(s_world* const world);
+void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
 bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);

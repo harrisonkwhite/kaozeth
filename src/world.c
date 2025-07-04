@@ -101,9 +101,6 @@ bool InitWorld(s_world* const world, const char* const filename) {
 }
 
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
-    assert(world);
-    assert(input_state);
-    assert(input_state_last);
     assert(display_size.x > 0 && display_size.y > 0); 
 
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
@@ -128,36 +125,22 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
     }
 
-    //
-    // Camera
-    //
     world->cam_pos = world->player.pos;
 
-    //
-    // NPC Spawning
-    //
     if (!ProcEnemySpawning(world)) {
         return false;
     }
 
-    //
-    // NPCs
-    //
-    RunNPCTicks(world);
+    UpdateNPCs(world);
     ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
-    //
-    // Item Drops
-    //
     UpdateItemDrops(world);
 
     //
     // Player Inventory
     //
-    if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
-        world->player_inv_open = !world->player_inv_open;
-    }
 
+    // Update hotbar state.
     for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
         if (IsKeyPressed(ek_key_code_1 + i, input_state, input_state_last)) {
             world->player_inv_hotbar_slot_selected = i;
@@ -165,24 +148,23 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
     }
 
-    switch (input_state->mouse_scroll) {
-        case ek_mouse_scroll_state_down:
-            world->player_inv_hotbar_slot_selected++;
-            world->player_inv_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
-            break;
+    if (input_state->mouse_scroll == ek_mouse_scroll_state_down) {
+        world->player_inv_hotbar_slot_selected++;
+        world->player_inv_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
+    } else if (input_state->mouse_scroll == ek_mouse_scroll_state_up) {
+        world->player_inv_hotbar_slot_selected--;
 
-        case ek_mouse_scroll_state_up:
-            world->player_inv_hotbar_slot_selected--;
-
-            if (world->player_inv_hotbar_slot_selected < 0) {
-                world->player_inv_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
-            }
-
-            break;
-
-        default: break;
+        if (world->player_inv_hotbar_slot_selected < 0) {
+            world->player_inv_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
+        }
     }
 
+    // Process inventory opening and closing.
+    if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
+        world->player_inv_open = !world->player_inv_open;
+    }
+
+    // Handle inventory open state.
     if (world->player_inv_open) {
         const s_vec_2d_i ui_size = UISize(display_size);
         const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
@@ -209,20 +191,23 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
                     } else {
                         snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
                     }
-
+#if 0
                     if (clicked) {
                         world->cursor_item_held_type = slot->item_type;
                         world->cursor_item_held_quantity = slot->quantity;
 
                         slot->quantity = 0;
                     }
+#endif
                 } else {
+#if 0
                     if (clicked && world->cursor_item_held_quantity > 0) {
                         slot->item_type = world->cursor_item_held_type;
                         slot->quantity = world->cursor_item_held_quantity;
 
                         world->cursor_item_held_quantity = 0;
                     }
+#endif
                 }
 
                 break;
@@ -230,78 +215,10 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
     }
 
-    assert(world->player_inv_hotbar_slot_selected >= 0 && world->player_inv_hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
-
-    //
-    // Item Usage
-    //
-    if (world->player.item_use_break > 0) {
-        world->player.item_use_break--;
-    } else {
-        if (!world->player_inv_open) {
-            s_inventory_slot* const cur_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
-
-            if (cur_slot->quantity > 0) {
-                const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
-
-                if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
-                    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-
-                    const s_vec_2d_i mouse_tile_pos = {
-                        floorf(mouse_cam_pos.x / TILE_SIZE),
-                        floorf(mouse_cam_pos.y / TILE_SIZE)
-                    };
-
-                    // Perform unique action based on the item use type.
-                    bool used = false; // Did we use the item?
-
-                    switch (active_item->use_type) {
-                        case ek_item_use_type_tile_place:
-                            if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                                PlaceTile(&world->core.tilemap_core, mouse_tile_pos, active_item->tile_place_type);
-                                used = true;
-                            }
-
-                            break;
-
-                        case ek_item_use_type_tile_destroy:
-                            if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                                HurtTile(world, mouse_tile_pos);
-                                used = true;
-                            }
-
-                            break;
-
-                        case ek_item_use_type_shoot:
-                            {
-                                const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
-                                const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
-
-                                if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player.pos, vel)) {
-                                    return false;
-                                }
-
-                                used = true;
-                            }
-
-                            break;
-                   }
-
-                    if (used) {
-                        if (active_item->consume_on_use) {
-                            cur_slot->quantity--;
-                        }
-
-                        world->player.item_use_break = active_item->use_break;
-                    }
-                }
-            }
-        }
+    if (!ProcItemUsage(world, input_state, display_size)) {
+        return false;
     }
 
-    //
-    // Projectiles
-    //
     if (!UpdateProjectiles(world)) {
         return false;
     }

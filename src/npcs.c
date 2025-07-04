@@ -87,7 +87,7 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
     return index;
 }
 
-void RunNPCTicks(s_world* const world) {
+void UpdateNPCs(s_world* const world) {
     assert(world);
 
     for (int i = 0; i < NPC_LIMIT; i++) {
