@@ -70,13 +70,13 @@ bool GenWorld(const char* const filename) {
 
     for (; ty < TILEMAP_HEIGHT / 2; ty++) {
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world_core.tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+            PlaceTile(&world_core.tilemap_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
         }
     }
 
     for (; ty < TILEMAP_HEIGHT; ty++) {
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world_core.tilemap, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
+            PlaceTile(&world_core.tilemap_core, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
         }
     }
 
@@ -241,7 +241,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         if (cur_slot->quantity > 0) {
             const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
 
-            if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
+            if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
                 const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
 
                 const s_vec_2d_i mouse_tile_pos = {
@@ -254,16 +254,16 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
                 switch (active_item->use_type) {
                     case ek_item_use_type_tile_place:
-                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap.activity, mouse_tile_pos)) {
-                            PlaceTile(&world->core.tilemap, mouse_tile_pos, active_item->tile_place_type);
+                        if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+                            PlaceTile(&world->core.tilemap_core, mouse_tile_pos, active_item->tile_place_type);
                             used = true;
                         }
 
                         break;
 
                     case ek_item_use_type_tile_destroy:
-                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap.activity, mouse_tile_pos)) {
-                            DestroyTile(world, mouse_tile_pos);
+                        if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+                            HurtTile(world, mouse_tile_pos);
                             used = true;
                         }
 
@@ -367,7 +367,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
         tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
         tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
 
-        RenderTilemap(rendering_context, &world->core.tilemap, tilemap_render_range, textures);
+        RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
     }
 
     if (!world->player.killed) {

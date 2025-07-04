@@ -40,7 +40,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 
     world->player.vel.y += GRAVITY;
 
-    const bool grounded = IsPlayerGrounded(world->player.pos, &world->core.tilemap.activity);
+    const bool grounded = IsPlayerGrounded(world->player.pos, &world->core.tilemap_core.activity);
 
     if (grounded) {
         world->player.jumping = false;
@@ -59,7 +59,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 
     {
         const s_rect collider = PlayerCollider(world->player.pos);
-        ProcTileCollisions(&world->player.vel, collider, &world->core.tilemap.activity);
+        ProcTileCollisions(&world->player.vel, collider, &world->core.tilemap_core.activity);
     }
 
     world->player.pos = Vec2DSum(world->player.pos, world->player.vel);

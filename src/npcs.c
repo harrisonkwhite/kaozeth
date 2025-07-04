@@ -30,7 +30,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     float vel_x_dest = 0.0f;
 
-    if (IsNPCOnGround(npc->pos, npc->type, &world->core.tilemap.activity)) {
+    if (IsNPCOnGround(npc->pos, npc->type, &world->core.tilemap_core.activity)) {
         if (slime->jump_time < 60) {
             slime->jump_time++;
         } else {
@@ -45,7 +45,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
     npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
     const s_rect collider = NPCCollider(npc->pos, npc->type);
-    ProcTileCollisions(&npc->vel, collider, &world->core.tilemap.activity);
+    ProcTileCollisions(&npc->vel, collider, &world->core.tilemap_core.activity);
 
     npc->pos = Vec2DSum(npc->pos, npc->vel);
 }
@@ -115,6 +115,7 @@ void ProcNPCDeaths(s_world* const world) {
 
         if (npc->hp == 0) {
             DeactivateBit(i, world->npcs.activity, NPC_LIMIT);
+            ZERO_OUT(*npc);
         }
     }
 }
@@ -186,7 +187,7 @@ bool ProcEnemySpawning(s_world* const world) {
         if (npc_cnt < spawn_limit) {
             const float spawn_x = RandPerc() * TILE_SIZE * TILEMAP_WIDTH;
 
-            if (!SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime)) {
+            if (SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime) == -1) {
                 return false;
             }
         }

@@ -3,11 +3,13 @@
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
         .spr = ek_sprite_dirt_tile,
-        .drop_item = ek_item_type_dirt_block
+        .drop_item = ek_item_type_dirt_block,
+        .life = 30
     },
     [ek_tile_type_stone] = {
         .spr = ek_sprite_stone_tile,
-        .drop_item = ek_item_type_stone_block
+        .drop_item = ek_item_type_stone_block,
+        .life = 30
     }
 };
 
@@ -39,7 +41,7 @@ s_rect_edges_i RectTilemapSpan(const s_rect rect) {
     );
 }
 
-void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type) {
+void PlaceTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type) {
     assert(tilemap);
     assert(IsTilePosInBounds(pos));
     assert(!IsTileActive(&tilemap->activity, pos));
@@ -48,14 +50,28 @@ void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type
     tilemap->tile_types[pos.y][pos.x] = tile_type;
 }
 
+void HurtTile(s_world* const world, const s_vec_2d_i pos) {
+    assert(world);
+    assert(IsTilePosInBounds(pos));
+    assert(IsTileActive(&world->core.tilemap_core.activity, pos));
+
+    world->tilemap_tile_lifes[pos.y][pos.x]++;
+
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+
+    if (world->tilemap_tile_lifes[pos.y][pos.x] == tile_type->life) {
+        DestroyTile(world, pos);
+    }
+}
+
 void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
     assert(world);
     assert(IsTilePosInBounds(pos));
-    assert(IsTileActive(&world->core.tilemap.activity, pos));
+    assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
-    DeactivateTile(&world->core.tilemap.activity, pos);
+    DeactivateTile(&world->core.tilemap_core.activity, pos);
 
-    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap.tile_types[pos.y][pos.x]];
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
     const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
     SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
 }
@@ -120,7 +136,7 @@ void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_ti
     }
 }
 
-void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap* const tilemap, const s_rect_edges_i range, const s_textures* const textures) {
+void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures) {
     assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
     assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
     assert(range.top >= 0 && range.top < TILEMAP_HEIGHT);
@@ -130,13 +146,26 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
 
     for (int ty = range.top; ty < range.bottom; ty++) {
         for (int tx = range.left; tx < range.right; tx++) {
-            if (!IsTileActive(&tilemap->activity, (s_vec_2d_i){tx, ty})) {
+            if (!IsTileActive(&tilemap_core->activity, (s_vec_2d_i){tx, ty})) {
                 continue;
             }
 
-            const s_tile_type* const tile_type = &g_tile_types[tilemap->tile_types[ty][tx]];
+            const s_tile_type* const tile_type = &g_tile_types[tilemap_core->tile_types[ty][tx]];
             const s_vec_2d tile_world_pos = {tx * TILE_SIZE, ty * TILE_SIZE};
             RenderSprite(rendering_context, tile_type->spr, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+
+            // Render the break overlay.
+            const int tile_life = (*tilemap_tile_lifes)[ty][tx];
+
+            if (tile_life > 0) {
+                const int tile_life_max = tile_type->life;
+                const int break_spr_cnt = 4; // TODO: This is really bad. We need an animation frame system of some kind.
+                const float break_index_mult = (float)tile_life / tile_life_max;
+                const int break_index = break_spr_cnt * break_index_mult;
+                assert(tile_life < tile_life_max); // Sanity check.
+
+                RenderSprite(rendering_context, ek_sprite_tile_break_0 + break_index, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+            }
         }
     }
 }

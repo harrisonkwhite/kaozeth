@@ -69,7 +69,7 @@ void UpdateItemDrops(s_world* const world) {
 
         {
             const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->core.tilemap.activity);
+            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->core.tilemap_core.activity);
         }
 
         drop->pos = Vec2DSum(drop->pos, drop->vel);

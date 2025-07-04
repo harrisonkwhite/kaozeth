@@ -93,8 +93,6 @@ typedef enum {
     eks_item_type_cnt
 } e_item_type;
 
-typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
-
 typedef enum {
     ek_tile_type_dirt,
     ek_tile_type_stone,
@@ -105,6 +103,7 @@ typedef enum {
 typedef struct {
     e_sprite spr;
     e_item_type drop_item;
+    int life;
 } s_tile_type;
 
 typedef struct {
@@ -200,10 +199,14 @@ typedef struct {
     float alpha;
 } s_popup_text;
 
+typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
+
 typedef struct {
     t_tilemap_activity activity;
     e_tile_type tile_types[TILEMAP_HEIGHT][TILEMAP_WIDTH];
-} s_tilemap;
+} s_tilemap_core;
+
+typedef int t_tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 
 typedef struct {
     bool killed;
@@ -216,7 +219,7 @@ typedef struct {
 
 typedef struct {
     int player_hp_max;
-    s_tilemap tilemap;
+    s_tilemap_core tilemap_core;
 } s_world_core;
 
 typedef struct world {
@@ -234,7 +237,7 @@ typedef struct world {
     s_item_drop item_drops[ITEM_DROP_LIMIT];
     int item_drop_active_cnt;
 
-    //int tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
+    t_tilemap_tile_lifes tilemap_tile_lifes;
 
     bool player_inv_open;
     s_inventory_slot player_inv_slots[PLAYER_INVENTORY_LENGTH];
@@ -433,12 +436,13 @@ void RenderProjectiles(const s_rendering_context* const rendering_context, const
 extern const s_tile_type g_tile_types[];
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
-void PlaceTile(s_tilemap* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
+void PlaceTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
+void HurtTile(s_world* const world, const s_vec_2d_i pos);
 void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
-void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap* const tilemap, const s_rect_edges_i range, const s_textures* const textures);
+void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
