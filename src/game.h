@@ -288,7 +288,9 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 typedef enum {
     ek_title_screen_page_home,
     ek_title_screen_page_worlds,
-    ek_title_screen_page_options
+    ek_title_screen_page_options,
+
+    eks_title_screen_page_cnt
 } e_title_screen_page;
 
 typedef struct {
@@ -309,7 +311,7 @@ typedef struct {
 
 bool InitTitleScreen(s_title_screen* const ts);
 void CleanTitleScreen(s_title_screen* const ts);
-bool TitleScreenTick(s_title_screen* const ts);
+bool TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //

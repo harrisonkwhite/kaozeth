@@ -84,7 +84,7 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
             return false;
         }
     } else {
-        if (!TitleScreenTick(&game->title_screen)) {
+        if (!TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     }
