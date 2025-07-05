@@ -174,6 +174,16 @@ void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* con
         };
 
         if (IsPointInRect(cursor_ui_pos, slot_collider)) {
+            if (slot->quantity > 0) {
+                // Update cursor hover string with slot item.
+                if (slot->quantity == 1) {
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
+                } else {
+                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
+                }
+            }
+
+            // Handle slot click event.
             const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
 
             if (clicked) {
