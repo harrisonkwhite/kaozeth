@@ -5,10 +5,12 @@
 #include "zfw_rendering.h"
 
 #define BUTTON_GAP 64.0f
+#define BUTTON_GAP_SMALL 48.0f
+#define BUTTON_GAP_LARGE 80.0f
 
 const int g_page_button_cnts[] = {
     [ek_title_screen_page_home] = 3,
-    [ek_title_screen_page_worlds] = WORLD_LIMIT + 1,
+    [ek_title_screen_page_worlds] = WORLD_LIMIT + 2,
     [ek_title_screen_page_new_world] = 2,
     [ek_title_screen_page_settings] = 1
 };
@@ -33,7 +35,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames, const char* c
 
     const struct dirent* dir_entry;
 
-    while ((dir_entry = readdir(dir)) != NULL) {
+    while ((dir_entry = readdir(dir)) != NULL && cnt < WORLD_LIMIT) {
         const char* const name = dir_entry->d_name;
 
         if (DoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
@@ -43,14 +45,14 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames, const char* c
                 continue;
             }
 
-            memcpy(filenames[cnt], name, name_len);
+            memcpy((*filenames)[cnt], name, name_len);
             cnt++;
         }
     }
 
     closedir(dir);
 
-    return filenames;
+    return true;
 }
 
 typedef struct {
@@ -70,27 +72,62 @@ static bool HomePageSettingsButtonClick(const int index, void* const data_generi
     return true;
 }
 
+static bool HomePageExitButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_worlds;
+    return true;
+}
+
 static bool WorldsPageWorldButtonClick(const int index, void* const data_generic) {
     const s_button_click_data* const data = data_generic;
 
     assert(index < WORLD_LIMIT);
+    assert(data->ts->world_filenames_cache[index][0]);
 
-    if (!data->ts->world_filenames_cache[index][0]) {
-        data->ts->page = ek_title_screen_page_new_world;
-    } else {
-        *data->tick_result = (s_title_screen_tick_result){
-            .type = ek_title_screen_tick_result_type_load_world
-        };
+    *data->tick_result = (s_title_screen_tick_result){
+        .type = ek_title_screen_tick_result_type_load_world
+    };
 
-        memcpy(data->tick_result->world_filename, data->ts->world_filenames_cache[index], sizeof(data->ts->world_filenames_cache[index]));
-    }
+    memcpy(data->tick_result->world_filename, data->ts->world_filenames_cache[index], sizeof(data->ts->world_filenames_cache[index]));
 
+    return true;
+}
+
+static bool WorldsPageGenButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_new_world;
+    assert(IS_ZERO(data->ts->new_world_name_buf));
     return true;
 }
 
 static bool WorldsPageBackButtonClick(const int index, void* const data_generic) {
     const s_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_home;
+    return true;
+}
+
+static bool NewWorldPageAcceptButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+
+    data->ts->page = ek_title_screen_page_worlds;
+
+    t_world_filename filename = {0};
+    snprintf(filename, sizeof(filename), "%s%s", data->ts->new_world_name_buf, WORLD_FILENAME_EXT);
+
+    if (!GenWorld(&filename)) {
+        return false;
+    }
+
+    ZERO_OUT(data->ts->new_world_name_buf);
+
+    ZERO_OUT(data->ts->world_filenames_cache);
+    return LoadWorldFilenames(&data->ts->world_filenames_cache, ".");
+}
+
+static bool NewWorldPageBackButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_worlds;
+    ZERO_OUT(data->ts->new_world_name_buf);
     return true;
 }
 
@@ -117,63 +154,127 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
         ui_size.y / 2.0f
     };
 
+    float y_pen = 0.0f;
+
     switch (page) {
         case ek_title_screen_page_home:
-            *GetButtonConst(&btns, 0) = (s_button){
-                .str = "Play",
-                .pos = (s_vec_2d){ui_mid.x, ui_mid.y},
-                .click_func = HomePagePlayButtonClick
-            };
+            for (int i = 0; i < btns.cnt; i++) {
+                s_button* const btn = GetButtonConst(&btns, i);
 
-            *GetButtonConst(&btns, 1) = (s_button){
-                .str = "Settings",
-                .pos = (s_vec_2d){ui_mid.x, ui_mid.y + (BUTTON_GAP * 1)},
-                .click_func = HomePageSettingsButtonClick
-            };
+                switch (i) {
+                    case 0:
+                        *btn = (s_button){
+                            .str = "Play",
+                            .click_func = HomePagePlayButtonClick
+                        };
 
-            *GetButtonConst(&btns, 2) = (s_button){
-                .str = "Exit",
-                .pos = (s_vec_2d){ui_mid.x, ui_mid.y + (BUTTON_GAP * 2)}
-            };
+                        break;
+
+                    case 1:
+                        *btn = (s_button){
+                            .str = "Settings",
+                            .click_func = HomePageSettingsButtonClick
+                        };
+
+                        break;
+
+                    case 2:
+                        *btn = (s_button){
+                            .str = "Exit",
+                            .click_func = HomePageExitButtonClick
+                        };
+
+                        break;
+
+                    default:
+                        assert(false && "Unhandled button case!");
+                        break;
+                }
+
+                btn->pos = (s_vec_2d){ui_mid.x, y_pen};
+
+                if (i < btns.cnt - 1) {
+                    y_pen += BUTTON_GAP;
+                }
+            }
 
             break;
 
         case ek_title_screen_page_worlds:
+            y_pen = BUTTON_GAP;
+
             for (int i = 0; i < WORLD_LIMIT; i++) {
                 s_button* const btn = GetButtonConst(&btns, i);
 
                 *btn = (s_button){
-                    .pos = {ui_mid.x, ui_mid.y + (BUTTON_GAP * i)},
+                    .pos = {ui_mid.x, y_pen},
                     .click_func = WorldsPageWorldButtonClick
                 };
 
+                if (i < WORLD_LIMIT - 1) {
+                    y_pen += BUTTON_GAP_SMALL;
+                }
+
                 if (!(*world_filenames)[i][0]) {
-                    snprintf(btn->str, sizeof(btn->str), "New World");
+                    snprintf(btn->str, sizeof(btn->str), "Empty");
+                    btn->inactive = true;
                 } else {
                     snprintf(btn->str, sizeof(btn->str), "%s", (*world_filenames)[i]);
                 }
             }
 
+            y_pen += BUTTON_GAP_LARGE;
+
             *GetButtonConst(&btns, WORLD_LIMIT) = (s_button){
+                .str = "Generate New",
+                .pos = {ui_mid.x, y_pen},
+                .click_func = WorldsPageGenButtonClick
+            };
+
+            y_pen += BUTTON_GAP_SMALL;
+
+            *GetButtonConst(&btns, WORLD_LIMIT + 1) = (s_button){
                 .str = "Back",
-                .pos = {ui_mid.x, ui_mid.y + (BUTTON_GAP * WORLD_LIMIT)},
+                .pos = {ui_mid.x, y_pen},
                 .click_func = WorldsPageBackButtonClick
             };
 
             break;
 
         case ek_title_screen_page_new_world:
-            *GetButtonConst(&btns, 0) = (s_button){
-                .str = "Accept",
-                .pos = ui_mid,
-                .click_func = SettingsPageBackButtonClick
-            };
+            y_pen = BUTTON_GAP_SMALL + BUTTON_GAP_LARGE;
 
-            *GetButtonConst(&btns, 1) = (s_button){
-                .str = "Back",
-                .pos = {ui_mid.x, ui_mid.y + BUTTON_GAP},
-                .click_func = SettingsPageBackButtonClick
-            };
+            for (int i = 0; i < btns.cnt; i++) {
+                s_button* const btn = GetButtonConst(&btns, i);
+
+                switch (i) {
+                    case 0:
+                        *btn = (s_button){
+                            .str = "Accept",
+                            .click_func = NewWorldPageAcceptButtonClick
+                        };
+
+                        break;
+
+                    case 1:
+                        *btn = (s_button){
+                            .str = "Back",
+                            .click_func = NewWorldPageBackButtonClick
+                        };
+
+                        break;
+
+                    default:
+                        assert(false && "Unhandled button case!");
+                        break;
+                }
+
+                btn->pos = (s_vec_2d){ui_mid.x, y_pen};
+
+                if (i < btns.cnt - 1) {
+                    y_pen += BUTTON_GAP_SMALL;
+                }
+            }
 
             break;
 
@@ -197,10 +298,18 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
         assert(!IS_ZERO(*btn) && "A page button wasn't set!");
     }
 
+    // Vertically center the buttons.
+    const float y_span = y_pen;
+
+    for (int i = 0; i < btns.cnt; i++) {
+        s_button* const btn = &btns.buf[i];
+        btn->pos.y += ui_mid.y;//ui_mid.y - (y_span / 2.0f);
+    }
+
     return btns;
 }
 
-bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const perm_mem_arena) {
+bool InitTitleScreen(s_title_screen* const ts) {
     assert(IS_ZERO(*ts));
 
     ts->page_btn_hovered_index = -1;
@@ -235,10 +344,10 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
 
     if (ts->page_btn_hovered_index != -1) {
         if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
-            s_button* const btn = GetButton(&page_btns, ts->page_btn_hovered_index);
+            s_button* const btn = GetButtonConst(&page_btns, ts->page_btn_hovered_index);
 
             if (btn->click_func) {
-                const s_button_click_data btn_click_data = {
+                s_button_click_data btn_click_data = {
                     .ts = ts,
                     .tick_result = &result
                 };
@@ -278,22 +387,6 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
                 ts->new_world_name_buf[nw_name_buf_index] = '\0';
             }
         }
-
-#if 0
-        //assert(buf str len cached needs to actually equal the real thingo);
-
-        // TODO: Set up a proper mechanism (within ZF) that allows for proper typing detection.
-        for (int i = ek_key_code_a; i <= ek_key_code_z; i++) {
-            if (IsKeyPressed(i, input_state, input_state_last)) {
-                for (int j = 0; j < sizeof(ts->new_world_name_buf) - 1; j++) {
-                    if (!ts->new_world_name_buf[j]) {
-                        ts->new_world_name_buf[j] = 
-                        break;
-                    }
-                }
-            }
-        }
-#endif
     }
 
     return result;
@@ -319,7 +412,7 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
     if (ts->page == ek_title_screen_page_new_world) {
         const s_vec_2d top_pos = {
             ui_size.x / 2.0f,
-            ui_size.y * 0.4f
+            ui_size.y / 2.0f
         };
 
         if (!RenderStr(rendering_context, "Enter world name:", ek_font_eb_garamond_32, fonts, top_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
@@ -327,7 +420,12 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
         }
 
         if (ts->new_world_name_buf[0]) {
-            if (!RenderStr(rendering_context, ts->new_world_name_buf, ek_font_eb_garamond_32, fonts, (s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+            const s_vec_2d dog_pos = {
+                ui_size.x / 2.0f,
+                (ui_size.y / 2.0f) + (BUTTON_GAP * 0.75f)
+            };
+
+            if (!RenderStr(rendering_context, ts->new_world_name_buf, ek_font_eb_garamond_32, fonts, dog_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
                 return false;
             }
         }

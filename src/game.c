@@ -87,7 +87,7 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
         return false;
     }
 
-    if (!InitTitleScreen(&game->title_screen, func_data->perm_mem_arena)) {
+    if (!InitTitleScreen(&game->title_screen)) {
         return false;
     }
 
@@ -113,7 +113,7 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
 
                 game->in_world = true;
 
-                if (!InitWorld(&game->world, tick_res.world_filename)) {
+                if (!InitWorld(&game->world, &tick_res.world_filename)) {
                     return false;
                 }
 

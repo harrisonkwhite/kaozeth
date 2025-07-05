@@ -289,6 +289,7 @@ typedef struct {
     char str[BUTTON_STR_BUF_SIZE];
     s_vec_2d pos;
     t_button_click_func click_func;
+    bool inactive;
 } s_button;
 
 typedef struct {
@@ -331,7 +332,7 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 //
 s_button* GetButton(s_buttons* const btns, const int index);
 s_button* GetButtonConst(const s_buttons* const btns, const int index);
-bool LoadIndexOfFirstButtonContainingPoint(int* const index, s_buttons* const btns, const s_vec_2d pt, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool LoadIndexOfFirstButtonContainingPoint(int* const index, const s_buttons* const btns, const s_vec_2d pt, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderButton(const s_rendering_context* const rendering_context, const s_button* const btn, const bool hovered, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
@@ -346,7 +347,7 @@ typedef enum {
 
 typedef struct {
     e_title_screen_tick_result_type type;
-    char world_filename[WORLD_FILENAME_BUF_SIZE];
+    t_world_filename world_filename;
 } s_title_screen_tick_result;
 
 typedef enum {
@@ -367,7 +368,7 @@ typedef struct {
     t_world_filenames world_filenames_cache;
 } s_title_screen;
 
-bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const perm_mem_arena);
+bool InitTitleScreen(s_title_screen* const ts);
 s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
