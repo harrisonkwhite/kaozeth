@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "game.h"
+#include "zfw_game.h"
 
 #define RESPAWN_TIME 120
 
@@ -94,19 +95,19 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     return true;
 }
 
-static bool GameTick(const s_game_tick_func_data* const func_data) {
+static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     if (game->in_world) {
         if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size)) {
-            return false;
+            return ek_game_tick_func_result_error;
         }
     } else {
         const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena);
 
         switch (tick_res.type) {
             case ek_title_screen_tick_result_type_error:
-                return false;
+                return ek_game_tick_func_result_error;
 
             case ek_title_screen_tick_result_type_load_world:
                 ZERO_OUT(game->title_screen);
@@ -114,19 +115,19 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
                 game->in_world = true;
 
                 if (!InitWorld(&game->world, &tick_res.world_filename)) {
-                    return false;
+                    return ek_game_tick_func_result_error;
                 }
 
                 break;
 
             case ek_title_screen_tick_result_type_exit:
-                break;
+                return ek_game_tick_func_result_exit;
 
             default: break;
         }
     }
 
-    return true;
+    return ek_game_tick_func_result_default;
 }
 
 static void InitUIViewMatrix(t_matrix_4x4* const mat) {

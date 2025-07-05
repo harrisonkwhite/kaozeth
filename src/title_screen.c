@@ -86,7 +86,13 @@ static bool HomePageSettingsButtonClick(const int index, void* const data_generi
 
 static bool HomePageExitButtonClick(const int index, void* const data_generic) {
     const s_button_click_data* const data = data_generic;
+
     data->ts->page = ek_title_screen_page_worlds;
+
+    *data->tick_result = (s_title_screen_tick_result){
+        .type = ek_title_screen_tick_result_type_exit
+    };
+
     return true;
 }
 
@@ -293,7 +299,7 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
         case ek_title_screen_page_settings:
             *GetButtonConst(&btns, 0) = (s_button){
                 .str = "Back",
-                .pos = ui_mid,
+                .pos = {ui_mid.x, y_pen},
                 .click_func = SettingsPageBackButtonClick
             };
 
