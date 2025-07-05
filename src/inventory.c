@@ -128,3 +128,84 @@ void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENT
         };
     }
 }
+
+void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, const s_input_state* const input_state, const s_input_state* const input_state_last) {
+    assert(hotbar_slot_selected);
+    assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+
+    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
+        if (IsKeyPressed(ek_key_code_1 + i, input_state, input_state_last)) {
+            *hotbar_slot_selected = i;
+            break;
+        }
+    }
+
+    if (input_state->mouse_scroll == ek_mouse_scroll_state_down) {
+        (*hotbar_slot_selected)++;
+        (*hotbar_slot_selected) %= PLAYER_INVENTORY_COLUMN_CNT;
+    } else if (input_state->mouse_scroll == ek_mouse_scroll_state_up) {
+        (*hotbar_slot_selected)--;
+
+        if (*hotbar_slot_selected < 0) {
+            *hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
+        }
+    }
+
+    assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
+}
+
+void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
+    assert(world->player_inv_open);
+
+    const s_vec_2d_i ui_size = UISize(display_size);
+    const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
+
+    s_vec_2d inv_slot_positions[PLAYER_INVENTORY_LENGTH];
+    LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
+
+    for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
+        s_inventory_slot* const slot = &world->player_inv_slots[i];
+
+        const s_rect slot_collider = {
+            inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
+            inv_slot_positions[i].y - (INVENTORY_SLOT_SIZE / 2.0f),
+            INVENTORY_SLOT_SIZE,
+            INVENTORY_SLOT_SIZE
+        };
+
+        if (IsPointInRect(cursor_ui_pos, slot_collider)) {
+            const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
+
+            if (clicked) {
+                if (slot->quantity > 0 && world->cursor_item_held_quantity > 0 && slot->item_type == world->cursor_item_held_type) {
+                    const int to_add = MIN(world->cursor_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
+
+                    if (to_add == 0) {
+                        const e_item_type item_type_temp = slot->item_type;
+                        const int quantity_temp = slot->quantity;
+
+                        slot->item_type = world->cursor_item_held_type;
+                        slot->quantity = world->cursor_item_held_quantity;
+
+                        world->cursor_item_held_type = item_type_temp;
+                        world->cursor_item_held_quantity = quantity_temp;
+                    } else {
+                        slot->quantity += to_add;
+                        world->cursor_item_held_quantity -= to_add;
+                    }
+                } else {
+                    const e_item_type item_type_temp = slot->item_type;
+                    const int quantity_temp = slot->quantity;
+
+                    slot->item_type = world->cursor_item_held_type;
+                    slot->quantity = world->cursor_item_held_quantity;
+
+                    world->cursor_item_held_type = item_type_temp;
+                    world->cursor_item_held_quantity = quantity_temp;
+                }
+            }
+
+            break;
+        }
+    }
+}

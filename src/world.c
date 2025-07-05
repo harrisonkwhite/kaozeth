@@ -136,83 +136,14 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
     UpdateItemDrops(world);
 
-    //
-    // Player Inventory
-    //
+    UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_state, input_state_last);
 
-    // Update hotbar state.
-    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
-        if (IsKeyPressed(ek_key_code_1 + i, input_state, input_state_last)) {
-            world->player_inv_hotbar_slot_selected = i;
-            break;
-        }
-    }
-
-    if (input_state->mouse_scroll == ek_mouse_scroll_state_down) {
-        world->player_inv_hotbar_slot_selected++;
-        world->player_inv_hotbar_slot_selected %= PLAYER_INVENTORY_COLUMN_CNT;
-    } else if (input_state->mouse_scroll == ek_mouse_scroll_state_up) {
-        world->player_inv_hotbar_slot_selected--;
-
-        if (world->player_inv_hotbar_slot_selected < 0) {
-            world->player_inv_hotbar_slot_selected += PLAYER_INVENTORY_COLUMN_CNT;
-        }
-    }
-
-    // Process inventory opening and closing.
     if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
         world->player_inv_open = !world->player_inv_open;
     }
 
-    // Handle inventory open state.
     if (world->player_inv_open) {
-        const s_vec_2d_i ui_size = UISize(display_size);
-        const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
-
-        s_vec_2d inv_slot_positions[PLAYER_INVENTORY_LENGTH];
-        LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
-
-        for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
-            s_inventory_slot* const slot = &world->player_inv_slots[i];
-
-            const s_rect slot_collider = {
-                inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
-                inv_slot_positions[i].y - (INVENTORY_SLOT_SIZE / 2.0f),
-                INVENTORY_SLOT_SIZE,
-                INVENTORY_SLOT_SIZE
-            };
-
-            if (IsPointInRect(cursor_ui_pos, slot_collider)) {
-                const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
-
-                if (slot->quantity > 0) {
-                    if (slot->quantity == 1) {
-                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
-                    } else {
-                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
-                    }
-#if 0
-                    if (clicked) {
-                        world->cursor_item_held_type = slot->item_type;
-                        world->cursor_item_held_quantity = slot->quantity;
-
-                        slot->quantity = 0;
-                    }
-#endif
-                } else {
-#if 0
-                    if (clicked && world->cursor_item_held_quantity > 0) {
-                        slot->item_type = world->cursor_item_held_type;
-                        slot->quantity = world->cursor_item_held_quantity;
-
-                        world->cursor_item_held_quantity = 0;
-                    }
-#endif
-                }
-
-                break;
-            }
-        }
+        ProcPlayerInventoryOpenState(world, input_state, input_state_last, display_size);
     }
 
     if (!ProcItemUsage(world, input_state, display_size)) {
