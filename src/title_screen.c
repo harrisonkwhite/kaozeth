@@ -15,6 +15,18 @@ const int g_page_button_cnts[] = {
     [ek_title_screen_page_settings] = 1
 };
 
+static int WorldCnt(const t_world_filenames* const filenames) {
+    int cnt = 0;
+
+    for (int i = 0; i < WORLD_LIMIT; i++) {
+        if ((*filenames)[i][0]) {
+            cnt++;
+        }
+    }
+
+    return cnt;
+}
+
 // TODO: Problem with this approach. If you insert an enum element between any existing one, it just zeroes out.
 static_assert(STATIC_ARRAY_LEN(g_page_button_cnts) == eks_title_screen_page_cnt, "Invalid array length!");
 
@@ -137,7 +149,7 @@ static bool SettingsPageBackButtonClick(const int index, void* const data_generi
     return true;
 }
 
-static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_screen_page page, const s_vec_2d_i ui_size, const t_world_filenames* const world_filenames) {
+static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_screen_page page, const s_vec_2d_i ui_size, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf) {
     AssertMemArenaValidity(mem_arena);
 
     const s_buttons btns = {
@@ -201,8 +213,6 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
             break;
 
         case ek_title_screen_page_worlds:
-            y_pen = BUTTON_GAP;
-
             for (int i = 0; i < WORLD_LIMIT; i++) {
                 s_button* const btn = GetButtonConst(&btns, i);
 
@@ -226,9 +236,10 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
             y_pen += BUTTON_GAP_LARGE;
 
             *GetButtonConst(&btns, WORLD_LIMIT) = (s_button){
-                .str = "Generate New",
+                .str = "Create New World",
                 .pos = {ui_mid.x, y_pen},
-                .click_func = WorldsPageGenButtonClick
+                .click_func = WorldsPageGenButtonClick,
+                .inactive = WorldCnt(world_filenames) == WORLD_LIMIT
             };
 
             y_pen += BUTTON_GAP_SMALL;
@@ -251,7 +262,8 @@ static s_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_scr
                     case 0:
                         *btn = (s_button){
                             .str = "Accept",
-                            .click_func = NewWorldPageAcceptButtonClick
+                            .click_func = NewWorldPageAcceptButtonClick,
+                            .inactive = !(*new_world_name_buf)[0]
                         };
 
                         break;
@@ -326,7 +338,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
 
     const s_vec_2d_i ui_size = UISize(display_size);
 
-    const s_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache);
+    const s_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache, &ts->new_world_name_buf);
 
     if (IS_ZERO(page_btns)) {
         return (s_title_screen_tick_result){
@@ -395,7 +407,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
 
-    const s_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache);
+    const s_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache, &ts->new_world_name_buf);
 
     if (IS_ZERO(page_btns)) {
         return false;

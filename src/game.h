@@ -359,11 +359,13 @@ typedef enum {
     eks_title_screen_page_cnt
 } e_title_screen_page;
 
+typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
+
 typedef struct {
     e_title_screen_page page;
     int page_btn_hovered_index;
 
-    char new_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
+    t_world_name_buf new_world_name_buf;
 
     t_world_filenames world_filenames_cache;
 } s_title_screen;
