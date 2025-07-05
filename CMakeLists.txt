@@ -4,6 +4,7 @@ add_subdirectory(zeta_framework)
 
 add_executable(terraria_clone
     src/game.c
+    src/ui.c
     src/title_screen.c
     src/world.c
     src/items.c

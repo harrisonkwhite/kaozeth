@@ -1,7 +1,6 @@
 #include <dirent.h>
 #include "game.h"
 
-#define BUTTON_FONT ek_font_eb_garamond_32
 #define BUTTON_GAP 64.0f
 
 static s_world_filenames PushWorldFilenamesToMemArena(s_mem_arena* const mem_arena, const char* const dir_name) {
@@ -51,6 +50,7 @@ static s_world_filenames PushWorldFilenamesToMemArena(s_mem_arena* const mem_are
     return filenames;
 }
 
+#if 0
 typedef enum {
     ek_page_button_type_redirect,
     ek_page_button_type_exit,
@@ -62,106 +62,156 @@ typedef struct {
     const char* str;
     e_page_button_type type;
     e_title_screen_page redir_page;
-} s_page_button;
+} s_button;
 
 typedef struct {
-    s_page_button* buf;
+    s_button* buf;
     int len;
-} s_page_buttons;
+} s_buttons;
+#endif
 
-static int PageButtonCnt(const e_title_screen_page page, const s_world_filenames* const world_filenames) {
+static int GetButtonCnt(const e_title_screen_page page, const s_world_filenames* const world_filenames) {
     assert(world_filenames);
 
     switch (page) {
         case ek_title_screen_page_home: return 3;
         case ek_title_screen_page_worlds: return world_filenames->cnt + 2;
         case ek_title_screen_page_settings: return 1;
+
+        default:
+            assert(false && "Invalid page!");
+            return 0;
     }
 }
 
-static s_page_button* PageButton(s_page_buttons* const btns, const int index) {
-    assert(btns);
-    assert(index >= 0 && index < btns->len);
+typedef struct {
+    s_title_screen* ts;
+    s_title_screen_tick_result* tick_result;
+} s_button_click_data;
 
-    return &btns->buf[index];
+static bool HomePagePlayButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_worlds;
+    return true;
 }
 
-static const s_page_button* PageButtonConst(const s_page_buttons* const btns, const int index) {
-    assert(btns);
-    assert(index >= 0 && index < btns->len);
-
-    return &btns->buf[index];
+static bool HomePageSettingsButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_settings;
+    return true;
 }
 
-static s_page_buttons PushPageButtons(s_mem_arena* const mem_arena, const e_title_screen_page page, const s_world_filenames* const world_filenames) {
-    AssertMemArenaValidity(mem_arena);
+static bool WorldsPageWorldButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
 
-    s_page_buttons btns = {
-        .len = PageButtonCnt(page, world_filenames)
+    assert(index < data->ts->world_filenames_cache.cnt);
+
+    *data->tick_result = (s_title_screen_tick_result){
+        .type = ek_title_screen_tick_result_type_load_world,
+        .world_filename = data->ts->world_filenames_cache.buf[index]
     };
 
-    btns.buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_page_button, btns.len);
+    return true;
+}
+
+static bool WorldsPageBackButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_home;
+    return true;
+}
+
+static bool SettingsPageBackButtonClick(const int index, void* const data_generic) {
+    const s_button_click_data* const data = data_generic;
+    data->ts->page = ek_title_screen_page_home;
+    return true;
+}
+
+static s_buttons PushGetButtons(s_mem_arena* const mem_arena, const e_title_screen_page page, const s_vec_2d_i ui_size, const s_world_filenames* const world_filenames) {
+    AssertMemArenaValidity(mem_arena);
+
+    s_buttons btns = {
+        .cnt = GetButtonCnt(page, world_filenames)
+    };
+
+    btns.buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_button, btns.cnt);
 
     if (!btns.buf) {
-        return (s_page_buttons){0};
+        return (s_buttons){0};
     }
+
+    const s_vec_2d ui_mid = {
+        ui_size.x / 2.0f,
+        ui_size.y / 2.0f
+    };
 
     switch (page) {
         case ek_title_screen_page_home:
-            *PageButton(&btns, 0) = (s_page_button){
+            *GetButton(&btns, 0) = (s_button){
                 .str = "Play",
-                .type = ek_page_button_type_redirect,
-                .redir_page = ek_title_screen_page_worlds
+                .pos = (s_vec_2d){ui_mid.x, ui_mid.y},
+                .click_func = HomePagePlayButtonClick
             };
 
-            *PageButton(&btns, 1) = (s_page_button){
+            *GetButton(&btns, 1) = (s_button){
                 .str = "Settings",
-                .type = ek_page_button_type_redirect,
-                .redir_page = ek_title_screen_page_settings
+                .pos = (s_vec_2d){ui_mid.x, ui_mid.y + (BUTTON_GAP * 1)},
+                .click_func = HomePageSettingsButtonClick
             };
 
-            *PageButton(&btns, 2) = (s_page_button){
+            *GetButton(&btns, 2) = (s_button){
                 .str = "Exit",
-                .type = ek_page_button_type_exit
+                .pos = (s_vec_2d){ui_mid.x, ui_mid.y + (BUTTON_GAP * 2)}
             };
 
             break;
 
         case ek_title_screen_page_worlds:
             for (int i = 0; i < world_filenames->cnt; i++) {
-                *PageButton(&btns, i) = (s_page_button){
+                *GetButton(&btns, i) = (s_button){
                     .str = world_filenames->buf[i],
-                    .type = ek_page_button_type_load_world
+                    .pos = {ui_mid.x, ui_mid.y},
+                    .click_func = WorldsPageWorldButtonClick
                 };
             }
 
-            *PageButton(&btns, world_filenames->cnt) = (s_page_button){
+            *GetButton(&btns, world_filenames->cnt) = (s_button){
                 .str = "Generate a New World",
-                .type = ek_page_button_type_new_world
+                .pos = {ui_mid.x, ui_mid.y + BUTTON_GAP},
             };
 
-            *PageButton(&btns, world_filenames->cnt + 1) = (s_page_button){
+            *GetButton(&btns, world_filenames->cnt + 1) = (s_button){
                 .str = "Back",
-                .type = ek_page_button_type_redirect,
-                .redir_page = ek_title_screen_page_home
+                .pos = {ui_mid.x, ui_mid.y + (BUTTON_GAP * 1.75f)},
+                .click_func = WorldsPageBackButtonClick
             };
 
             break;
 
         case ek_title_screen_page_settings:
-            *PageButton(&btns, 0) = (s_page_button){
+            *GetButton(&btns, 0) = (s_button){
                 .str = "Back",
-                .type = ek_page_button_type_redirect,
-                .redir_page = ek_title_screen_page_home
+                .pos = ui_mid,
+                .click_func = SettingsPageBackButtonClick
             };
 
             break;
+
+        default:
+            assert(false && "Invalid page!");
+            return (s_buttons){0};
+    }
+
+    // Assert that every button was set.
+    for (int i = 0; i < btns.cnt; i++) {
+        const s_button* const btn = &btns.buf[i];
+        assert(!IS_ZERO(*btn) && "A page button wasn't set!");
     }
 
     return btns;
 }
 
-static s_vec_2d PageButtonPos(const int btn_index, const int btn_cnt, const e_title_screen_page page, const s_vec_2d_i ui_size) {
+#if 0
+static s_vec_2d GetButtonPos(const int btn_index, const int btn_cnt, const e_title_screen_page page, const s_vec_2d_i ui_size) {
     assert(ui_size.x > 0 && ui_size.y > 0);
     assert(btn_index >= 0 && btn_index < btn_cnt);
 
@@ -173,6 +223,7 @@ static s_vec_2d PageButtonPos(const int btn_index, const int btn_cnt, const e_ti
         btns_top + (BUTTON_GAP * btn_index)
     };
 }
+#endif
 
 bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const perm_mem_arena) {
     assert(IS_ZERO(*ts));
@@ -193,9 +244,8 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
     s_title_screen_tick_result result = {0};
 
     const s_vec_2d_i ui_size = UISize(display_size);
-    const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
-    const s_page_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, &ts->world_filenames_cache);
+    const s_buttons page_btns = PushGetButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache);
 
     if (IS_ZERO(page_btns)) {
         return (s_title_screen_tick_result){
@@ -203,53 +253,80 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
         };
     }
 
-    ts->page_btn_hovered_index = -1;
+    const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
-    for (int i = 0; i < page_btns.len; i++) {
-        const s_page_button* const btn = PageButtonConst(&page_btns, i);
+    if (!LoadIndexOfFirstButtonContainingPoint(&ts->page_btn_hovered_index, &page_btns, cursor_ui_pos, fonts, temp_mem_arena)) {
+        return (s_title_screen_tick_result){
+            .type = ek_title_screen_tick_result_type_error
+        };
+    }
 
-        const s_vec_2d btn_pos = PageButtonPos(i, page_btns.len, ts->page, ui_size);
+    if (ts->page_btn_hovered_index != -1) {
+        if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
+            s_button* const btn = GetButton(&page_btns, ts->page_btn_hovered_index);
 
-        s_rect btn_str_collider = {0};
+            if (btn->click_func) {
+                const s_button_click_data btn_click_data = {
+                    .ts = ts,
+                    .tick_result = &result
+                };
 
-        if (!LoadStrCollider(&btn_str_collider, btn->str, BUTTON_FONT, fonts, btn_pos, ek_str_hor_align_center, ek_str_ver_align_center, temp_mem_arena)) {
-            return (s_title_screen_tick_result){
-                .type = ek_title_screen_tick_result_type_error
-            };
-        }
-
-        if (IsPointInRect(cursor_ui_pos, btn_str_collider)) {
-            ts->page_btn_hovered_index = i;
-
-            if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
-                switch (btn->type) {
-                    case ek_page_button_type_redirect:
-                        ts->page = btn->redir_page;
-                        break;
-
-                    case ek_page_button_type_exit:
-                        break;
-
-                    case ek_page_button_type_new_world:
-                        if (!GenWorld("sample.wrld")) {
-                            return (s_title_screen_tick_result){
-                                .type = ek_title_screen_tick_result_type_error
-                            };
-                        }
-
-                        break;
-
-                    case ek_page_button_type_load_world:
-                        result = (s_title_screen_tick_result){
-                            .type = ek_title_screen_tick_result_type_load_world,
-                            .world_filename = "sample.wrld"
-                        };
-
-                        break;
+                if (!btn->click_func(ts->page_btn_hovered_index, &btn_click_data)) {
+                    return (s_title_screen_tick_result){
+                        .type = ek_title_screen_tick_result_type_error
+                    };
                 }
+            } else {
+                assert(false && "Button click function not set!");
             }
+#if 0
+            switch (ts->page) {
+                case ek_title_screen_page_home:
+                    switch (ts->page_btn_hovered_index) {
+                        case 0:
+                            ts->page = ek_title_screen_page_worlds;
+                            break;
 
-            break;
+                        case 1:
+                            ts->page = ek_title_screen_page_settings;
+                            break; 
+
+                        default:
+                            assert(false && "Click event for button not handled!");
+                            break;
+                    }
+
+                    break;
+
+                case ek_title_screen_page_worlds:
+                    if (ts->page_btn_hovered_index)
+
+                    for (int i = 0; i < ts->world_filenames_cache.cnt; i++) {
+                        
+                    }
+
+                    switch (ts->page_btn_hovered_index) {
+                        default:
+                            assert(false && "Click event for button not handled!");
+                            break;
+                    }
+
+                    break;
+
+                case ek_title_screen_page_settings:
+                    switch (ts->page_btn_hovered_index) {
+                        case 0:
+                            ts->page = ek_title_screen_page_home;
+                            break;
+
+                        default:
+                            assert(false && "Click event for button not handled!");
+                            break;
+                    }
+
+                    break;
+            }
+#endif
         }
     }
 
@@ -259,21 +336,23 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
 
-    const s_page_buttons page_btns = PushPageButtons(temp_mem_arena, ts->page, &ts->world_filenames_cache);
+    const s_buttons page_btns = PushGetButtons(temp_mem_arena, ts->page, ui_size, &ts->world_filenames_cache);
 
     if (IS_ZERO(page_btns)) {
         return false;
     }
 
-    for (int i = 0; i < page_btns.len; i++) {
-        const s_page_button* const btn = PageButtonConst(&page_btns, i);
-        const s_vec_2d btn_pos = PageButtonPos(i, page_btns.len, ts->page, ui_size);
-        const s_color btn_color = ts->page_btn_hovered_index == i ? YELLOW : WHITE;
+    for (int i = 0; i < page_btns.cnt; i++) {
+        const s_button* const btn = GetButton(&page_btns, i);
 
-        if (!RenderStr(rendering_context, btn->str, BUTTON_FONT, fonts, btn_pos, ek_str_hor_align_center, ek_str_ver_align_center, btn_color, temp_mem_arena)) {
+        if (!RenderButton(rendering_context, btn, ts->page_btn_hovered_index == i, fonts, temp_mem_arena)) {
             return false;
         }
     }
+
+    /*if (!RenderStr(rendering_context, "Select a World", ek_font_eb_garamond_48, fonts, , ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        return false;
+    }*/
 
     // Render logo.
     const s_vec_2d logo_pos = {

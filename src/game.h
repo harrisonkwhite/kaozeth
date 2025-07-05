@@ -15,6 +15,7 @@
 
 #define PLAYER_INIT_HP_MAX 100
 
+#define WORLD_LIMIT 3
 #define WORLD_NAME_LEN_LIMIT 20
 #define WORLD_FILENAME_EXT ".wrld"
 #define WORLD_FILENAME_BUF_SIZE (WORLD_NAME_LEN_LIMIT + sizeof(WORLD_FILENAME_EXT))
@@ -282,6 +283,19 @@ typedef struct {
     int cnt;
 } s_world_filenames;
 
+typedef bool (*t_button_click_func)(const int index, void* const data);
+
+typedef struct {
+    const char* str;
+    s_vec_2d pos;
+    t_button_click_func click_func;
+} s_button;
+
+typedef struct {
+    s_button* buf;
+    int cnt;
+} s_buttons;
+
 extern const s_rect_i g_sprite_src_rects[];
 
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
@@ -311,6 +325,13 @@ static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
 // game.c
 //
 s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
+
+//
+// ui.c
+//
+s_button* GetButton(s_buttons* const btns, const int index);
+bool LoadIndexOfFirstButtonContainingPoint(int* const index, s_buttons* const btns, const s_vec_2d pt, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderButton(s_rendering_context* const rendering_context, const s_button* const btn, const bool hovered, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // titlescreen.c
