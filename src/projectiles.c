@@ -112,6 +112,10 @@ bool UpdateProjectiles(s_world* const world) {
             }
         }
 
+        if (TileCollisionCheck(&world->core.tilemap_core.activity, proj_trans_collider)) {
+            destroy = true;
+        }
+
         // Handle destruction.
         if (destroy) {
             // Replace the current projectile with the one at the end.
