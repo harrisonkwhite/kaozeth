@@ -273,6 +273,8 @@ typedef struct {
 
     e_tile_type tile_place_type;
 
+    int tile_destroy_range;
+
     e_projectile_type shoot_proj_type;
     float shoot_proj_spd;
     int shoot_proj_dmg;

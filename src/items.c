@@ -23,7 +23,8 @@ const s_item_type g_item_types[] = {
         .name = "Copper Pickaxe",
         .spr = ek_sprite_pickaxe_item,
         .use_type = ek_item_use_type_tile_destroy,
-        .use_break = 10
+        .use_break = 10,
+        .tile_destroy_range = 4
     },
     [ek_item_type_wooden_sword] = {
         .name = "Wooden Sword",
@@ -84,7 +85,25 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
             break;
 
         case ek_item_use_type_tile_destroy:
-            if (IsTilePosInBounds(mouse_tile_pos) && IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+            {
+                if (!IsTilePosInBounds(mouse_tile_pos) || !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
+                    break;
+                }
+
+                const s_vec_2d_i player_tile_pos = {
+                    floorf(world->player.pos.x / TILE_SIZE),
+                    floorf(world->player.pos.y / TILE_SIZE)
+                };
+
+                const s_vec_2d_i dist = {
+                    ABS(mouse_tile_pos.x - player_tile_pos.x),
+                    ABS(mouse_tile_pos.y - player_tile_pos.y)
+                };
+
+                if (dist.x > active_item->tile_destroy_range || dist.y > active_item->tile_destroy_range) {
+                    break;
+                }
+
                 HurtTile(world, mouse_tile_pos);
                 used = true;
             }
