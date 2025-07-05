@@ -18,11 +18,11 @@ static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-static bool LoadWorldCoreFromFile(s_world_core* const world_core, const char* const filename) {
+static bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename) {
     assert(world_core && IS_ZERO(*world_core));
     assert(filename);
 
-    FILE* const fs = fopen(filename, "rb");
+    FILE* const fs = fopen((const char*)filename, "rb");
 
     if (!fs) {
         return false;
@@ -38,19 +38,19 @@ static bool LoadWorldCoreFromFile(s_world_core* const world_core, const char* co
     return true;
 }
 
-static bool WriteWorldCoreToFile(const s_world_core* const world_core, const char* const filename) {
+static bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename) {
     assert(world_core);
     assert(filename);
 
-    FILE* const fs = fopen(filename, "wb");
+    FILE* const fs = fopen((const char*)filename, "wb");
 
     if (!fs) {
-        fprintf(stderr, "Failed to open \"%s\"!\n", filename);
+        fprintf(stderr, "Failed to open \"%s\"!\n", (const char*)filename);
         return false;
     }
 
     if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
-        fprintf(stderr, "Failed to write to world file \"%s\"!\n", filename);
+        fprintf(stderr, "Failed to write to world file \"%s\"!\n", (const char*)filename);
         fclose(fs);
         return false;
     }
@@ -60,7 +60,7 @@ static bool WriteWorldCoreToFile(const s_world_core* const world_core, const cha
     return true;
 }
 
-bool GenWorld(const char* const filename) {
+bool GenWorld(const t_world_filename* const filename) {
     s_world_core world_core = {0};
 
     world_core.player_hp_max = PLAYER_INIT_HP_MAX;
@@ -84,7 +84,7 @@ bool GenWorld(const char* const filename) {
     return WriteWorldCoreToFile(&world_core, filename);
 }
 
-bool InitWorld(s_world* const world, const char* const filename) {
+bool InitWorld(s_world* const world, const t_world_filename* const filename) {
     assert(world && IS_ZERO(*world));
     assert(filename);
 

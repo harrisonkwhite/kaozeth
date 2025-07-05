@@ -13,6 +13,8 @@
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
+#define BUTTON_STR_BUF_SIZE 32
+
 #define PLAYER_INIT_HP_MAX 100
 
 #define WORLD_LIMIT 3
@@ -277,16 +279,14 @@ typedef struct {
 } s_item_type;
 
 typedef char t_world_filename[WORLD_FILENAME_BUF_SIZE];
-
-typedef struct {
-    t_world_filename* buf;
-    int cnt;
-} s_world_filenames;
+typedef t_world_filename t_world_filenames[WORLD_LIMIT];
 
 typedef bool (*t_button_click_func)(const int index, void* const data);
 
+static_assert(WORLD_NAME_LEN_LIMIT <= BUTTON_STR_BUF_SIZE - 1, "A button must be able to represent a maximum-length world name!");
+
 typedef struct {
-    const char* str;
+    char str[BUTTON_STR_BUF_SIZE];
     s_vec_2d pos;
     t_button_click_func click_func;
 } s_button;
@@ -330,8 +330,9 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 // ui.c
 //
 s_button* GetButton(s_buttons* const btns, const int index);
+s_button* GetButtonConst(const s_buttons* const btns, const int index);
 bool LoadIndexOfFirstButtonContainingPoint(int* const index, s_buttons* const btns, const s_vec_2d pt, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
-bool RenderButton(s_rendering_context* const rendering_context, const s_button* const btn, const bool hovered, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderButton(const s_rendering_context* const rendering_context, const s_button* const btn, const bool hovered, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // titlescreen.c
@@ -345,12 +346,13 @@ typedef enum {
 
 typedef struct {
     e_title_screen_tick_result_type type;
-    const char* world_filename;
+    char world_filename[WORLD_FILENAME_BUF_SIZE];
 } s_title_screen_tick_result;
 
 typedef enum {
     ek_title_screen_page_home,
     ek_title_screen_page_worlds,
+    ek_title_screen_page_new_world,
     ek_title_screen_page_settings,
 
     eks_title_screen_page_cnt
@@ -360,18 +362,20 @@ typedef struct {
     e_title_screen_page page;
     int page_btn_hovered_index;
 
-    s_world_filenames world_filenames_cache;
+    char new_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
+
+    t_world_filenames world_filenames_cache;
 } s_title_screen;
 
 bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const perm_mem_arena);
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world.c
 //
-bool GenWorld(const char* const filename);
-bool InitWorld(s_world* const world, const char* const filename);
+bool GenWorld(const t_world_filename* const filename);
+bool InitWorld(s_world* const world, const t_world_filename* const filename);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);

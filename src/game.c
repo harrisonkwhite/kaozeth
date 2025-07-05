@@ -102,7 +102,7 @@ static bool GameTick(const s_game_tick_func_data* const func_data) {
             return false;
         }
     } else {
-        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena);
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena);
 
         switch (tick_res.type) {
             case ek_title_screen_tick_result_type_error:

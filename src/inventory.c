@@ -140,10 +140,10 @@ void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, co
         }
     }
 
-    if (input_state->mouse_scroll == ek_mouse_scroll_state_down) {
+    if (input_state->mouse_scroll_state == ek_mouse_scroll_state_down) {
         (*hotbar_slot_selected)++;
         (*hotbar_slot_selected) %= PLAYER_INVENTORY_COLUMN_CNT;
-    } else if (input_state->mouse_scroll == ek_mouse_scroll_state_up) {
+    } else if (input_state->mouse_scroll_state == ek_mouse_scroll_state_up) {
         (*hotbar_slot_selected)--;
 
         if (*hotbar_slot_selected < 0) {
