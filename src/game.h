@@ -60,31 +60,52 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define CURSOR_HOVER_STR_BUF_SIZE 32
 
 typedef enum {
+    ek_texture_player,
+    ek_texture_npcs,
+    ek_texture_tiles,
+    ek_texture_item_icons,
+    ek_texture_projectiles,
+    ek_texture_misc,
+
+    eks_texture_cnt
+} e_texture;
+
+typedef enum {
     ek_font_eb_garamond_24,
     ek_font_eb_garamond_32,
     ek_font_eb_garamond_48,
     ek_font_eb_garamond_80,
 
     eks_font_cnt
-} e_fonts;
+} e_font;
 
 typedef enum {
     ek_sprite_player,
+
     ek_sprite_slime,
+
+    ek_sprite_dirt_tile,
+    ek_sprite_stone_tile,
+    ek_sprite_sand_tile,
     ek_sprite_tile_break_0,
     ek_sprite_tile_break_1,
     ek_sprite_tile_break_2,
     ek_sprite_tile_break_3,
-    ek_sprite_dirt_tile,
-    ek_sprite_stone_tile,
-    ek_sprite_dirt_tile_item,
-    ek_sprite_stone_tile_item,
-    ek_sprite_pickaxe_item,
+
+    ek_sprite_dirt_block_item_icon,
+    ek_sprite_stone_block_item_icon,
+
     ek_sprite_projectile,
+
     ek_sprite_cursor,
 
     eks_sprite_cnt
 } e_sprite;
+
+typedef struct {
+    e_texture tex;
+    s_rect_i src_rect;
+} s_sprite;
 
 typedef enum {
     ek_item_type_dirt_block,
@@ -265,7 +286,7 @@ typedef enum {
 // NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
 typedef struct {
     const char* name;
-    const e_sprite spr;
+    const e_sprite icon_spr;
 
     bool consume_on_use;
     e_item_use_type use_type;
@@ -299,20 +320,10 @@ typedef struct {
     int cnt;
 } s_buttons;
 
-extern const s_rect_i g_sprite_src_rects[];
+extern const s_sprite g_sprites[];
 
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
-    RenderTexture(
-        context,
-        0,
-        textures,
-        g_sprite_src_rects[spr],
-        pos,
-        origin,
-        scale,
-        rot,
-        blend
-    );
+    RenderTexture(context, g_sprites[spr].tex, textures, g_sprites[spr].src_rect, pos, origin, scale, rot, blend);
 }
 
 static inline s_vec_2d_i UISize(const s_vec_2d_i display_size) {
@@ -426,7 +437,7 @@ bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type i
 void UpdateItemDrops(s_world* const world);
 
 static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
-    return ColliderFromSprite(g_item_types[item_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
+    return ColliderFromSprite(g_item_types[item_type].icon_spr, pos, (s_vec_2d){0.5f, 0.5f});
 }
 
 //

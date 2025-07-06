@@ -237,7 +237,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     for (int i = 0; i < world->item_drop_active_cnt; i++) {
         const s_item_drop* const drop = &world->item_drops[i];
 
-        const e_sprite spr = g_item_types[drop->item_type].spr;
+        const e_sprite spr = g_item_types[drop->item_type].icon_spr;
 
         RenderSprite(rendering_context, spr, textures, drop->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
@@ -342,7 +342,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     }
 
     if (world->cursor_item_held_quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].icon_spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 
     return true;

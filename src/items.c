@@ -5,36 +5,40 @@
 const s_item_type g_item_types[] = {
     [ek_item_type_dirt_block] = {
         .name = "Dirt Block",
-        .spr = ek_sprite_dirt_tile_item,
+        .icon_spr = ek_sprite_dirt_block_item_icon,
         .use_type = ek_item_use_type_tile_place,
         .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
         .consume_on_use = true,
         .tile_place_type = ek_tile_type_dirt
     },
+
     [ek_item_type_stone_block] = {
         .name = "Stone Block",
-        .spr = ek_sprite_stone_tile_item,
+        .icon_spr = ek_sprite_stone_block_item_icon,
         .use_type = ek_item_use_type_tile_place,
         .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
         .consume_on_use = true,
         .tile_place_type = ek_tile_type_stone
     },
+
     [ek_item_type_copper_pickaxe] = {
         .name = "Copper Pickaxe",
-        .spr = ek_sprite_pickaxe_item,
+        .icon_spr = ek_sprite_stone_block_item_icon,
         .use_type = ek_item_use_type_tile_destroy,
         .use_break = 10,
         .tile_destroy_range = 4
     },
+
     [ek_item_type_wooden_sword] = {
         .name = "Wooden Sword",
-        .spr = ek_sprite_dirt_tile,
+        .icon_spr = ek_sprite_stone_block_item_icon,
         .use_type = ek_item_use_type_tile_place,
         .use_break = 10
     },
+
     [ek_item_type_wooden_bow] = {
         .name = "Wooden Bow",
-        .spr = ek_sprite_dirt_tile,
+        .icon_spr = ek_sprite_stone_block_item_icon,
         .use_type = ek_item_use_type_shoot,
         .use_break = 10,
         .shoot_proj_type = ek_projectile_type_wooden_arrow,

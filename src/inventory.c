@@ -71,7 +71,7 @@ bool RenderInventorySlot(const s_rendering_context* const rendering_context, con
 
     // Render the item icon.
     if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[slot.item_type].spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, g_item_types[slot.item_type].icon_spr, textures, RectCenter(slot_rect), (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 
     // Render the quantity.

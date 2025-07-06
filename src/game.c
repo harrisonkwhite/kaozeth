@@ -14,26 +14,77 @@ typedef struct {
     s_world world;
 } s_game;
 
-const s_rect_i g_sprite_src_rects[] = {
-    [ek_sprite_player] = {1, 1, 14, 22},
-    [ek_sprite_slime] = {17, 9, 14, 14},
-    [ek_sprite_tile_break_0] = {16, 24, 8, 8},
-    [ek_sprite_tile_break_1] = {24, 24, 8, 8},
-    [ek_sprite_tile_break_2] = {32, 24, 8, 8},
-    [ek_sprite_tile_break_3] = {40, 24, 8, 8},
-    [ek_sprite_dirt_tile] = {16, 0, 8, 8},
-    [ek_sprite_stone_tile] = {32, 8, 8, 8},
-    [ek_sprite_dirt_tile_item] = {33, 1, 6, 6},
-    [ek_sprite_stone_tile_item] = {41, 1, 6, 6},
-    [ek_sprite_pickaxe_item] = {49, 1, 14, 14},
-    [ek_sprite_projectile] = {48, 18, 16, 4},
-    [ek_sprite_cursor] = {24, 0, 8, 8}
+const s_sprite g_sprites[] = {
+    [ek_sprite_player] = {
+        .tex = ek_texture_player,
+        .src_rect = {1, 1, 14, 22}
+    },
+
+    [ek_sprite_slime] = {
+        .tex = ek_texture_npcs,
+        .src_rect = {1, 1, 14, 14}
+    },
+
+    [ek_sprite_dirt_tile] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {0, 0, 8, 8}
+    },
+
+    [ek_sprite_stone_tile] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {8, 0, 8, 8}
+    },
+
+    [ek_sprite_sand_tile] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {16, 0, 8, 8}
+    },
+
+    [ek_sprite_tile_break_0] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {0, 8, 8, 8}
+    },
+
+    [ek_sprite_tile_break_1] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {8, 8, 8, 8}
+    },
+
+    [ek_sprite_tile_break_2] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {16, 8, 8, 8}
+    },
+
+    [ek_sprite_tile_break_3] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {24, 8, 8, 8}
+    },
+
+    [ek_sprite_dirt_block_item_icon] = {
+        .tex = ek_texture_item_icons,
+        .src_rect = {1, 1, 6, 6}
+    },
+
+    [ek_sprite_stone_block_item_icon] = {
+        .tex = ek_texture_item_icons,
+        .src_rect = {9, 1, 6, 6}
+    },
+
+    [ek_sprite_projectile] = {
+        .tex = ek_texture_projectiles,
+        .src_rect = {0, 2, 16, 4}
+    },
+
+    [ek_sprite_cursor] = {
+        .tex = ek_texture_misc,
+        .src_rect = {0, 0, 8, 8}
+    }
 };
 
-static_assert(STATIC_ARRAY_LEN(g_sprite_src_rects) == eks_sprite_cnt, "Invalid array length!");
+static_assert(STATIC_ARRAY_LEN(g_sprites) == eks_sprite_cnt, "Invalid array length!");
 
-s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin) {
-    const s_rect_i src_rect = g_sprite_src_rects[sprite];
+s_rect ColliderFromSprite(const e_sprite spr, const s_vec_2d pos, const s_vec_2d origin) {
+    const s_rect_i src_rect = g_sprites[spr].src_rect;
     return (s_rect){
         pos.x - (src_rect.width * origin.x),
         pos.y - (src_rect.height * origin.y),
@@ -43,11 +94,24 @@ s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec
 }
 
 static const char* TextureIndexToFilePath(const int index) {
+    switch ((e_texture)index) {
+        case ek_texture_player: return "assets/textures/player.png";
+        case ek_texture_npcs: return "assets/textures/npcs.png";
+        case ek_texture_tiles: return "assets/textures/tiles.png";
+        case ek_texture_item_icons: return "assets/textures/item_icons.png";
+        case ek_texture_projectiles: return "assets/textures/projectiles.png";
+        case ek_texture_misc: return "assets/textures/misc.png";
+
+        default:
+            assert(false && "Texture case not handled!");
+            return NULL;
+    }
+
     return "assets/sprites.png";
 }
 
 static s_font_load_info FontIndexToLoadInfo(const int index) {
-    switch (index) {
+    switch ((e_font)index) {
         case ek_font_eb_garamond_24:
             return (s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
@@ -73,6 +137,7 @@ static s_font_load_info FontIndexToLoadInfo(const int index) {
             };
 
         default:
+            assert(false && "Font case not handled!");
             return (s_font_load_info){0};
     }
 }
@@ -80,7 +145,7 @@ static s_font_load_info FontIndexToLoadInfo(const int index) {
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, 1, TextureIndexToFilePath)) {
+    if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
         return false;
     }
 
