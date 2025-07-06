@@ -77,7 +77,7 @@ const s_sprite g_sprites[] = {
 
     [ek_sprite_cursor] = {
         .tex = ek_texture_misc,
-        .src_rect = {0, 0, 8, 8}
+        .src_rect = {2, 2, 4, 4}
     }
 };
 

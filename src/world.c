@@ -60,62 +60,81 @@ static bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_w
     return true;
 }
 
+#define WORLD_TILEMAP_GROUND_LEVEL (TILEMAP_HEIGHT / 3)
+#define WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM 5
+static_assert(WORLD_TILEMAP_GROUND_LEVEL - WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM >= 0 && WORLD_TILEMAP_GROUND_LEVEL + WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM < TILEMAP_HEIGHT, "Tilemap ground level range goes out of bounds!");
+#define WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR 0.3f
+static_assert(WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR >= 0.0f && WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR <= 1.0f, "Variance is out of range!");
+
+#define WORLD_TILEMAP_STONE_LEVEL (TILEMAP_HEIGHT / 4)
+#define WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM 8
+static_assert(WORLD_TILEMAP_STONE_LEVEL - WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM >= 0 && WORLD_TILEMAP_STONE_LEVEL + WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM < TILEMAP_HEIGHT, "Tilemap stone level range goes out of bounds!");
+#define WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR 0.6f
+static_assert(WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR >= 0.0f && WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR <= 1.0f, "Variance is out of range!");
+
+static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
+    assert(tm_core);
+
+    int level = WORLD_TILEMAP_GROUND_LEVEL + RandRangeI(-WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM, WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM);
+
+    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        for (int ty = level; ty < TILEMAP_HEIGHT; ty++) {
+            PlaceTile(tm_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+        }
+
+        if (RandPerc() < WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR) {
+            if (RandPerc() < 0.5f) {
+                level++;
+            } else {
+                level--;
+            }
+
+            if (level < WORLD_TILEMAP_GROUND_LEVEL - WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM) {
+                level += 2;
+            } else if (level >= WORLD_TILEMAP_GROUND_LEVEL + WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM) {
+                level -= 2;
+            }
+        }
+    }
+}
+
+static void GenWorldTilemapStone(s_tilemap_core* const tm_core) {
+    assert(tm_core);
+
+    int level = WORLD_TILEMAP_STONE_LEVEL + RandRangeI(-WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM, WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM);
+
+    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        for (int ty = level; ty < TILEMAP_HEIGHT; ty++) {
+            const s_vec_2d_i tp = {tx, ty};
+
+            if (IsTileActive(&tm_core->activity, tp)) {
+                PlaceTile(tm_core, tp, ek_tile_type_dirt);
+            }
+        }
+
+        if (RandPerc() < WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR) {
+            if (RandPerc() < 0.5f) {
+                level++;
+            } else {
+                level--;
+            }
+
+            if (level < WORLD_TILEMAP_STONE_LEVEL - WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM) {
+                level += 2;
+            } else if (level >= WORLD_TILEMAP_STONE_LEVEL + WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM) {
+                level -= 2;
+            }
+        }
+    }
+}
+
 bool GenWorld(const t_world_filename* const filename) {
     s_world_core world_core = {0};
 
     world_core.player_hp_max = PLAYER_INIT_HP_MAX;
 
-    // Generate the base tilemap.
-    int dirt_level = TILEMAP_HEIGHT / 3;
-
-    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        for (int ty = dirt_level; ty < TILEMAP_HEIGHT; ty++) {
-            PlaceTile(&world_core.tilemap_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
-        }
-
-        if (RandPerc() < 0.2f) {
-            if (RandPerc() < 0.5f) {
-                dirt_level++;
-            } else {
-                dirt_level--;
-            }
-        }
-    }
-
-    // Add desert.
-    {
-        const int desert_x_begin = TILEMAP_WIDTH * RandRange(0.6f, 0.7f);
-        const int desert_width = TILEMAP_WIDTH * 0.2f;
-
-        for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
-            for (int tx = desert_x_begin; tx < desert_x_begin + desert_width; tx++) {
-                if (IsTileActive(&world_core.tilemap_core.activity, (s_vec_2d_i){tx, ty})) {
-                    world_core.tilemap_core.tile_types[ty][tx] = ek_tile_type_sand;
-                }
-            }
-        }
-    }
-
-    // Add stone.
-    {
-        int stone_level = TILEMAP_HEIGHT * RandRange(0.6f, 0.7f);
-
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            for (int ty = stone_level; ty < TILEMAP_HEIGHT; ty++) {
-                if (IsTileActive(&world_core.tilemap_core.activity, (s_vec_2d_i){tx, ty})) {
-                    world_core.tilemap_core.tile_types[ty][tx] = ek_tile_type_stone;
-                }
-            }
-
-            if (RandPerc() < 0.2f) {
-                if (RandPerc() < 0.5f) {
-                    stone_level++;
-                } else {
-                    stone_level--;
-                }
-            }
-        }
-    }
+    GenWorldTilemapGround(&world_core.tilemap_core);
+    GenWorldTilemapStone(&world_core.tilemap_core);
 
     // Write the world core to a file.
     return WriteWorldCoreToFile(&world_core, filename);
