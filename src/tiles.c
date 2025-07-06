@@ -1,6 +1,8 @@
 #include "game.h"
 #include "zfw_math.h"
 
+#define TILEMAP_CONTACT_PRECISE_JUMP_SIZE 0.1f
+
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
         .spr = ek_sprite_dirt_tile,
@@ -119,7 +121,7 @@ void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d
     const s_rect hor_collider = Collider((s_vec_2d){pos->x + vel->x, pos->y}, collider_size, collider_origin);
 
     if (TileCollisionCheck(tm_activity, hor_collider)) {
-        MakeContactWithTilemap(pos, vel->x >= 0.0f ? ek_cardinal_dir_right : ek_cardinal_dir_left, collider_size, collider_origin, tm_activity);
+        MakeContactWithTilemapByJumpSize(pos, TILEMAP_CONTACT_PRECISE_JUMP_SIZE, vel->x >= 0.0f ? ek_cardinal_dir_right : ek_cardinal_dir_left, collider_size, collider_origin, tm_activity);
         vel->x = 0.0f;
     }
 
@@ -141,17 +143,24 @@ void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_
     const s_rect ver_collider = Collider((s_vec_2d){pos->x, pos->y + *vel_y}, collider_size, collider_origin);
 
     if (TileCollisionCheck(tm_activity, ver_collider)) {
-        MakeContactWithTilemap(pos, *vel_y >= 0.0f ? ek_cardinal_dir_down : ek_cardinal_dir_up, collider_size, collider_origin, tm_activity);
+        MakeContactWithTilemapByJumpSize(pos, TILEMAP_CONTACT_PRECISE_JUMP_SIZE, *vel_y >= 0.0f ? ek_cardinal_dir_down : ek_cardinal_dir_up, collider_size, collider_origin, tm_activity);
         *vel_y = 0.0f;
     }
 }
 
-// TODO: Slow pixel-by-pixel approach! Jump by the interval of a tile size instead at first.
 void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity) {
+    // Jump by tile intervals first, then make more precise contact.
+    MakeContactWithTilemapByJumpSize(pos, TILE_SIZE, dir, collider_size, collider_origin, tm_activity);
+    MakeContactWithTilemapByJumpSize(pos, TILEMAP_CONTACT_PRECISE_JUMP_SIZE, dir, collider_size, collider_origin, tm_activity);
+}
+
+void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity) {
+    assert(pos);
+    assert(jump_size > 0.0f);
     assert(collider_size.x > 0.0f && collider_size.y > 0.0f);
     assert(tm_activity);
 
-    const s_vec_2d jump = Vec2DScaled(g_cardinal_dir_vecs[dir], 0.1f);
+    const s_vec_2d jump = Vec2DScaled(g_cardinal_dir_vecs[dir], jump_size);
 
     while (!TileCollisionCheck(tm_activity, Collider(Vec2DSum(*pos, jump), collider_size, collider_origin))) {
         *pos = Vec2DSum(*pos, jump);
