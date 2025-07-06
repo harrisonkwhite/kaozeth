@@ -15,7 +15,7 @@
 
 #define BUTTON_STR_BUF_SIZE 32
 
-#define PLAYER_INIT_HP_MAX 100
+#define PLAYER_INIT_HP_MAX 10
 
 #define WORLD_LIMIT 3
 #define WORLD_NAME_LEN_LIMIT 20
@@ -393,11 +393,12 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
 //
 // world.c
 //
-bool GenWorld(const t_world_filename* const filename);
 bool InitWorld(s_world* const world, const t_world_filename* const filename);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
+bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
 
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
@@ -429,6 +430,11 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
         cam_tl.y + (pos.y / CAMERA_SCALE)
     };
 }
+
+//
+// world_gen.c
+//
+void GenWorld(s_world_core* const world_core);
 
 //
 // items.c

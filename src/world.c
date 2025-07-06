@@ -18,128 +18,6 @@ static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-static bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename) {
-    assert(world_core && IS_ZERO(*world_core));
-    assert(filename);
-
-    FILE* const fs = fopen((const char*)filename, "rb");
-
-    if (!fs) {
-        return false;
-    }
-
-    if (fread(world_core, sizeof(*world_core), 1, fs) == 0) {
-        fclose(fs);
-        return false;
-    }
-
-    fclose(fs);
-
-    return true;
-}
-
-static bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename) {
-    assert(world_core);
-    assert(filename);
-
-    FILE* const fs = fopen((const char*)filename, "wb");
-
-    if (!fs) {
-        fprintf(stderr, "Failed to open \"%s\"!\n", (const char*)filename);
-        return false;
-    }
-
-    if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
-        fprintf(stderr, "Failed to write to world file \"%s\"!\n", (const char*)filename);
-        fclose(fs);
-        return false;
-    }
-
-    fclose(fs);
-
-    return true;
-}
-
-#define WORLD_TILEMAP_GROUND_LEVEL (TILEMAP_HEIGHT / 3)
-#define WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM 5
-static_assert(WORLD_TILEMAP_GROUND_LEVEL - WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM >= 0 && WORLD_TILEMAP_GROUND_LEVEL + WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM < TILEMAP_HEIGHT, "Tilemap ground level range goes out of bounds!");
-#define WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR 0.3f
-static_assert(WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR >= 0.0f && WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR <= 1.0f, "Variance is out of range!");
-
-#define WORLD_TILEMAP_STONE_LEVEL (TILEMAP_HEIGHT / 4)
-#define WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM 8
-static_assert(WORLD_TILEMAP_STONE_LEVEL - WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM >= 0 && WORLD_TILEMAP_STONE_LEVEL + WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM < TILEMAP_HEIGHT, "Tilemap stone level range goes out of bounds!");
-#define WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR 0.6f
-static_assert(WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR >= 0.0f && WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR <= 1.0f, "Variance is out of range!");
-
-static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
-    assert(tm_core);
-
-    int level = WORLD_TILEMAP_GROUND_LEVEL + RandRangeI(-WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM, WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM);
-
-    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        for (int ty = level; ty < TILEMAP_HEIGHT; ty++) {
-            PlaceTile(tm_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
-        }
-
-        if (RandPerc() < WORLD_TILEMAP_GROUND_LEVEL_OFFS_VAR) {
-            if (RandPerc() < 0.5f) {
-                level++;
-            } else {
-                level--;
-            }
-
-            if (level < WORLD_TILEMAP_GROUND_LEVEL - WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM) {
-                level += 2;
-            } else if (level >= WORLD_TILEMAP_GROUND_LEVEL + WORLD_TILEMAP_GROUND_LEVEL_OFFS_LIM) {
-                level -= 2;
-            }
-        }
-    }
-}
-
-static void GenWorldTilemapStone(s_tilemap_core* const tm_core) {
-    assert(tm_core);
-
-    int level = WORLD_TILEMAP_STONE_LEVEL + RandRangeI(-WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM, WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM);
-
-    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        for (int ty = level; ty < TILEMAP_HEIGHT; ty++) {
-            const s_vec_2d_i tp = {tx, ty};
-
-            if (IsTileActive(&tm_core->activity, tp)) {
-                PlaceTile(tm_core, tp, ek_tile_type_dirt);
-            }
-        }
-
-        if (RandPerc() < WORLD_TILEMAP_STONE_LEVEL_OFFS_VAR) {
-            if (RandPerc() < 0.5f) {
-                level++;
-            } else {
-                level--;
-            }
-
-            if (level < WORLD_TILEMAP_STONE_LEVEL - WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM) {
-                level += 2;
-            } else if (level >= WORLD_TILEMAP_STONE_LEVEL + WORLD_TILEMAP_STONE_LEVEL_OFFS_LIM) {
-                level -= 2;
-            }
-        }
-    }
-}
-
-bool GenWorld(const t_world_filename* const filename) {
-    s_world_core world_core = {0};
-
-    world_core.player_hp_max = PLAYER_INIT_HP_MAX;
-
-    GenWorldTilemapGround(&world_core.tilemap_core);
-    GenWorldTilemapStone(&world_core.tilemap_core);
-
-    // Write the world core to a file.
-    return WriteWorldCoreToFile(&world_core, filename);
-}
-
 bool InitWorld(s_world* const world, const t_world_filename* const filename) {
     assert(world && IS_ZERO(*world));
     assert(filename);
@@ -179,6 +57,8 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
             ZERO_OUT(world->player);
             InitPlayer(&world->player, world->core.player_hp_max);
         }
+
+        world->player_inv_open = false;
     }
 
     world->cam_pos = world->player.pos;
@@ -194,8 +74,10 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
 
     UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_state, input_state_last);
 
-    if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
-        world->player_inv_open = !world->player_inv_open;
+    if (!world->player.killed) {
+        if (IsKeyPressed(ek_key_code_escape, input_state, input_state_last)) {
+            world->player_inv_open = !world->player_inv_open;
+        }
     }
 
     if (world->player_inv_open) {
@@ -400,6 +282,48 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     if (world->cursor_item_held_quantity > 0) {
         RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].icon_spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, WHITE);
     }
+
+    return true;
+}
+
+bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename) {
+    assert(world_core && IS_ZERO(*world_core));
+    assert(filename);
+
+    FILE* const fs = fopen((const char*)filename, "rb");
+
+    if (!fs) {
+        return false;
+    }
+
+    if (fread(world_core, sizeof(*world_core), 1, fs) == 0) {
+        fclose(fs);
+        return false;
+    }
+
+    fclose(fs);
+
+    return true;
+}
+
+bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename) {
+    assert(world_core);
+    assert(filename);
+
+    FILE* const fs = fopen((const char*)filename, "wb");
+
+    if (!fs) {
+        fprintf(stderr, "Failed to open \"%s\"!\n", (const char*)filename);
+        return false;
+    }
+
+    if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
+        fprintf(stderr, "Failed to write to world file \"%s\"!\n", (const char*)filename);
+        fclose(fs);
+        return false;
+    }
+
+    fclose(fs);
 
     return true;
 }

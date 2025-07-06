@@ -132,8 +132,13 @@ static bool NewWorldPageAcceptButtonClick(const int index, void* const data_gene
     t_world_filename filename = {0};
     snprintf(filename, sizeof(filename), "%s%s", data->ts->new_world_name_buf, WORLD_FILENAME_EXT);
 
-    if (!GenWorld(&filename)) {
-        return false;
+    {
+        s_world_core world_core = {0};
+        GenWorld(&world_core);
+
+        if (!WriteWorldCoreToFile(&world_core, &filename)) {
+            return false;
+        }
     }
 
     ZERO_OUT(data->ts->new_world_name_buf);
