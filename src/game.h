@@ -28,6 +28,7 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 
 #define NPC_LIMIT 256
 
+#define INVENTORY_SLOT_BG_ALPHA 0.4f
 #define INVENTORY_SLOT_SIZE 48.0f
 #define INVENTORY_SLOT_GAP 72.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
@@ -37,7 +38,6 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 static_assert(PLAYER_INVENTORY_HOTBAR_LENGTH <= 9, "Too large since each hotbar slot needs an associated digit key.");
 #define PLAYER_INVENTORY_LENGTH (PLAYER_INVENTORY_COLUMN_CNT * 4)
 static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player inventory needs at least one full row!");
-#define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.3f
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
 #define PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS (INVENTORY_SLOT_SIZE * 1.75f)
 #define PLAYER_INVENTORY_BODY_Y_PERC 0.45f

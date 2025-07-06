@@ -342,7 +342,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     }
 
     if (world->cursor_item_held_quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].icon_spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].icon_spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, WHITE);
     }
 
     return true;
