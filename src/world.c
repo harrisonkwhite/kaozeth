@@ -178,8 +178,28 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     Flush(rendering_context);
 }
 
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+    const s_vec_2d cursor_ui_pos = DisplayToUIPos(cursor_pos);
+
+    //
+    // Tile Highlight
+    //
+    {
+        const s_vec_2d cursor_cam_pos = DisplayToCameraPos(cursor_pos, world->cam_pos, rendering_context->display_size);
+        const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
+        const s_vec_2d cursor_cam_pos_snapped_to_tilemap = {cursor_tile_pos.x * TILE_SIZE, cursor_tile_pos.y * TILE_SIZE};
+
+        const s_vec_2d highlight_pos = CameraToUIPos(cursor_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
+        const float highlight_size = (float)(TILE_SIZE / CAMERA_SCALE) * TILE_SIZE;
+        const s_rect highlight_rect = {
+            .x = highlight_pos.x,
+            .y = highlight_pos.y,
+            .width = highlight_size,
+            .height = highlight_size
+        };
+        RenderRect(rendering_context, highlight_rect, (s_color){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
+    }
 
     //
     // Popup Texts

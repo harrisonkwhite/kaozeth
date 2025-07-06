@@ -15,7 +15,7 @@
 
 #define BUTTON_STR_BUF_SIZE 32
 
-#define PLAYER_INIT_HP_MAX 10
+#define PLAYER_INIT_HP_MAX 100
 
 #define WORLD_LIMIT 3
 #define WORLD_NAME_LEN_LIMIT 20
@@ -52,6 +52,7 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define PROJECTILE_LIMIT 1024
 
 #define TILE_SIZE 8
+#define TILE_HIGHLIGHT_ALPHA 0.4f
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 48
 
@@ -338,6 +339,13 @@ static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
     return Vec2DScaled(pos, 1.0f / UI_SCALE);
 }
 
+static inline s_vec_2d_i CameraToTilePos(const s_vec_2d pos) {
+    return (s_vec_2d_i){
+        floorf(pos.x / TILE_SIZE),
+        floorf(pos.y / TILE_SIZE)
+    };
+}
+
 static inline s_rect Collider(const s_vec_2d pos, const s_vec_2d size, const s_vec_2d origin) {
     assert(size.x > 0.0f && size.y > 0.0f);
     return (s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
@@ -400,7 +408,7 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
 bool InitWorld(s_world* const world, const t_world_filename* const filename);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_ui_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
 
@@ -433,6 +441,10 @@ static inline s_vec_2d DisplayToCameraPos(const s_vec_2d pos, const s_vec_2d cam
         cam_tl.x + (pos.x / CAMERA_SCALE),
         cam_tl.y + (pos.y / CAMERA_SCALE)
     };
+}
+
+static inline s_vec_2d CameraToUIPos(const s_vec_2d pos, const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    return DisplayToUIPos(CameraToDisplayPos(pos, cam_pos, display_size));
 }
 
 //

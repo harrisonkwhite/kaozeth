@@ -197,15 +197,13 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
-
     if (game->in_world) {
         RenderWorld(&func_data->rendering_context, &game->world, &game->textures);
 
         ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
-        if (!RenderWorldUI(&func_data->rendering_context, &game->world, cursor_ui_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->input_state->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     } else {
@@ -218,6 +216,7 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
     }
 
     // Render the cursor.
+    const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
     RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
 
     Flush(&func_data->rendering_context);

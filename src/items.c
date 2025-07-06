@@ -81,11 +81,7 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
     const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
 
     const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-
-    const s_vec_2d_i mouse_tile_pos = {
-        floorf(mouse_cam_pos.x / TILE_SIZE),
-        floorf(mouse_cam_pos.y / TILE_SIZE)
-    };
+    const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
     bool used = false; // Did we use the item?
 
