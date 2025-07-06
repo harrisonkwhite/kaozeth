@@ -3,8 +3,6 @@
 #include "game.h"
 #include "zfw_math.h"
 
-#define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
-
 #define SLIME_VEL_X_LERP 0.2f
 #define SLIME_JUMP_HEIGHT 4.0f
 #define SLIME_AERIAL_HOR_MOVE_SPD 1.5f
@@ -45,8 +43,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
-    const s_rect collider = NPCCollider(npc->pos, npc->type);
-    ProcTileCollisions(&npc->vel, collider, &world->core.tilemap_core.activity);
+    ProcTileCollisions(&npc->pos, &npc->vel, NPCColliderSize(npc->type), NPC_ORIGIN, &world->core.tilemap_core.activity);
 
     npc->pos = Vec2DSum(npc->pos, npc->vel);
 }
@@ -83,10 +80,7 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type, cons
         npc->type = type;
 
         // Ground the NPC.
-        {
-            const s_rect collider = NPCCollider(npc->pos, npc->type);
-            npc->pos.y += DistToTileContact(collider, ek_cardinal_dir_down, tm_activity);
-        }
+        MakeContactWithTilemap(&npc->pos, ek_cardinal_dir_down, NPCColliderSize(npc->type), NPC_ORIGIN, tm_activity);
     } else {
         fprintf(stderr, "Failed to spawn NPC due to insufficient space!\n");
     }
@@ -136,7 +130,7 @@ void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs
         const s_npc* const npc = &npcs->buf[i];
         const e_sprite spr = g_npc_types[npc->type].spr;
 
-        RenderSprite(rendering_context, spr, textures, npc->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 }
 
@@ -162,10 +156,6 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_v
     return true;
 }
 
-s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type) {
-    return ColliderFromSprite(g_npc_types[npc_type].spr, npc_pos, NPC_ORIGIN);
-}
-
 bool IsNPCActive(const t_npc_activity* const activity, const int index) {
     assert(activity);
     assert(index >= 0 && index < NPC_LIMIT);
@@ -185,6 +175,8 @@ static int NPCCnt(const t_npc_activity* const activity) {
 }
 
 bool ProcEnemySpawning(s_world* const world) {
+    return true;
+
     const float spawn_rate = 0.002f;
     const int spawn_limit = 5;
 

@@ -338,10 +338,14 @@ static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
     return Vec2DScaled(pos, 1.0f / UI_SCALE);
 }
 
-//
-// game.c
-//
-s_rect ColliderFromSprite(const e_sprite sprite, const s_vec_2d pos, const s_vec_2d origin);
+static inline s_rect Collider(const s_vec_2d pos, const s_vec_2d size, const s_vec_2d origin) {
+    assert(size.x > 0.0f && size.y > 0.0f);
+    return (s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
+}
+
+static inline s_rect ColliderFromSprite(const e_sprite spr, const s_vec_2d pos, const s_vec_2d origin) {
+    return Collider(pos, (s_vec_2d){g_sprites[spr].src_rect.width, g_sprites[spr].src_rect.height}, origin);
+}
 
 //
 // ui.c
@@ -444,9 +448,17 @@ extern const s_item_type g_item_types[];
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 void UpdateItemDrops(s_world* const world);
+void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures);
+
+#define ITEM_DROP_ORIGIN (s_vec_2d){0.5f, 0.5f}
+
+static inline s_vec_2d ItemDropColliderSize(const e_item_type item_type) {
+    const s_sprite* const spr = &g_sprites[g_item_types[item_type].icon_spr];
+    return (s_vec_2d){spr->src_rect.width, spr->src_rect.height};
+}
 
 static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item_type) {
-    return ColliderFromSprite(g_item_types[item_type].icon_spr, pos, (s_vec_2d){0.5f, 0.5f});
+    return Collider(pos, ItemDropColliderSize(item_type), ITEM_DROP_ORIGIN);
 }
 
 //
@@ -457,8 +469,18 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);
 void RenderPlayer(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
-s_rect PlayerCollider(const s_vec_2d pos);
 bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb);
+
+#define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
+
+static inline s_vec_2d PlayerColliderSize() {
+    const s_sprite* const spr = &g_sprites[ek_sprite_player];
+    return (s_vec_2d){spr->src_rect.width, spr->src_rect.height};
+}
+
+static inline s_rect PlayerCollider(const s_vec_2d pos) {
+    return Collider(pos, PlayerColliderSize(), PLAYER_ORIGIN);
+}
 
 //
 // npcs.c
@@ -470,9 +492,19 @@ void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
 bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);
-s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
 bool ProcEnemySpawning(s_world* const world);
+
+#define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
+
+static inline s_vec_2d NPCColliderSize(const e_npc_type npc_type) {
+    const s_sprite* const spr = &g_sprites[npc_type];
+    return (s_vec_2d){spr->src_rect.width, spr->src_rect.height};
+}
+
+static inline s_rect NPCCollider(const s_vec_2d npc_pos, const e_npc_type npc_type) {
+    return Collider(npc_pos, NPCColliderSize(npc_type), NPC_ORIGIN);
+}
 
 //
 // projectiles.c
@@ -493,9 +525,9 @@ void PlaceTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile
 void HurtTile(s_world* const world, const s_vec_2d_i pos);
 void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
-void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
-void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
-float DistToTileContact(const s_rect collider, const e_cardinal_dir dir, const t_tilemap_activity* const tm_activity);
+void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
+void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
+void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {

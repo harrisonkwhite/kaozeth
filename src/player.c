@@ -11,8 +11,6 @@
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
-#define PLAYER_ORIGIN (s_vec_2d){0.5f, 0.5f}
-
 static inline bool IsPlayerGrounded(const s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
     const s_rect below_collider = RectTranslated(PlayerCollider(player_pos), (s_vec_2d){0.0f, 1.0f});
     return TileCollisionCheck(tm_activity, below_collider);
@@ -24,11 +22,7 @@ void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activi
     assert(tm_activity);
 
     player->pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
-
-    {
-        const s_rect collider = PlayerCollider(player->pos);
-        player->pos.y += DistToTileContact(collider, ek_cardinal_dir_down, tm_activity);
-    }
+    MakeContactWithTilemap(&player->pos, ek_cardinal_dir_down, PlayerColliderSize(), PLAYER_ORIGIN, tm_activity);
 
     player->hp = hp_max;
 }
@@ -64,10 +58,7 @@ void ProcPlayerMovement(s_world* const world, const s_input_state* const input_s
         }
     }
 
-    {
-        const s_rect collider = PlayerCollider(world->player.pos);
-        ProcTileCollisions(&world->player.vel, collider, &world->core.tilemap_core.activity);
-    }
+    ProcTileCollisions(&world->player.pos, &world->player.vel, PlayerColliderSize(), PLAYER_ORIGIN, &world->core.tilemap_core.activity);
 
     world->player.pos = Vec2DSum(world->player.pos, world->player.vel);
 }
@@ -130,10 +121,6 @@ void RenderPlayer(const s_rendering_context* const rendering_context, const s_wo
     }
 
     RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, (s_color){1.0f, 1.0f, 1.0f, alpha});
-}
-
-s_rect PlayerCollider(const s_vec_2d pos) {
-    return ColliderFromSprite(ek_sprite_player, pos, PLAYER_ORIGIN);
 }
 
 // Returns true if successful, false otherwise.

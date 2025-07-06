@@ -54,6 +54,8 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         if (world->respawn_time < RESPAWN_TIME) {
             world->respawn_time++;
         } else {
+            world->respawn_time = 0;
+
             ZERO_OUT(world->player);
             InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
         }
@@ -171,14 +173,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
 
-    // Render item drops.
-    for (int i = 0; i < world->item_drop_active_cnt; i++) {
-        const s_item_drop* const drop = &world->item_drops[i];
-
-        const e_sprite spr = g_item_types[drop->item_type].icon_spr;
-
-        RenderSprite(rendering_context, spr, textures, drop->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
-    }
+    RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
 
     Flush(rendering_context);
 }

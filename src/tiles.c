@@ -110,50 +110,52 @@ bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rec
     return false;
 }
 
-void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity) {
+void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity) {
+    assert(pos);
     assert(vel);
-    assert(collider.width > 0 && collider.height > 0);
+    assert(collider_size.x > 0.0f && collider_size.y > 0.0f);
     assert(tm_activity);
 
-    const s_rect hor_rect = RectTranslated(collider, (s_vec_2d){vel->x, 0.0f});
+    const s_rect hor_collider = Collider((s_vec_2d){pos->x + vel->x, pos->y}, collider_size, collider_origin);
 
-    if (TileCollisionCheck(tm_activity, hor_rect)) {
+    if (TileCollisionCheck(tm_activity, hor_collider)) {
+        MakeContactWithTilemap(pos, vel->x >= 0.0f ? ek_cardinal_dir_right : ek_cardinal_dir_left, collider_size, collider_origin, tm_activity);
         vel->x = 0.0f;
     }
 
-    ProcVerTileCollisions(&vel->y, collider, tm_activity);
+    ProcVerTileCollisions(pos, &vel->y, collider_size, collider_origin, tm_activity);
 
-    const s_rect diag_rect = RectTranslated(collider, *vel);
+    const s_rect diag_collider = Collider(Vec2DSum(*pos, *vel), collider_size, collider_origin);
 
-    if (TileCollisionCheck(tm_activity, diag_rect)) {
+    if (TileCollisionCheck(tm_activity, diag_collider)) {
         vel->x = 0.0f;
     }
 }
 
-void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity) {
+void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity) {
+    assert(pos);
     assert(vel_y);
-    assert(collider.width > 0 && collider.height > 0);
+    assert(collider_size.x > 0.0f && collider_size.y > 0.0f);
     assert(tm_activity);
 
-    const s_rect ver_rect = RectTranslated(collider, (s_vec_2d){0.0f, *vel_y});
+    const s_rect ver_collider = Collider((s_vec_2d){pos->x, pos->y + *vel_y}, collider_size, collider_origin);
 
-    if (TileCollisionCheck(tm_activity, ver_rect)) {
+    if (TileCollisionCheck(tm_activity, ver_collider)) {
+        MakeContactWithTilemap(pos, *vel_y >= 0.0f ? ek_cardinal_dir_down : ek_cardinal_dir_up, collider_size, collider_origin, tm_activity);
         *vel_y = 0.0f;
     }
 }
 
-// TEMP: Slow pixel-by-pixel approach, and only downwards!
-float DistToTileContact(const s_rect collider, const e_cardinal_dir dir, const t_tilemap_activity* const tm_activity) {
+// TODO: Slow pixel-by-pixel approach! Jump by the interval of a tile size instead at first.
+void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity) {
+    assert(collider_size.x > 0.0f && collider_size.y > 0.0f);
     assert(tm_activity);
-    assert(!TileCollisionCheck(tm_activity, collider));
 
-    s_rect shifting_collider = collider;
+    const s_vec_2d jump = Vec2DScaled(g_cardinal_dir_vecs[dir], 0.1f);
 
-    do {
-        shifting_collider = RectTranslated(shifting_collider, g_cardinal_dir_vecs[dir]);
-    } while (!TileCollisionCheck(tm_activity, shifting_collider));
-
-    return dir == ek_cardinal_dir_right || dir == ek_cardinal_dir_left ? ABS(shifting_collider.x - collider.x) - 1.0f : ABS(shifting_collider.y - collider.y) - 1.0f;
+    while (!TileCollisionCheck(tm_activity, Collider(Vec2DSum(*pos, jump), collider_size, collider_origin))) {
+        *pos = Vec2DSum(*pos, jump);
+    }
 }
 
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures) {

@@ -1,4 +1,5 @@
 #include "game.h"
+#include "zfw_rendering.h"
 
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
 
@@ -179,10 +180,7 @@ void UpdateItemDrops(s_world* const world) {
         // Process movement.
         drop->vel.y += GRAVITY;
 
-        {
-            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
-            ProcVerTileCollisions(&drop->vel.y, drop_collider, &world->core.tilemap_core.activity);
-        }
+        ProcVerTileCollisions(&drop->pos, &drop->vel.y, ItemDropColliderSize(drop->item_type), ITEM_DROP_ORIGIN, &world->core.tilemap_core.activity);
 
         drop->pos = Vec2DSum(drop->pos, drop->vel);
 
@@ -203,5 +201,17 @@ void UpdateItemDrops(s_world* const world) {
                 i--;
             }
         }
+    }
+}
+
+void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures) {
+    assert(rendering_context);
+    assert(drops);
+    assert(drop_cnt >= 0);
+
+    for (int i = 0; i < drop_cnt; i++) {
+        const s_item_drop* const drop = &drops[i];
+        const e_sprite spr = g_item_types[drop->item_type].icon_spr;
+        RenderSprite(rendering_context, spr, textures, drop->pos, ITEM_DROP_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
     }
 }
