@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <zfw_random.h>
 #include "game.h"
+#include "zfw_math.h"
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
@@ -68,7 +69,7 @@ static bool IsNPCValid(const s_npc* const npc) {
     return npc->type >= 0 && npc->type < eks_npc_type_cnt && npc->hp >= 0 && npc->hp <= g_npc_types[npc->type].hp_max;
 }
 
-int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
+int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity) {
     const int index = FirstInactiveBitIndex(npcs->activity, NPC_LIMIT);
 
     if (index != -1) {
@@ -80,6 +81,12 @@ int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type) {
         npc->pos = pos;
         npc->hp = g_npc_types[type].hp_max;
         npc->type = type;
+
+        // Ground the NPC.
+        {
+            const s_rect collider = NPCCollider(npc->pos, npc->type);
+            npc->pos.y += DistToTileContact(collider, ek_cardinal_dir_down, tm_activity);
+        }
     } else {
         fprintf(stderr, "Failed to spawn NPC due to insufficient space!\n");
     }
@@ -187,7 +194,7 @@ bool ProcEnemySpawning(s_world* const world) {
         if (npc_cnt < spawn_limit) {
             const float spawn_x = RandPerc() * TILE_SIZE * TILEMAP_WIDTH;
 
-            if (SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime) == -1) {
+            if (SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime, &world->core.tilemap_core.activity) == -1) {
                 return false;
             }
         }

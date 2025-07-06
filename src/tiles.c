@@ -1,4 +1,5 @@
 #include "game.h"
+#include "zfw_math.h"
 
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
@@ -139,6 +140,20 @@ void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_ti
     if (TileCollisionCheck(tm_activity, ver_rect)) {
         *vel_y = 0.0f;
     }
+}
+
+// TEMP: Slow pixel-by-pixel approach, and only downwards!
+float DistToTileContact(const s_rect collider, const e_cardinal_dir dir, const t_tilemap_activity* const tm_activity) {
+    assert(tm_activity);
+    assert(!TileCollisionCheck(tm_activity, collider));
+
+    s_rect shifting_collider = collider;
+
+    do {
+        shifting_collider = RectTranslated(shifting_collider, g_cardinal_dir_vecs[dir]);
+    } while (!TileCollisionCheck(tm_activity, shifting_collider));
+
+    return dir == ek_cardinal_dir_right || dir == ek_cardinal_dir_left ? ABS(shifting_collider.x - collider.x) - 1.0f : ABS(shifting_collider.y - collider.y) - 1.0f;
 }
 
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures) {

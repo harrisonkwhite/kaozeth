@@ -452,7 +452,7 @@ static inline s_rect ItemDropCollider(const s_vec_2d pos, const e_item_type item
 //
 // player.c
 //
-void InitPlayer(s_player* const player, const int hp_max);
+void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activity* const tm_activity);
 void ProcPlayerMovement(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);
@@ -465,7 +465,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const s_vec_2d kb);
 //
 extern const s_npc_type g_npc_types[];
 
-int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
+int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
@@ -495,6 +495,7 @@ void DestroyTile(s_world* const world, const s_vec_2d_i pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const vel, const s_rect collider, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(float* const vel_y, const s_rect collider, const t_tilemap_activity* const tm_activity);
+float DistToTileContact(const s_rect collider, const e_cardinal_dir dir, const t_tilemap_activity* const tm_activity);
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {

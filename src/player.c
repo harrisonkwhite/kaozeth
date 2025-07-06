@@ -18,11 +18,18 @@ static inline bool IsPlayerGrounded(const s_vec_2d player_pos, const t_tilemap_a
     return TileCollisionCheck(tm_activity, below_collider);
 }
 
-void InitPlayer(s_player* const player, const int hp_max) {
+void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activity* const tm_activity) {
     assert(player && IS_ZERO(*player));
     assert(hp_max >= 0);
+    assert(tm_activity);
 
     player->pos.x = TILE_SIZE * TILEMAP_WIDTH * 0.5f;
+
+    {
+        const s_rect collider = PlayerCollider(player->pos);
+        player->pos.y += DistToTileContact(collider, ek_cardinal_dir_down, tm_activity);
+    }
+
     player->hp = hp_max;
 }
 

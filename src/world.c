@@ -26,7 +26,7 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
         return false;
     }
 
-    InitPlayer(&world->player, world->core.player_hp_max);
+    InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
 
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_copper_pickaxe, 1);
     AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, ek_item_type_wooden_bow, 1);
@@ -55,7 +55,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
             world->respawn_time++;
         } else {
             ZERO_OUT(world->player);
-            InitPlayer(&world->player, world->core.player_hp_max);
+            InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
         }
 
         world->player_inv_open = false;
