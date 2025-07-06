@@ -65,18 +65,55 @@ bool GenWorld(const t_world_filename* const filename) {
 
     world_core.player_hp_max = PLAYER_INIT_HP_MAX;
 
-    // Generate the tilemap.
-    int ty = TILEMAP_HEIGHT / 3;
+    // Generate the base tilemap.
+    int dirt_level = TILEMAP_HEIGHT / 3;
 
-    for (; ty < TILEMAP_HEIGHT / 2; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        for (int ty = dirt_level; ty < TILEMAP_HEIGHT; ty++) {
             PlaceTile(&world_core.tilemap_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
+        }
+
+        if (RandPerc() < 0.2f) {
+            if (RandPerc() < 0.5f) {
+                dirt_level++;
+            } else {
+                dirt_level--;
+            }
         }
     }
 
-    for (; ty < TILEMAP_HEIGHT; ty++) {
+    // Add desert.
+    {
+        const int desert_x_begin = TILEMAP_WIDTH * RandRange(0.6f, 0.7f);
+        const int desert_width = TILEMAP_WIDTH * 0.2f;
+
+        for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
+            for (int tx = desert_x_begin; tx < desert_x_begin + desert_width; tx++) {
+                if (IsTileActive(&world_core.tilemap_core.activity, (s_vec_2d_i){tx, ty})) {
+                    world_core.tilemap_core.tile_types[ty][tx] = ek_tile_type_sand;
+                }
+            }
+        }
+    }
+
+    // Add stone.
+    {
+        int stone_level = TILEMAP_HEIGHT * RandRange(0.6f, 0.7f);
+
         for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            PlaceTile(&world_core.tilemap_core, (s_vec_2d_i){tx, ty}, ek_tile_type_stone);
+            for (int ty = stone_level; ty < TILEMAP_HEIGHT; ty++) {
+                if (IsTileActive(&world_core.tilemap_core.activity, (s_vec_2d_i){tx, ty})) {
+                    world_core.tilemap_core.tile_types[ty][tx] = ek_tile_type_stone;
+                }
+            }
+
+            if (RandPerc() < 0.2f) {
+                if (RandPerc() < 0.5f) {
+                    stone_level++;
+                } else {
+                    stone_level--;
+                }
+            }
         }
     }
 
