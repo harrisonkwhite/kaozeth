@@ -10,6 +10,11 @@ const s_tile_type g_tile_types[] = {
         .spr = ek_sprite_stone_tile,
         .drop_item = ek_item_type_stone_block,
         .life = 8
+    },
+    [ek_tile_type_sand] = {
+        .spr = ek_sprite_sand_tile,
+        .drop_item = ek_item_type_sand_block,
+        .life = 3
     }
 };
 

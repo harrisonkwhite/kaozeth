@@ -94,6 +94,7 @@ typedef enum {
 
     ek_sprite_dirt_block_item_icon,
     ek_sprite_stone_block_item_icon,
+    ek_sprite_sand_block_item_icon,
 
     ek_sprite_projectile,
 
@@ -110,6 +111,7 @@ typedef struct {
 typedef enum {
     ek_item_type_dirt_block,
     ek_item_type_stone_block,
+    ek_item_type_sand_block,
     ek_item_type_copper_pickaxe,
     ek_item_type_wooden_sword,
     ek_item_type_wooden_bow,
@@ -120,6 +122,7 @@ typedef enum {
 typedef enum {
     ek_tile_type_dirt,
     ek_tile_type_stone,
+    ek_tile_type_sand,
 
     eks_tile_type_cnt
 } e_tile_type;
