@@ -31,15 +31,15 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 #define INVENTORY_SLOT_GAP 64.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
-#define PLAYER_HP_BAR_WIDTH 216.0f
+#define PLAYER_HP_BAR_WIDTH 240.0f
 #define PLAYER_HP_BAR_HEIGHT 16.0f
-#define PLAYER_HP_POS_PERC (s_vec_2d){0.925f, 0.12f}
+#define PLAYER_HP_POS_PERC (s_vec_2d){0.95f, 0.075f}
 
 #define PLAYER_INVENTORY_COLUMN_CNT 6
 static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slot needs an associated digit key.");
 #define PLAYER_INVENTORY_ROW_CNT 3
 #define PLAYER_INVENTORY_LEN (PLAYER_INVENTORY_COLUMN_CNT * PLAYER_INVENTORY_ROW_CNT)
-#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.075f, 0.12f}
+#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.05f, 0.075f}
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
 
 #define POPUP_TEXT_LIMIT 1024
@@ -76,6 +76,7 @@ typedef enum {
 } e_texture;
 
 typedef enum {
+    ek_font_eb_garamond_20,
     ek_font_eb_garamond_24,
     ek_font_eb_garamond_28,
     ek_font_eb_garamond_32,
@@ -293,7 +294,6 @@ typedef enum {
     ek_item_use_type_shoot
 } e_item_use_type;
 
-// NOTE: Might want to partition these out into distinct arrays once more familiar with how this data will be accessed.
 typedef struct {
     const char* name;
     const e_sprite icon_spr;
@@ -310,8 +310,6 @@ typedef struct {
     float shoot_proj_spd;
     int shoot_proj_dmg;
 } s_item_type;
-
-//static_assert(WORLD_NAME_LEN_LIMIT <= BUTTON_STR_BUF_SIZE - 1, "A button must be able to represent a maximum-length world name!");
 
 extern const s_sprite g_sprites[];
 

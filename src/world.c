@@ -30,7 +30,6 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
     InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
-    AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_wooden_bow, 1);
 
     return true;
 }
@@ -235,7 +234,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
         const s_rect hp_bar_rect = {
             hp_pos.x - PLAYER_HP_BAR_WIDTH,
-            hp_pos.y - (PLAYER_HP_BAR_HEIGHT / 2.0f),
+            hp_pos.y,
             PLAYER_HP_BAR_WIDTH,
             PLAYER_HP_BAR_HEIGHT
         };
@@ -244,7 +243,7 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
 
         const s_vec_2d hp_str_pos = {
             hp_pos.x - hp_bar_rect.width - 10.0f,
-            hp_pos.y
+            hp_pos.y + (hp_bar_rect.height / 2.0f)
         };
 
         char hp_str[8] = {0};

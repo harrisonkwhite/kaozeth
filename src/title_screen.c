@@ -7,6 +7,8 @@
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
 #define PAGE_ELEM_GAP 48.0f
 #define PAGE_ELEM_COMMON_PADDING 28.0f
+#define PAGE_ELEM_STR_BUF_SIZE 32
+static_assert(WORLD_NAME_LEN_LIMIT <= PAGE_ELEM_STR_BUF_SIZE - 1, "A page element must be able to represent a maximum-length world name!");
 
 typedef struct {
     s_title_screen* ts;
@@ -16,7 +18,7 @@ typedef struct {
 typedef bool (*t_page_elem_button_click_func)(const int index, void* const data);
 
 typedef struct {
-    char str[32];
+    char str[PAGE_ELEM_STR_BUF_SIZE];
     float padding_top;
     float padding_bottom;
     e_font font;
