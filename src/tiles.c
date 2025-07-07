@@ -14,9 +14,9 @@ const s_tile_type g_tile_types[] = {
         .drop_item = ek_item_type_stone_block,
         .life = 8
     },
-    [ek_tile_type_sand] = {
-        .spr = ek_sprite_sand_tile,
-        .drop_item = ek_item_type_sand_block,
+    [ek_tile_type_grass] = {
+        .spr = ek_sprite_grass_tile,
+        .drop_item = ek_item_type_grass_block,
         .life = 3
     }
 };

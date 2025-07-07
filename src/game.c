@@ -35,7 +35,7 @@ const s_sprite g_sprites[] = {
         .src_rect = {8, 0, 8, 8}
     },
 
-    [ek_sprite_sand_tile] = {
+    [ek_sprite_grass_tile] = {
         .tex = ek_texture_tiles,
         .src_rect = {16, 0, 8, 8}
     },
@@ -68,6 +68,11 @@ const s_sprite g_sprites[] = {
     [ek_sprite_stone_block_item_icon] = {
         .tex = ek_texture_item_icons,
         .src_rect = {9, 1, 6, 6}
+    },
+
+    [ek_sprite_grass_block_item_icon] = {
+        .tex = ek_texture_item_icons,
+        .src_rect = {17, 1, 6, 6}
     },
 
     [ek_sprite_projectile] = {

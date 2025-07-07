@@ -15,7 +15,9 @@ static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
     int level = GROUND_LEVEL_BASE + RandRangeI(-GROUND_LEVEL_OFFS_LIM, GROUND_LEVEL_OFFS_LIM);
 
     for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        for (int ty = level; ty < TILEMAP_HEIGHT; ty++) {
+        PlaceTile(tm_core, (s_vec_2d_i){tx, level}, ek_tile_type_grass);
+
+        for (int ty = level + 1; ty < TILEMAP_HEIGHT; ty++) {
             PlaceTile(tm_core, (s_vec_2d_i){tx, ty}, ek_tile_type_dirt);
         }
 

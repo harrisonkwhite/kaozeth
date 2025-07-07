@@ -54,8 +54,8 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define TILE_SIZE 8
 #define TILE_PLACE_DIST 4
 #define TILE_HIGHLIGHT_ALPHA 0.4f
-#define TILEMAP_WIDTH 120
-#define TILEMAP_HEIGHT 48
+#define TILEMAP_WIDTH 640
+#define TILEMAP_HEIGHT 200
 
 #define ITEM_DROP_LIMIT 1024
 
@@ -88,7 +88,7 @@ typedef enum {
 
     ek_sprite_dirt_tile,
     ek_sprite_stone_tile,
-    ek_sprite_sand_tile,
+    ek_sprite_grass_tile,
     ek_sprite_tile_break_0,
     ek_sprite_tile_break_1,
     ek_sprite_tile_break_2,
@@ -96,7 +96,7 @@ typedef enum {
 
     ek_sprite_dirt_block_item_icon,
     ek_sprite_stone_block_item_icon,
-    ek_sprite_sand_block_item_icon,
+    ek_sprite_grass_block_item_icon,
 
     ek_sprite_projectile,
 
@@ -113,7 +113,7 @@ typedef struct {
 typedef enum {
     ek_item_type_dirt_block,
     ek_item_type_stone_block,
-    ek_item_type_sand_block,
+    ek_item_type_grass_block,
     ek_item_type_copper_pickaxe,
     ek_item_type_wooden_sword,
     ek_item_type_wooden_bow,
@@ -124,7 +124,7 @@ typedef enum {
 typedef enum {
     ek_tile_type_dirt,
     ek_tile_type_stone,
-    ek_tile_type_sand,
+    ek_tile_type_grass,
 
     eks_tile_type_cnt
 } e_tile_type;

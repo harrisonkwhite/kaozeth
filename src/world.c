@@ -63,7 +63,13 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         world->player_inv_open = false;
     }
 
+    const s_vec_2d cam_size = CameraSize(display_size);
+
     world->cam_pos = world->player.pos;
+    world->cam_pos = (s_vec_2d){
+        MAX(cam_size.x / 2.0f, world->cam_pos.x),
+        MAX(cam_size.y / 2.0f, world->cam_pos.y)
+    };
 
     if (!ProcEnemySpawning(world)) {
         return false;

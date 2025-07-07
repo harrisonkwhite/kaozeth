@@ -22,13 +22,13 @@ const s_item_type g_item_types[] = {
         .tile_place_type = ek_tile_type_stone
     },
 
-    [ek_item_type_sand_block] = {
-        .name = "Sand Block",
-        .icon_spr = ek_sprite_sand_block_item_icon,
+    [ek_item_type_grass_block] = {
+        .name = "Grass Block",
+        .icon_spr = ek_sprite_grass_block_item_icon,
         .use_type = ek_item_use_type_tile_place,
         .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
         .consume_on_use = true,
-        .tile_place_type = ek_tile_type_sand
+        .tile_place_type = ek_tile_type_grass
     },
 
     [ek_item_type_copper_pickaxe] = {
