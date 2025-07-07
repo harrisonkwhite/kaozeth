@@ -266,6 +266,23 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         }
     }
 
+    // Render current item name.
+    {
+        const s_inventory_slot* const slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
+
+        if (slot->quantity > 0) {
+            const char* const item_name = g_item_types[slot->item_type].name;
+            const s_vec_2d name_pos = {
+                ui_size.x / 2.0f,
+                ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS - (INVENTORY_SLOT_SIZE * 0.75f)
+            };
+
+            if (!RenderStr(rendering_context, item_name, ek_font_eb_garamond_24, fonts, name_pos, ek_str_hor_align_center, ek_str_ver_align_bottom, WHITE, temp_mem_arena)) {
+                return false;
+            }
+        }
+    }
+
     // Render the body if open.
     if (world->player_inv_open) {
         for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
