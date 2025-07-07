@@ -34,9 +34,9 @@ const s_item_type g_item_types[] = {
     [ek_item_type_copper_pickaxe] = {
         .name = "Copper Pickaxe",
         .icon_spr = ek_sprite_stone_block_item_icon,
-        .use_type = ek_item_use_type_tile_destroy,
+        .use_type = ek_item_use_type_tile_hurt,
         .use_break = 10,
-        .tile_destroy_range = 4
+        .tile_destroy_dist = 4
     },
 
     [ek_item_type_wooden_sword] = {
@@ -59,89 +59,80 @@ const s_item_type g_item_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
-bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
+bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i mouse_tile_pos, const t_tilemap_activity* const tm_activity) {
+    switch (g_item_types[item_type].use_type) {
+        case ek_item_use_type_tile_place:
+            return IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(tm_activity, mouse_tile_pos);
 
+        case ek_item_use_type_tile_hurt:
+            if (!IsTilePosInBounds(mouse_tile_pos) || !IsTileActive(tm_activity, mouse_tile_pos)) {
+                return false;
+            }
+
+            {
+                const int dist = TileDist(player_tile_pos, mouse_tile_pos);
+
+                if (dist > g_item_types[item_type].tile_destroy_dist) {
+                    return false;
+                }
+            }
+
+            return true;
+
+        case ek_item_use_type_shoot:
+            return true;
+   }
+}
+
+bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
     }
 
-    if (!IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
-        return true;
-    }
+    s_inventory_slot* const slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
 
-    s_inventory_slot* const cur_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
-
-    if (cur_slot->quantity == 0) {
+    if (slot->quantity == 0) {
         // Selected slot is empty, no item to use.
         return true;
     }
 
-    const s_item_type* const active_item = &g_item_types[cur_slot->item_type];
+    const s_item_type* const item_type = &g_item_types[slot->item_type];
 
-    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-    const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+    const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
 
-    bool used = false; // Did we use the item?
+    const s_vec_2d cursor_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+    const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
 
-    switch (active_item->use_type) {
-        case ek_item_use_type_tile_place:
-            if (IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                PlaceTile(&world->core.tilemap_core, mouse_tile_pos, active_item->tile_place_type);
-                used = true;
-            }
-
-            break;
-
-        case ek_item_use_type_tile_destroy:
-            {
-                if (!IsTilePosInBounds(mouse_tile_pos) || !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
-                    break;
-                }
-
-                const s_vec_2d_i player_tile_pos = {
-                    floorf(world->player.pos.x / TILE_SIZE),
-                    floorf(world->player.pos.y / TILE_SIZE)
-                };
-
-                const s_vec_2d_i dist = {
-                    ABS(mouse_tile_pos.x - player_tile_pos.x),
-                    ABS(mouse_tile_pos.y - player_tile_pos.y)
-                };
-
-                if (dist.x > active_item->tile_destroy_range || dist.y > active_item->tile_destroy_range) {
-                    break;
-                }
-
-                HurtTile(world, mouse_tile_pos);
-                used = true;
-            }
-
-            break;
-
-        case ek_item_use_type_shoot:
-            {
-                const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
-                const s_vec_2d vel = Vec2DScaled(dir, active_item->shoot_proj_spd);
-
-                if (!SpawnProjectile(world, active_item->shoot_proj_type, true, active_item->shoot_proj_dmg, world->player.pos, vel)) {
-                    return false;
-                }
-
-                used = true;
-            }
-
-            break;
-   }
-
-    if (used) {
-        if (active_item->consume_on_use) {
-            cur_slot->quantity--;
-        }
-
-        world->player.item_use_break = active_item->use_break;
+    if (!IsItemUsable(slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
+        return true;
     }
+
+    if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
+        switch (item_type->use_type) {
+            case ek_item_use_type_tile_place:
+                PlaceTile(&world->core.tilemap_core, cursor_tile_pos, item_type->tile_place_type);
+                break;
+
+            case ek_item_use_type_tile_hurt:
+                HurtTile(world, cursor_tile_pos);
+                break;
+
+            case ek_item_use_type_shoot:
+                {
+                    const s_vec_2d dir = Vec2DDir(world->player.pos, cursor_cam_pos);
+                    const s_vec_2d vel = Vec2DScaled(dir, item_type->shoot_proj_spd);
+
+                    if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
+                        return false;
+                    }
+                }
+
+                break;
+        }
+    }
+
+    world->player.item_use_break = item_type->use_break;
 
     return true;
 }

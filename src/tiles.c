@@ -200,3 +200,30 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
         }
     }
 }
+
+void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos) {
+    const s_inventory_slot* const active_slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
+
+    if (active_slot->quantity > 0) {
+        const s_item_type* const active_item = &g_item_types[active_slot->item_type];
+
+        const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
+
+        const s_vec_2d cursor_cam_pos = DisplayToCameraPos(cursor_pos, world->cam_pos, rendering_context->display_size);
+        const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
+
+        if (active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt && IsItemUsable(active_slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
+            const s_vec_2d cursor_cam_pos_snapped_to_tilemap = {cursor_tile_pos.x * TILE_SIZE, cursor_tile_pos.y * TILE_SIZE};
+
+            const s_vec_2d highlight_pos = CameraToUIPos(cursor_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
+            const float highlight_size = (float)(TILE_SIZE / CAMERA_SCALE) * TILE_SIZE;
+            const s_rect highlight_rect = {
+                .x = highlight_pos.x,
+                .y = highlight_pos.y,
+                .width = highlight_size,
+                .height = highlight_size
+            };
+            RenderRect(rendering_context, highlight_rect, (s_color){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
+        }
+    }
+}

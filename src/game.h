@@ -52,6 +52,7 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define PROJECTILE_LIMIT 1024
 
 #define TILE_SIZE 8
+#define TILE_PLACE_DIST 5
 #define TILE_HIGHLIGHT_ALPHA 0.4f
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 48
@@ -283,7 +284,7 @@ typedef struct world {
 
 typedef enum {
     ek_item_use_type_tile_place,
-    ek_item_use_type_tile_destroy,
+    ek_item_use_type_tile_hurt,
     ek_item_use_type_shoot
 } e_item_use_type;
 
@@ -298,7 +299,7 @@ typedef struct {
 
     e_tile_type tile_place_type;
 
-    int tile_destroy_range;
+    int tile_destroy_dist;
 
     e_projectile_type shoot_proj_type;
     float shoot_proj_spd;
@@ -457,6 +458,7 @@ void GenWorld(s_world_core* const world_core);
 //
 extern const s_item_type g_item_types[];
 
+bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i mouse_tile_pos, const t_tilemap_activity* const tm_activity);
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 void UpdateItemDrops(s_world* const world);
@@ -542,9 +544,14 @@ void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_
 void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
+void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
+}
+
+static inline int TileDist(const s_vec_2d_i a, const s_vec_2d_i b) {
+    return Dist((s_vec_2d){a.x, a.y}, (s_vec_2d){b.x, b.y});
 }
 
 static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
