@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 project(terraria_clone C)
+
+set(CMAKE_C_STANDARD 11)
+
 add_subdirectory(zeta_framework)
 
 add_executable(terraria_clone
