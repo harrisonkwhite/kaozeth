@@ -28,17 +28,15 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 
 #define INVENTORY_SLOT_BG_ALPHA 0.4f
 #define INVENTORY_SLOT_SIZE 48.0f
-#define INVENTORY_SLOT_GAP 72.0f
+#define INVENTORY_SLOT_GAP 64.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
-#define PLAYER_INVENTORY_COLUMN_CNT 8
-#define PLAYER_INVENTORY_HOTBAR_LENGTH 8
-static_assert(PLAYER_INVENTORY_HOTBAR_LENGTH <= 9, "Too large since each hotbar slot needs an associated digit key.");
-#define PLAYER_INVENTORY_LENGTH (PLAYER_INVENTORY_COLUMN_CNT * 4)
-static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player inventory needs at least one full row!");
+#define PLAYER_INVENTORY_COLUMN_CNT 7
+static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slot needs an associated digit key.");
+#define PLAYER_INVENTORY_ROW_CNT 3
+#define PLAYER_INVENTORY_LEN (PLAYER_INVENTORY_COLUMN_CNT * PLAYER_INVENTORY_ROW_CNT)
+#define PLAYER_INVENTORY_TOP_LEFT_PERC (s_vec_2d){0.075f, 0.12f}
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
-#define PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS (INVENTORY_SLOT_SIZE * 1.75f)
-#define PLAYER_INVENTORY_BODY_Y_PERC 0.45f
 
 #define POPUP_TEXT_LIMIT 1024
 #define POPUP_TEXT_STR_BUF_SIZE 32
@@ -272,7 +270,7 @@ typedef struct world {
     t_tilemap_tile_lifes tilemap_tile_lifes;
 
     bool player_inv_open;
-    s_inventory_slot player_inv_slots[PLAYER_INVENTORY_LENGTH];
+    s_inventory_slot player_inv_slots[PLAYER_INVENTORY_ROW_CNT][PLAYER_INVENTORY_COLUMN_CNT];
     int player_inv_hotbar_slot_selected;
 
     s_popup_text popup_texts[POPUP_TEXT_LIMIT];
@@ -580,8 +578,8 @@ int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const
 bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
 bool RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
-void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size);
 void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, const s_input_state* const input_state, const s_input_state* const input_state_last);
 void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
+bool RenderPlayerInventory(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 #endif

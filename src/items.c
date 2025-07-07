@@ -88,7 +88,7 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
         return true;
     }
 
-    s_inventory_slot* const slot = &world->player_inv_slots[world->player_inv_hotbar_slot_selected];
+    s_inventory_slot* const slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
     if (slot->quantity == 0) {
         // Selected slot is empty, no item to use.
@@ -176,13 +176,13 @@ void UpdateItemDrops(s_world* const world) {
         drop->pos = Vec2DSum(drop->pos, drop->vel);
 
         // Process collection.
-        const bool collectable = DoesInventoryHaveRoomFor(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
+        const bool collectable = DoesInventoryHaveRoomFor((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
 
         if (collectable) {
             const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
 
             if (DoRectsInters(player_collider, drop_collider)) {
-                AddToInventory(world->player_inv_slots, PLAYER_INVENTORY_LENGTH, drop->item_type, drop->quantity);
+                AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
 
                 // Remove this item drop.
                 world->item_drop_active_cnt--;

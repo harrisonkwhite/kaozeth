@@ -92,41 +92,17 @@ bool RenderInventorySlot(const s_rendering_context* const rendering_context, con
     return true;
 }
 
-void LoadPlayerInventorySlotPositions(s_vec_2d (* const positions)[PLAYER_INVENTORY_LENGTH], const s_vec_2d_i ui_size) {
-    assert(positions);
+static s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_i ui_size) {
+    assert(r >= 0 && r < PLAYER_INVENTORY_ROW_CNT);
+    assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
 
-    const float mid_x = ui_size.x / 2.0f;
-    const float left = mid_x - (INVENTORY_SLOT_GAP * (PLAYER_INVENTORY_COLUMN_CNT - 1) * 0.5f);
+    const s_vec_2d top_left = {ui_size.x * PLAYER_INVENTORY_TOP_LEFT_PERC.x, ui_size.y * PLAYER_INVENTORY_TOP_LEFT_PERC.y};
 
-    //
-    // Hotbar
-    //
-    const float hotbar_y = ui_size.y - PLAYER_INVENTORY_HOTBAR_BOTTOM_OFFS;
-
-    for (int i = 0; i < PLAYER_INVENTORY_COLUMN_CNT; i++) {
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * i),
-            hotbar_y
-        };
-    }
-
-    //
-    // Body
-    //
-    const int body_row_cnt = ceilf((float)PLAYER_INVENTORY_LENGTH / PLAYER_INVENTORY_COLUMN_CNT) - 1;
-    const float top = (ui_size.y * PLAYER_INVENTORY_BODY_Y_PERC) - (INVENTORY_SLOT_GAP * (body_row_cnt - 1) * 0.5f);
-
-    for (int i = PLAYER_INVENTORY_COLUMN_CNT; i < PLAYER_INVENTORY_LENGTH; i++) {
-        const int bi = i - PLAYER_INVENTORY_COLUMN_CNT;
-        const int c = bi % PLAYER_INVENTORY_COLUMN_CNT;
-        const int r = bi / PLAYER_INVENTORY_COLUMN_CNT;
-
-        (*positions)[i] = (s_vec_2d){
-            left + (INVENTORY_SLOT_GAP * c),
-            top + (INVENTORY_SLOT_GAP * r)
-        };
-    }
+    return (s_vec_2d){
+        top_left.x + (INVENTORY_SLOT_GAP * c),
+        top_left.y + (INVENTORY_SLOT_GAP * r)
+    };
 }
 
 void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, const s_input_state* const input_state, const s_input_state* const input_state_last) {
@@ -160,37 +136,50 @@ void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* con
     const s_vec_2d_i ui_size = UISize(display_size);
     const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
-    s_vec_2d inv_slot_positions[PLAYER_INVENTORY_LENGTH];
-    LoadPlayerInventorySlotPositions(&inv_slot_positions, ui_size);
+    for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
+        for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
+            s_inventory_slot* const slot = &world->player_inv_slots[r][c];
 
-    for (int i = 0; i < PLAYER_INVENTORY_LENGTH; i++) {
-        s_inventory_slot* const slot = &world->player_inv_slots[i];
+            const s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, ui_size);
 
-        const s_rect slot_collider = {
-            inv_slot_positions[i].x - (INVENTORY_SLOT_SIZE / 2.0f),
-            inv_slot_positions[i].y - (INVENTORY_SLOT_SIZE / 2.0f),
-            INVENTORY_SLOT_SIZE,
-            INVENTORY_SLOT_SIZE
-        };
+            const s_rect slot_collider = {
+                slot_pos.x - (INVENTORY_SLOT_SIZE / 2.0f),
+                slot_pos.y - (INVENTORY_SLOT_SIZE / 2.0f),
+                INVENTORY_SLOT_SIZE,
+                INVENTORY_SLOT_SIZE
+            };
 
-        if (IsPointInRect(cursor_ui_pos, slot_collider)) {
-            if (slot->quantity > 0) {
-                // Update cursor hover string with slot item.
-                if (slot->quantity == 1) {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
-                } else {
-                    snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
+            if (IsPointInRect(cursor_ui_pos, slot_collider)) {
+                if (slot->quantity > 0) {
+                    // Update cursor hover string with slot item.
+                    if (slot->quantity == 1) {
+                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s", g_item_types[slot->item_type].name);
+                    } else {
+                        snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d)", g_item_types[slot->item_type].name, slot->quantity);
+                    }
                 }
-            }
 
-            // Handle slot click event.
-            const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
+                // Handle slot click event.
+                const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
 
-            if (clicked) {
-                if (slot->quantity > 0 && world->cursor_item_held_quantity > 0 && slot->item_type == world->cursor_item_held_type) {
-                    const int to_add = MIN(world->cursor_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
+                if (clicked) {
+                    if (slot->quantity > 0 && world->cursor_item_held_quantity > 0 && slot->item_type == world->cursor_item_held_type) {
+                        const int to_add = MIN(world->cursor_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
 
-                    if (to_add == 0) {
+                        if (to_add == 0) {
+                            const e_item_type item_type_temp = slot->item_type;
+                            const int quantity_temp = slot->quantity;
+
+                            slot->item_type = world->cursor_item_held_type;
+                            slot->quantity = world->cursor_item_held_quantity;
+
+                            world->cursor_item_held_type = item_type_temp;
+                            world->cursor_item_held_quantity = quantity_temp;
+                        } else {
+                            slot->quantity += to_add;
+                            world->cursor_item_held_quantity -= to_add;
+                        }
+                    } else {
                         const e_item_type item_type_temp = slot->item_type;
                         const int quantity_temp = slot->quantity;
 
@@ -199,23 +188,38 @@ void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* con
 
                         world->cursor_item_held_type = item_type_temp;
                         world->cursor_item_held_quantity = quantity_temp;
-                    } else {
-                        slot->quantity += to_add;
-                        world->cursor_item_held_quantity -= to_add;
                     }
-                } else {
-                    const e_item_type item_type_temp = slot->item_type;
-                    const int quantity_temp = slot->quantity;
-
-                    slot->item_type = world->cursor_item_held_type;
-                    slot->quantity = world->cursor_item_held_quantity;
-
-                    world->cursor_item_held_type = item_type_temp;
-                    world->cursor_item_held_quantity = quantity_temp;
                 }
-            }
 
-            break;
+                break;
+            }
         }
     }
+}
+
+bool RenderPlayerInventory(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    // Draw a backdrop if the player inventory is open.
+    if (world->player_inv_open) {
+        const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+        const s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
+        RenderRect(rendering_context, bg_rect, (s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
+    }
+
+    // Draw inventory slots.
+    const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
+    const int row_cnt = world->player_inv_open ? PLAYER_INVENTORY_ROW_CNT : 1;
+
+    for (int r = 0; r < row_cnt; r++) {
+        for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
+            const s_inventory_slot* const slot = &world->player_inv_slots[r][c];
+            const s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, ui_size);
+            const s_color slot_color = r == 0 && c == world->player_inv_hotbar_slot_selected ? YELLOW : WHITE;
+
+            if (!RenderInventorySlot(rendering_context, *slot, slot_pos, slot_color, textures, fonts, temp_mem_arena)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
