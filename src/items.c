@@ -33,7 +33,7 @@ const s_item_type g_item_types[] = {
 
     [ek_item_type_copper_pickaxe] = {
         .name = "Copper Pickaxe",
-        .icon_spr = ek_sprite_item_icon_template,
+        .icon_spr = ek_sprite_copper_pickaxe_item_icon,
         .use_type = ek_item_use_type_tile_hurt,
         .use_break = 10,
         .tile_hurt_dist = 4

@@ -75,9 +75,14 @@ const s_sprite g_sprites[] = {
         .src_rect = {17, 1, 6, 6}
     },
 
+    [ek_sprite_copper_pickaxe_item_icon] = {
+        .tex = ek_texture_item_icons,
+        .src_rect = {2, 9, 12, 14}
+    },
+
     [ek_sprite_item_icon_template] = {
         .tex = ek_texture_item_icons,
-        .src_rect = {0, 8, 16, 16}
+        .src_rect = {0, 24, 16, 16}
     },
 
     [ek_sprite_projectile] = {

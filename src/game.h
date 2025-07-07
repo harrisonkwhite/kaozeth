@@ -102,6 +102,7 @@ typedef enum {
     ek_sprite_dirt_block_item_icon,
     ek_sprite_stone_block_item_icon,
     ek_sprite_grass_block_item_icon,
+    ek_sprite_copper_pickaxe_item_icon,
     ek_sprite_item_icon_template,
 
     ek_sprite_projectile,
