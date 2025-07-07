@@ -204,7 +204,7 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
 void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos) {
     const s_inventory_slot* const active_slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
-    if (active_slot->quantity > 0) {
+    if (!world->player_inv_open && active_slot->quantity > 0) {
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
 
         const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);

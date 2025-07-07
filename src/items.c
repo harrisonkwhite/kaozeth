@@ -88,6 +88,10 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
         return true;
     }
 
+    if (world->player_inv_open) {
+        return true;
+    }
+
     s_inventory_slot* const slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
     if (slot->quantity == 0) {
