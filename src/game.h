@@ -3,6 +3,7 @@
 
 #include <zfw_game.h>
 #include <zfw_utils.h>
+#include <zfw_random.h>
 
 #define GAME_TITLE "Terraria"
 
@@ -10,8 +11,8 @@
 
 #define GRAVITY 0.2f
 
-#define CAMERA_SCALE 4.0f
-#define UI_SCALE 2.0f
+#define CAMERA_SCALE 2.0f
+#define UI_SCALE 1.0f
 
 #define PLAYER_INIT_HP_MAX 100
 

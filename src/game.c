@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "game.h"
-#include "zfw_game.h"
 
 #define RESPAWN_TIME 120
 
@@ -257,9 +256,9 @@ static void CleanGame(void* const user_mem) {
 int main() {
     const s_game_info game_info = {
         .user_mem_size = sizeof(s_game),
-        .user_mem_alignment = alignof(s_game),
+        .user_mem_alignment = ALIGN_OF(s_game),
 
-        .window_init_size = {1920, 1080},
+        .window_init_size = {1280, 720},
         .window_title = "Terraria Clone",
         .window_flags = ek_window_flag_hide_cursor | ek_window_flag_resizable,
 

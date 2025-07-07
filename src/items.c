@@ -1,5 +1,4 @@
 #include "game.h"
-#include "zfw_rendering.h"
 
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
 

@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <zfw_random.h>
 #include "game.h"
-#include "zfw_rendering.h"
 
 #define RESPAWN_TIME 120
 

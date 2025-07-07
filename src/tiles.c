@@ -1,5 +1,4 @@
 #include "game.h"
-#include "zfw_math.h"
 
 #define TILEMAP_CONTACT_PRECISE_JUMP_SIZE 0.1f
 
@@ -260,7 +259,7 @@ void RenderTileHighlight(const s_rendering_context* const rendering_context, con
             const s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
 
             const s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
-            const float highlight_size = (float)(TILE_SIZE / CAMERA_SCALE) * TILE_SIZE;
+            const float highlight_size = (float)(TILE_SIZE * CAMERA_SCALE) / UI_SCALE;
             const s_rect highlight_rect = {
                 .x = highlight_pos.x,
                 .y = highlight_pos.y,

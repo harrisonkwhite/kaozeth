@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <dirent.h>
 #include <zfw_game.h>
-#include <zfw_rendering.h>
 #include "game.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
@@ -33,14 +31,61 @@ typedef struct {
     int cnt;
 } s_page_elems;
 
-static bool LoadWorldFilenames(t_world_filenames* const filenames, const char* const dir_name) {
-    assert(filenames && IS_ZERO(*filenames));
-    assert(dir_name);
+#ifdef _WIN32
+#include <windows.h>
 
-    DIR* const dir = opendir(dir_name);
+static bool LoadWorldFilenames(t_world_filenames* const filenames) {
+    assert(filenames && IS_ZERO(*filenames));
+
+    char search_path[MAX_PATH];
+    snprintf(search_path, sizeof(search_path), "*%s", WORLD_FILENAME_EXT);
+
+    WIN32_FIND_DATAA find_data;
+    const HANDLE hFind = FindFirstFileA(search_path, &find_data);
+
+    if (hFind == INVALID_HANDLE_VALUE) {
+        const DWORD err = GetLastError();
+
+        if (err == ERROR_FILE_NOT_FOUND) {
+            // No file with the extension was found.
+            return true;
+        }
+
+        fprintf(stderr, "Failed to open current directory!\n");
+        return false;
+    }
+
+    int cnt = 0;
+
+    do {
+        const char* name = find_data.cFileName;
+
+        if (DoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
+            const int name_len = strlen(name);
+
+            if (name_len >= WORLD_FILENAME_BUF_SIZE) {
+                continue;
+            }
+
+            memcpy((*filenames)[cnt], name, name_len);
+            cnt++;
+        }
+    } while (FindNextFileA(hFind, &find_data));
+
+    FindClose(hFind);
+
+    return true;
+}
+#else
+#include <dirent.h>
+
+static bool LoadWorldFilenames(t_world_filenames* const filenames) {
+    assert(filenames && IS_ZERO(*filenames));
+
+    DIR* const dir = opendir(".");
 
     if (!dir) {
-        fprintf(stderr, "Failed to open directory \"%s\"!\n", dir_name);
+        fprintf(stderr, "Failed to open current directory!\n");
         return false;
     }
 
@@ -67,6 +112,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames, const char* c
 
     return true;
 }
+#endif
 
 static int WorldCnt(const t_world_filenames* const filenames) {
     int cnt = 0;
@@ -151,7 +197,7 @@ static bool NewWorldPageAcceptButtonClick(const int index, void* const data_gene
     ZERO_OUT(data->ts->new_world_name_buf);
 
     ZERO_OUT(data->ts->world_filenames_cache);
-    return LoadWorldFilenames(&data->ts->world_filenames_cache, ".");
+    return LoadWorldFilenames(&data->ts->world_filenames_cache);
 }
 
 static bool NewWorldPageBackButtonClick(const int index, void* const data_generic) {
@@ -362,7 +408,7 @@ bool InitTitleScreen(s_title_screen* const ts) {
 
     ts->page_btn_elem_hovered_index = -1;
 
-    if (!LoadWorldFilenames(&ts->world_filenames_cache, ".")) {
+    if (!LoadWorldFilenames(&ts->world_filenames_cache)) {
         return false;
     }
 

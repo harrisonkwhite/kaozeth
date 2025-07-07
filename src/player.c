@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <zfw_math.h>
-#include <zfw_random.h>
 #include "game.h"
 
 #define PLAYER_MOVE_SPD 1.5f

@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <zfw_random.h>
 #include "game.h"
-#include "zfw_math.h"
 
 #define SLIME_VEL_X_LERP 0.2f
 #define SLIME_JUMP_HEIGHT_MIN 3.0f

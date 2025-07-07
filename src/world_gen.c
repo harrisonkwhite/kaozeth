@@ -1,4 +1,3 @@
-#include <zfw_random.h>
 #include "game.h"
 
 #define GROUND_LEVEL_BASE (TILEMAP_HEIGHT / 3)

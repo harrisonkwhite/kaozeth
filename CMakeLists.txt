@@ -13,7 +13,13 @@ add_executable(terraria_clone
     src/npcs.c
     src/tiles.c
     src/projectiles.c
+
+    src/game.h
 )
 
 target_include_directories(terraria_clone PRIVATE zeta_framework/include)
-target_link_libraries(terraria_clone PRIVATE zeta_framework m)
+target_link_libraries(terraria_clone PRIVATE zeta_framework)
+
+set_target_properties(terraria_clone PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
