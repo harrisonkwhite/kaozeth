@@ -1,20 +1,18 @@
 # Terraria Clone in C
 
-This project began as an original game, but I eventually realised it would be more productive to just clone an existing game so I could focus solely on programming technique and not have to worry about game design.
+This is a personal project I am developing to improve my programming skills.
 
-I chose Terraria because it is composed of so many different systems (e.g. world generation, lighting, liquid simulation, NPC AI, networking).
+It began as an original game, but I eventually realised it would be more productive to just clone an existing one so I could focus solely on programming technique and not have to worry about game design.
 
-This is a personal project created to improve my programming skills.
+I chose to clone Terraria specifically because it is composed of so many different interesting systems (e.g. world generation, lighting, liquid simulation, NPC AI, networking).
 
-The project uses a Raylib-esque framework I built called [Zeta Framework](https://github.com/yourusername/zeta-framework), also developed for learning purposes.
+This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple framework I made for developing 2D games using OpenGL.
 
 ---
 
 ## Building
 
-Make sure to clone the repository **recursively**.
-
-Then build using CMake:
+Make sure to clone the repository **recursively**, then build using CMake:
 
 ```
 mkdir build
@@ -34,5 +32,3 @@ cmake ..
 - Falling Tiles (e.g. Sand)  
 - Tilemap Lighting  
 - Day/Night Cycle
-
----
