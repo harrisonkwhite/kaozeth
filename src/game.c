@@ -75,6 +75,11 @@ const s_sprite g_sprites[] = {
         .src_rect = {17, 1, 6, 6}
     },
 
+    [ek_sprite_item_icon_template] = {
+        .tex = ek_texture_item_icons,
+        .src_rect = {0, 8, 16, 16}
+    },
+
     [ek_sprite_projectile] = {
         .tex = ek_texture_projectiles,
         .src_rect = {0, 2, 16, 4}

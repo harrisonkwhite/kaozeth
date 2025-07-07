@@ -33,7 +33,7 @@ const s_item_type g_item_types[] = {
 
     [ek_item_type_copper_pickaxe] = {
         .name = "Copper Pickaxe",
-        .icon_spr = ek_sprite_stone_block_item_icon,
+        .icon_spr = ek_sprite_item_icon_template,
         .use_type = ek_item_use_type_tile_hurt,
         .use_break = 10,
         .tile_hurt_dist = 4
@@ -41,14 +41,14 @@ const s_item_type g_item_types[] = {
 
     [ek_item_type_wooden_sword] = {
         .name = "Wooden Sword",
-        .icon_spr = ek_sprite_stone_block_item_icon,
+        .icon_spr = ek_sprite_item_icon_template,
         .use_type = ek_item_use_type_tile_place,
         .use_break = 10
     },
 
     [ek_item_type_wooden_bow] = {
         .name = "Wooden Bow",
-        .icon_spr = ek_sprite_stone_block_item_icon,
+        .icon_spr = ek_sprite_item_icon_template,
         .use_type = ek_item_use_type_shoot,
         .use_break = 10,
         .shoot_proj_type = ek_projectile_type_wooden_arrow,

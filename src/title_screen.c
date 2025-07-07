@@ -1,5 +1,5 @@
-#include <dirent.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <zfw_game.h>
 #include <zfw_rendering.h>
 #include "game.h"
@@ -32,8 +32,6 @@ typedef struct {
 } s_page_elems;
 
 static bool LoadWorldFilenames(t_world_filenames* const filenames, const char* const dir_name) {
-    // TODO: Make this cross-platform!
-
     assert(filenames && IS_ZERO(*filenames));
     assert(dir_name);
 
