@@ -107,13 +107,13 @@ static bool WorldsPageWorldButtonClick(const int index, void* const data_generic
 
     const int world_index = index - 1;
     assert(world_index >= 0 && world_index < WORLD_LIMIT);
-    assert(data->ts->world_filenames_cache[index][0]);
+    assert(data->ts->world_filenames_cache[world_index][0]);
 
     *data->tick_result = (s_title_screen_tick_result){
         .type = ek_title_screen_tick_result_type_load_world
     };
 
-    memcpy(data->tick_result->world_filename, data->ts->world_filenames_cache[index], sizeof(data->ts->world_filenames_cache[index]));
+    memcpy(data->tick_result->world_filename, data->ts->world_filenames_cache[world_index], sizeof(data->ts->world_filenames_cache[world_index]));
 
     return true;
 }

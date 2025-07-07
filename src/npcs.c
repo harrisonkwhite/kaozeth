@@ -174,15 +174,36 @@ static int NPCCnt(const t_npc_activity* const activity) {
     return cnt;
 }
 
-bool ProcEnemySpawning(s_world* const world) {
-    const float spawn_rate = 0.002f;
+static float GenEnemySpawnX(const float cam_x, const float cam_width, const float offs, const float max_innerness) {
+    assert(cam_width > 0.0f);
+    assert(offs >= 0.0f);
+    assert(max_innerness <= cam_width / 2.0f);
+
+    const float cam_left = cam_x - (cam_width / 2.0f);
+    const float cam_right = cam_x + (cam_width / 2.0f);
+    const float left = cam_left - offs;
+    const float right = cam_right + offs;
+
+    float x;
+
+    do {
+        x = RandRange(left, right);
+    } while (x >= cam_left + max_innerness && x < cam_right - max_innerness);
+
+    return CLAMP(x, 0.0f, WORLD_WIDTH - 1.0f);
+}
+
+bool ProcEnemySpawning(s_world* const world, const float cam_width) {
+    assert(cam_width > 0.0f);
+
+    const float spawn_rate = 0.004f;
     const int spawn_limit = 4;
 
     if (RandPerc() < spawn_rate) {
         const int npc_cnt = NPCCnt(&world->npcs.activity);
 
         if (npc_cnt < spawn_limit) {
-            const float spawn_x = RandPerc() * TILE_SIZE * TILEMAP_WIDTH;
+            const float spawn_x = GenEnemySpawnX(world->cam_pos.x, cam_width, cam_width, -(cam_width / 4.0f));
 
             if (SpawnNPC(&world->npcs, (s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime, &world->core.tilemap_core.activity) == -1) {
                 return false;

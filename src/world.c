@@ -37,6 +37,8 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
+    const s_vec_2d cam_size = CameraSize(display_size);
+
     ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
 
     if (!world->player.killed) {
@@ -66,14 +68,13 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     world->cam_pos = world->player.pos;
 
     {
-        const s_vec_2d cam_size = CameraSize(display_size);
         world->cam_pos = (s_vec_2d){
             CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
             CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
         };
     }
 
-    if (!ProcEnemySpawning(world)) {
+    if (!ProcEnemySpawning(world, cam_size.x)) {
         return false;
     }
 

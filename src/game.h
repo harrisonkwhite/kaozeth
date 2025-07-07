@@ -518,7 +518,7 @@ void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
 bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_vec_2d kb);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
-bool ProcEnemySpawning(s_world* const world);
+bool ProcEnemySpawning(s_world* const world, const float cam_width);
 
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
