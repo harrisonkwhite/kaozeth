@@ -97,7 +97,7 @@ static s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_
     assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
 
-    const s_vec_2d top_left = {ui_size.x * PLAYER_INVENTORY_TOP_LEFT_PERC.x, ui_size.y * PLAYER_INVENTORY_TOP_LEFT_PERC.y};
+    const s_vec_2d top_left = {ui_size.x * PLAYER_INVENTORY_POS_PERC.x, ui_size.y * PLAYER_INVENTORY_POS_PERC.y};
 
     return (s_vec_2d){
         top_left.x + (INVENTORY_SLOT_GAP * c),

@@ -31,11 +31,15 @@ static_assert(DMG_POPUP_TEXT_VEL_Y_MIN <= DMG_POPUP_TEXT_VEL_Y_MAX, "Invalid ran
 #define INVENTORY_SLOT_GAP 64.0f
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Will be unique per item in the future.
 
-#define PLAYER_INVENTORY_COLUMN_CNT 7
+#define PLAYER_HP_BAR_WIDTH 216.0f
+#define PLAYER_HP_BAR_HEIGHT 16.0f
+#define PLAYER_HP_POS_PERC (s_vec_2d){0.925f, 0.12f}
+
+#define PLAYER_INVENTORY_COLUMN_CNT 6
 static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slot needs an associated digit key.");
 #define PLAYER_INVENTORY_ROW_CNT 3
 #define PLAYER_INVENTORY_LEN (PLAYER_INVENTORY_COLUMN_CNT * PLAYER_INVENTORY_ROW_CNT)
-#define PLAYER_INVENTORY_TOP_LEFT_PERC (s_vec_2d){0.075f, 0.12f}
+#define PLAYER_INVENTORY_POS_PERC (s_vec_2d){0.075f, 0.12f}
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
 
 #define POPUP_TEXT_LIMIT 1024
@@ -73,6 +77,7 @@ typedef enum {
 
 typedef enum {
     ek_font_eb_garamond_24,
+    ek_font_eb_garamond_28,
     ek_font_eb_garamond_32,
     ek_font_eb_garamond_48,
     ek_font_eb_garamond_80,

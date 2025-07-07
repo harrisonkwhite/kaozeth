@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <zfw_random.h>
 #include "game.h"
+#include "zfw_rendering.h"
 
 #define RESPAWN_TIME 120
 
@@ -223,24 +224,36 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
         }
     }
 
-#if 0
     //
     // Player Health
     //
     {
-        const s_vec_2d hp_text_pos = {
-            ui_size.x / 2.0f,
-            64.0f
+        const s_vec_2d hp_pos = {
+            ui_size.x * PLAYER_HP_POS_PERC.x,
+            ui_size.y * PLAYER_HP_POS_PERC.y
+        };
+
+        const s_rect hp_bar_rect = {
+            hp_pos.x - PLAYER_HP_BAR_WIDTH,
+            hp_pos.y - (PLAYER_HP_BAR_HEIGHT / 2.0f),
+            PLAYER_HP_BAR_WIDTH,
+            PLAYER_HP_BAR_HEIGHT
+        };
+
+        RenderBarHor(rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, (s_color_rgb){1.0f, 1.0f, 1.0f}, (s_color_rgb){0});
+
+        const s_vec_2d hp_str_pos = {
+            hp_pos.x - hp_bar_rect.width - 10.0f,
+            hp_pos.y
         };
 
         char hp_str[8] = {0};
         snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
-        if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_32, fonts, hp_text_pos, ek_str_hor_align_center, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
+        if (!RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_str_pos, ek_str_hor_align_right, ek_str_ver_align_center, WHITE, temp_mem_arena)) {
             return false;
         }
     }
-#endif
 
     if (!RenderPlayerInventory(rendering_context, world, textures, fonts, temp_mem_arena)) {
         return false;
