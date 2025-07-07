@@ -16,7 +16,7 @@ static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
 
     for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
         const int grass_depth = RandRangeI(2, 4);
-        const int dirt_depth = RandRangeI(13, 17);
+        const int dirt_depth = RandRangeI(11, 15);
         assert(grass_depth < dirt_depth && level + dirt_depth <= TILEMAP_HEIGHT);
 
         for (int ty = level; ty < level + grass_depth; ty++) {

@@ -84,6 +84,52 @@ void DestroyTile(s_world* const world, const s_vec_2d_i pos) {
     SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
 }
 
+bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos) {
+    assert(world);
+    assert(IsTilePosInBounds(tile_pos));
+    assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
+
+    const s_rect tile_collider = {
+        tile_pos.x * TILE_SIZE,
+        tile_pos.y * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+    };
+
+    // Check for player.
+    const s_rect player_collider = PlayerCollider(world->player.pos);
+
+    if (DoRectsInters(tile_collider, player_collider)) {
+        return false;
+    }
+
+    // Check for NPCs.
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        const s_npc* const npc = &world->npcs.buf[i];
+        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+        if (DoRectsInters(tile_collider, npc_collider)) {
+            return false;
+        }
+    }
+
+    // Check for projectiles.
+    for (int i = 0; i < world->proj_cnt; i++) {
+        const s_projectile* const proj = &world->projectiles[i];
+        const s_rect proj_collider = ProjectileCollider(proj->type, proj->pos);
+
+        if (DoRectsInters(tile_collider, proj_collider)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider) {
     assert(tm_activity);
     assert(collider.width > 0.0f && collider.height > 0.0f);
@@ -201,21 +247,19 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
     }
 }
 
-void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos) {
+void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos) {
     const s_inventory_slot* const active_slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
     if (!world->player_inv_open && active_slot->quantity > 0) {
+        const s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, world->cam_pos, rendering_context->display_size);
+        const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
 
-        const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
+        if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, world, mouse_tile_pos)) {
+            const s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
 
-        const s_vec_2d cursor_cam_pos = DisplayToCameraPos(cursor_pos, world->cam_pos, rendering_context->display_size);
-        const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
-
-        if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
-            const s_vec_2d cursor_cam_pos_snapped_to_tilemap = {cursor_tile_pos.x * TILE_SIZE, cursor_tile_pos.y * TILE_SIZE};
-
-            const s_vec_2d highlight_pos = CameraToUIPos(cursor_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
+            const s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
             const float highlight_size = (float)(TILE_SIZE / CAMERA_SCALE) * TILE_SIZE;
             const s_rect highlight_rect = {
                 .x = highlight_pos.x,

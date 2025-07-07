@@ -10,10 +10,6 @@ const s_projectile_type g_projectile_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
 
-static inline s_rect ProjectileCollider(const e_projectile_type proj_type, const s_vec_2d pos) {
-    return ColliderFromSprite(g_projectile_types[proj_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
-}
-
 static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_vec_2d pos_before, const s_vec_2d pos_after) {
     const s_rect colliders[2] = {
         ProjectileCollider(proj_type, pos_before),

@@ -471,7 +471,7 @@ void GenWorld(s_world_core* const world_core);
 //
 extern const s_item_type g_item_types[];
 
-bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i mouse_tile_pos, const t_tilemap_activity* const tm_activity);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos);
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 void UpdateItemDrops(s_world* const world);
@@ -542,6 +542,10 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
 bool UpdateProjectiles(s_world* const world);
 void RenderProjectiles(const s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const s_textures* const textures);
 
+static inline s_rect ProjectileCollider(const e_projectile_type proj_type, const s_vec_2d pos) {
+    return ColliderFromSprite(g_projectile_types[proj_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
+}
+
 //
 // tiles.c
 //
@@ -551,6 +555,7 @@ s_rect_edges_i RectTilemapSpan(const s_rect rect);
 void PlaceTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
 void HurtTile(s_world* const world, const s_vec_2d_i pos);
 void DestroyTile(s_world* const world, const s_vec_2d_i pos);
+bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);

@@ -59,23 +59,26 @@ const s_item_type g_item_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
-bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i cursor_tile_pos, const t_tilemap_activity* const tm_activity) {
-    const int player_to_cursor_tile_dist = TileDist(player_tile_pos, cursor_tile_pos);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos) {
+    const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
+    const int player_to_mouse_tile_dist = TileDist(player_tile_pos, mouse_tile_pos);
 
     switch (g_item_types[item_type].use_type) {
         case ek_item_use_type_tile_place:
-            if (!IsTilePosInBounds(cursor_tile_pos) || IsTileActive(tm_activity, cursor_tile_pos)) {
+            if (!IsTilePosInBounds(mouse_tile_pos)
+                || IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)
+                || !IsTilePosFree(world, mouse_tile_pos)) {
                 return false;
             }
 
-            return player_to_cursor_tile_dist <= TILE_PLACE_DIST;
+            return player_to_mouse_tile_dist <= TILE_PLACE_DIST;
 
         case ek_item_use_type_tile_hurt:
-            if (!IsTilePosInBounds(cursor_tile_pos) || !IsTileActive(tm_activity, cursor_tile_pos)) {
+            if (!IsTilePosInBounds(mouse_tile_pos) || !IsTileActive(&world->core.tilemap_core.activity, mouse_tile_pos)) {
                 return false;
             }
 
-            return player_to_cursor_tile_dist <= g_item_types[item_type].tile_hurt_dist;
+            return player_to_mouse_tile_dist <= g_item_types[item_type].tile_hurt_dist;
 
         case ek_item_use_type_shoot:
             return true;
@@ -99,33 +102,28 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
         return true;
     }
 
+    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+    const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+
+    if (!IsMouseButtonDown(ek_mouse_button_code_left, input_state)
+        || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
+        return true;
+    }
+
     const s_item_type* const item_type = &g_item_types[slot->item_type];
-
-    const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
-
-    const s_vec_2d cursor_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-    const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
-
-    if (!IsItemUsable(slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
-        return true;
-    }
-
-    if (!IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
-        return true;
-    }
 
     switch (item_type->use_type) {
         case ek_item_use_type_tile_place:
-            PlaceTile(&world->core.tilemap_core, cursor_tile_pos, item_type->tile_place_type);
+            PlaceTile(&world->core.tilemap_core, mouse_tile_pos, item_type->tile_place_type);
             break;
 
         case ek_item_use_type_tile_hurt:
-            HurtTile(world, cursor_tile_pos);
+            HurtTile(world, mouse_tile_pos);
             break;
 
         case ek_item_use_type_shoot:
             {
-                const s_vec_2d dir = Vec2DDir(world->player.pos, cursor_cam_pos);
+                const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
                 const s_vec_2d vel = Vec2DScaled(dir, item_type->shoot_proj_spd);
 
                 if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
