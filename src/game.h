@@ -13,8 +13,6 @@
 #define CAMERA_SCALE 4.0f
 #define UI_SCALE 2.0f
 
-#define BUTTON_STR_BUF_SIZE 32
-
 #define PLAYER_INIT_HP_MAX 100
 
 #define WORLD_LIMIT 3
@@ -309,24 +307,7 @@ typedef struct {
     int shoot_proj_dmg;
 } s_item_type;
 
-typedef char t_world_filename[WORLD_FILENAME_BUF_SIZE];
-typedef t_world_filename t_world_filenames[WORLD_LIMIT];
-
-typedef bool (*t_button_click_func)(const int index, void* const data);
-
-static_assert(WORLD_NAME_LEN_LIMIT <= BUTTON_STR_BUF_SIZE - 1, "A button must be able to represent a maximum-length world name!");
-
-typedef struct {
-    char str[BUTTON_STR_BUF_SIZE];
-    s_vec_2d pos;
-    t_button_click_func click_func;
-    bool inactive;
-} s_button;
-
-typedef struct {
-    s_button* buf;
-    int cnt;
-} s_buttons;
+//static_assert(WORLD_NAME_LEN_LIMIT <= BUTTON_STR_BUF_SIZE - 1, "A button must be able to represent a maximum-length world name!");
 
 extern const s_sprite g_sprites[];
 
@@ -360,16 +341,45 @@ static inline s_rect ColliderFromSprite(const e_sprite spr, const s_vec_2d pos, 
 }
 
 //
-// ui.c
+// title_screen.c
 //
-s_button* GetButton(s_buttons* const btns, const int index);
-s_button* GetButtonConst(const s_buttons* const btns, const int index);
-bool LoadIndexOfFirstButtonContainingPoint(int* const index, const s_buttons* const btns, const s_vec_2d pt, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
-bool RenderButton(const s_rendering_context* const rendering_context, const s_button* const btn, const bool hovered, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+#if 0
+typedef enum {
+    ek_title_screen_tick_result_type_default,
+    ek_title_screen_tick_result_type_error,
+    ek_title_screen_tick_result_type_load_world,
+    ek_title_screen_tick_result_type_exit
+} e_title_screen_tick_result_type;
 
-//
-// titlescreen.c
-//
+typedef struct {
+    e_title_screen_tick_result_type type;
+    t_world_filename world_filename;
+} s_title_screen_tick_result;
+
+typedef enum {
+    ek_title_screen_page_home,
+    eks_title_screen_page_cnt
+} e_title_screen_page;
+
+typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
+
+typedef struct {
+    e_title_screen_page page;
+    int page_btn_hovered_index;
+
+    t_world_name_buf new_world_name_buf;
+
+    t_world_filenames world_filenames_cache;
+} s_title_screen;
+
+bool InitTitleScreen(s_title_screen* const ts);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+#endif
+
+typedef char t_world_filename[WORLD_FILENAME_BUF_SIZE];
+typedef t_world_filename t_world_filenames[WORLD_LIMIT];
+
 typedef enum {
     ek_title_screen_tick_result_type_default,
     ek_title_screen_tick_result_type_error,
@@ -395,11 +405,9 @@ typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
 
 typedef struct {
     e_title_screen_page page;
-    int page_btn_hovered_index;
-
-    t_world_name_buf new_world_name_buf;
-
+    int page_btn_elem_hovered_index;
     t_world_filenames world_filenames_cache;
+    t_world_name_buf new_world_name_buf;
 } s_title_screen;
 
 bool InitTitleScreen(s_title_screen* const ts);
