@@ -212,7 +212,7 @@ void RenderTileHighlight(const s_rendering_context* const rendering_context, con
         const s_vec_2d cursor_cam_pos = DisplayToCameraPos(cursor_pos, world->cam_pos, rendering_context->display_size);
         const s_vec_2d_i cursor_tile_pos = CameraToTilePos(cursor_cam_pos);
 
-        if (active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt && IsItemUsable(active_slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
+        if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, player_tile_pos, cursor_tile_pos, &world->core.tilemap_core.activity)) {
             const s_vec_2d cursor_cam_pos_snapped_to_tilemap = {cursor_tile_pos.x * TILE_SIZE, cursor_tile_pos.y * TILE_SIZE};
 
             const s_vec_2d highlight_pos = CameraToUIPos(cursor_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);

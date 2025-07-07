@@ -36,7 +36,7 @@ const s_item_type g_item_types[] = {
         .icon_spr = ek_sprite_stone_block_item_icon,
         .use_type = ek_item_use_type_tile_hurt,
         .use_break = 10,
-        .tile_destroy_dist = 4
+        .tile_hurt_dist = 4
     },
 
     [ek_item_type_wooden_sword] = {
@@ -59,25 +59,23 @@ const s_item_type g_item_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
-bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i mouse_tile_pos, const t_tilemap_activity* const tm_activity) {
+bool IsItemUsable(const e_item_type item_type, const s_vec_2d_i player_tile_pos, const s_vec_2d_i cursor_tile_pos, const t_tilemap_activity* const tm_activity) {
+    const int player_to_cursor_tile_dist = TileDist(player_tile_pos, cursor_tile_pos);
+
     switch (g_item_types[item_type].use_type) {
         case ek_item_use_type_tile_place:
-            return IsTilePosInBounds(mouse_tile_pos) && !IsTileActive(tm_activity, mouse_tile_pos);
-
-        case ek_item_use_type_tile_hurt:
-            if (!IsTilePosInBounds(mouse_tile_pos) || !IsTileActive(tm_activity, mouse_tile_pos)) {
+            if (!IsTilePosInBounds(cursor_tile_pos) || IsTileActive(tm_activity, cursor_tile_pos)) {
                 return false;
             }
 
-            {
-                const int dist = TileDist(player_tile_pos, mouse_tile_pos);
+            return player_to_cursor_tile_dist <= TILE_PLACE_DIST;
 
-                if (dist > g_item_types[item_type].tile_destroy_dist) {
-                    return false;
-                }
+        case ek_item_use_type_tile_hurt:
+            if (!IsTilePosInBounds(cursor_tile_pos) || !IsTileActive(tm_activity, cursor_tile_pos)) {
+                return false;
             }
 
-            return true;
+            return player_to_cursor_tile_dist <= g_item_types[item_type].tile_hurt_dist;
 
         case ek_item_use_type_shoot:
             return true;
@@ -108,31 +106,37 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
         return true;
     }
 
-    if (IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
-        switch (item_type->use_type) {
-            case ek_item_use_type_tile_place:
-                PlaceTile(&world->core.tilemap_core, cursor_tile_pos, item_type->tile_place_type);
-                break;
+    if (!IsMouseButtonDown(ek_mouse_button_code_left, input_state)) {
+        return true;
+    }
 
-            case ek_item_use_type_tile_hurt:
-                HurtTile(world, cursor_tile_pos);
-                break;
+    switch (item_type->use_type) {
+        case ek_item_use_type_tile_place:
+            PlaceTile(&world->core.tilemap_core, cursor_tile_pos, item_type->tile_place_type);
+            break;
 
-            case ek_item_use_type_shoot:
-                {
-                    const s_vec_2d dir = Vec2DDir(world->player.pos, cursor_cam_pos);
-                    const s_vec_2d vel = Vec2DScaled(dir, item_type->shoot_proj_spd);
+        case ek_item_use_type_tile_hurt:
+            HurtTile(world, cursor_tile_pos);
+            break;
 
-                    if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
-                        return false;
-                    }
+        case ek_item_use_type_shoot:
+            {
+                const s_vec_2d dir = Vec2DDir(world->player.pos, cursor_cam_pos);
+                const s_vec_2d vel = Vec2DScaled(dir, item_type->shoot_proj_spd);
+
+                if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
+                    return false;
                 }
+            }
 
-                break;
-        }
+            break;
     }
 
     world->player.item_use_break = item_type->use_break;
+
+    if (item_type->consume_on_use) {
+        slot->quantity--;
+    }
 
     return true;
 }

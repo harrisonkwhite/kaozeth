@@ -52,7 +52,7 @@ static_assert(PLAYER_INVENTORY_LENGTH >= PLAYER_INVENTORY_COLUMN_CNT, "Player in
 #define PROJECTILE_LIMIT 1024
 
 #define TILE_SIZE 8
-#define TILE_PLACE_DIST 5
+#define TILE_PLACE_DIST 4
 #define TILE_HIGHLIGHT_ALPHA 0.4f
 #define TILEMAP_WIDTH 120
 #define TILEMAP_HEIGHT 48
@@ -299,7 +299,7 @@ typedef struct {
 
     e_tile_type tile_place_type;
 
-    int tile_destroy_dist;
+    int tile_hurt_dist;
 
     e_projectile_type shoot_proj_type;
     float shoot_proj_spd;
