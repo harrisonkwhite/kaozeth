@@ -175,10 +175,8 @@ static int NPCCnt(const t_npc_activity* const activity) {
 }
 
 bool ProcEnemySpawning(s_world* const world) {
-    return true;
-
     const float spawn_rate = 0.002f;
-    const int spawn_limit = 5;
+    const int spawn_limit = 4;
 
     if (RandPerc() < spawn_rate) {
         const int npc_cnt = NPCCnt(&world->npcs.activity);

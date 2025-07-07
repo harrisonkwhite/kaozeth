@@ -512,7 +512,7 @@ bool ProcEnemySpawning(s_world* const world);
 #define NPC_ORIGIN (s_vec_2d){0.5f, 0.5f}
 
 static inline s_vec_2d NPCColliderSize(const e_npc_type npc_type) {
-    const s_sprite* const spr = &g_sprites[npc_type];
+    const s_sprite* const spr = &g_sprites[g_npc_types[npc_type].spr];
     return (s_vec_2d){spr->src_rect.width, spr->src_rect.height};
 }
 
