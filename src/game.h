@@ -155,7 +155,7 @@ typedef enum {
 
 typedef struct {
     int jump_time;
-    int jump_hor_sign;
+    float jump_hor_spd;
 } s_slime_npc;
 
 typedef union {
@@ -177,6 +177,7 @@ typedef t_byte t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
 typedef struct world s_world;
 
 typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
+typedef void (*t_npc_postspawn_func)(s_world* const world, const int npc_index);
 
 typedef struct {
     const char* name;
@@ -184,6 +185,7 @@ typedef struct {
     e_sprite spr;
 
     t_npc_tick_func tick_func;
+    t_npc_postspawn_func postspawn_func;
 
     int hp_max;
 
@@ -515,7 +517,7 @@ static inline s_rect PlayerCollider(const s_vec_2d pos) {
 //
 extern const s_npc_type g_npc_types[];
 
-int SpawnNPC(s_npcs* const npcs, const s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
+int SpawnNPC(s_world* const world, const s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
 void RenderNPCs(const s_rendering_context* const rendering_context, const s_npcs* const npcs, const s_textures* const textures);
