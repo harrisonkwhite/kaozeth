@@ -6,11 +6,13 @@ It began as an original game, but I eventually realised it would be more product
 
 I chose to clone Terraria specifically because it is composed of so many different interesting systems (e.g. world generation, lighting, liquid simulation, NPC AI, networking).
 
-This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple framework I made for developing 2D games using OpenGL.
+> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple framework I made for developing 2D games using OpenGL.
 
 ---
 
 ## Building
+
+Building and running this project has been tested on Windows and Linux.
 
 Make sure to clone the repository **recursively**, then build using CMake:
 
@@ -19,6 +21,10 @@ mkdir build
 cd build
 cmake ..
 ```
+
+For Linux, there are a number of dependencies you might need to manually install. CMake will report if any are missing.
+
+> **Important:** The game itself depends on the assets folder being in the current working directory.
 
 ---
 
