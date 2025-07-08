@@ -217,7 +217,7 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
     int elem_cnt;
 
     switch (page) {
-        case ek_title_screen_page_home: elem_cnt = 3; break;
+        case ek_title_screen_page_home: elem_cnt = 4; break;
         case ek_title_screen_page_worlds: elem_cnt = 1 + WORLD_LIMIT + 2; break;
         case ek_title_screen_page_new_world: elem_cnt = 4; break;
         case ek_title_screen_page_settings: elem_cnt = 1; break;
@@ -239,6 +239,15 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
                 switch (i) {
                     case 0:
                         elems[i] = (s_page_elem){
+                            .str = GAME_TITLE,
+                            .font = ek_font_eb_garamond_80,
+                            .padding_bottom = 48.0f
+                        };
+
+                        break;
+
+                    case 1:
+                        elems[i] = (s_page_elem){
                             .str = "Play",
                             .font = PAGE_ELEM_COMMON_FONT,
                             .padding_top = PAGE_ELEM_COMMON_PADDING / 2.0f,
@@ -249,7 +258,7 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
 
                         break;
 
-                    case 1:
+                    case 2:
                         elems[i] = (s_page_elem){
                             .str = "Settings",
                             .font = PAGE_ELEM_COMMON_FONT,
@@ -261,7 +270,7 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
 
                         break;
 
-                    case 2:
+                    case 3:
                         elems[i] = (s_page_elem){
                             .str = "Exit",
                             .font = PAGE_ELEM_COMMON_FONT,
