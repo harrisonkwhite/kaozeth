@@ -24,6 +24,8 @@ cmake ..
 
 For Linux, there are a number of dependencies you might need to manually install. CMake will report if any are missing.
 
+You can also use the "run.sh" shell script if on a platform which supports it.
+
 > **Important:** The game itself depends on the assets folder being in the current working directory.
 
 ---

@@ -1,6 +1,4 @@
 build/
 .cache/
 compile_commands.json
-run.sh
-debug.sh
 *.wrld
