@@ -11,6 +11,8 @@
 
 #define GRAVITY 0.2f
 
+#define CAMERA_LERP 0.25f
+
 #define CAMERA_SCALE 2.0f
 #define UI_SCALE 1.0f
 

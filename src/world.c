@@ -27,6 +27,8 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
 
     InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
 
+    world->cam_pos = world->player.pos;
+
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
     return true;
@@ -63,9 +65,11 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         world->player_inv_open = false;
     }
 
-    world->cam_pos = world->player.pos;
-
     {
+        const s_vec_2d cam_pos_dest = world->player.pos;
+
+        world->cam_pos = LerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
+
         world->cam_pos = (s_vec_2d){
             CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
             CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
