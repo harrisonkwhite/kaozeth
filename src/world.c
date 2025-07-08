@@ -34,12 +34,80 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
     return true;
 }
 
+static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const s_vec_2d mouse_pos, const s_world* const world, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+
+    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, world->cam_pos, display_size);
+    const s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
+
+    // TODO: The sequencing of the below should really correspond to draw layering. Maybe add some layer depth variable?
+
+    assert(hover_str_buf && IS_ZERO(*hover_str_buf));
+
+    if (world->player_inv_open) {
+        for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
+            for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
+                const s_inventory_slot* const slot = &world->player_inv_slots[r][c];
+
+                if (slot->quantity == 0) {
+                    continue;
+                }
+
+                const s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, UISize(display_size));
+
+                const s_rect slot_collider = {
+                    slot_pos.x,
+                    slot_pos.y,
+                    INVENTORY_SLOT_SIZE,
+                    INVENTORY_SLOT_SIZE
+                };
+
+                if (IsPointInRect(mouse_ui_pos, slot_collider)) {
+                    WriteItemNameStr(*hover_str_buf, sizeof(*hover_str_buf), slot->item_type, slot->quantity);
+                    break;
+                }
+            }
+        }
+    } else {
+        //
+        // Item Drops
+        //
+        for (int i = 0; i < world->item_drop_active_cnt; i++) {
+            const s_item_drop* const drop = &world->item_drops[i];
+            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
+
+            if (IsPointInRect(mouse_cam_pos, drop_collider)) {
+                WriteItemNameStr(*hover_str_buf, sizeof(*hover_str_buf), drop->item_type, drop->quantity);
+                break;
+            }
+        }
+
+        //
+        // NPC Hovering
+        //
+        for (int i = 0; i < NPC_LIMIT; i++) {
+            if (!IsNPCActive(&world->npcs.activity, i)) {
+                continue;
+            }
+
+            const s_npc* const npc = &world->npcs.buf[i];
+            const s_npc_type* const npc_type = &g_npc_types[npc->type];
+            const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+            if (IsPointInRect(mouse_cam_pos, npc_collider)) {
+                snprintf(*hover_str_buf, sizeof(*hover_str_buf), "%s (%d/%d)", npc_type->name, npc->hp, npc_type->hp_max);
+                break;
+            }
+        }
+    }
+}
+
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
     const s_vec_2d cam_size = CameraSize(display_size);
 
-    ZERO_OUT(world->cursor_hover_str); // Reset this, for it can be overwritten over the course of this tick.
+    ZERO_OUT(world->mouse_hover_str); // Reset this, for it can be overwritten over the course of this tick.
 
     if (!world->player.killed) {
         ProcPlayerMovement(world, input_state, input_state_last);
@@ -63,17 +131,6 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
         }
 
         world->player_inv_open = false;
-    }
-
-    {
-        const s_vec_2d cam_pos_dest = world->player.pos;
-
-        world->cam_pos = LerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
-
-        world->cam_pos = (s_vec_2d){
-            CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
-            CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
-        };
     }
 
     if (!ProcEnemySpawning(world, cam_size.x)) {
@@ -128,26 +185,24 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     }
 
     //
-    // NPC Hovering
+    // Camera
     //
+    {
+        const s_vec_2d cam_pos_dest = world->player.pos;
 
-    // TODO: Clean up messy state system. No need to check for the below if we're in the inventory - unless we want to perfectly model Terraria.
+        world->cam_pos = LerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
 
-    const s_vec_2d cursor_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-
-    for (int i = 0; i < NPC_LIMIT; i++) {
-        if (!IsNPCActive(&world->npcs.activity, i)) {
-            continue;
-        }
-
-        const s_npc* const npc = &world->npcs.buf[i];
-        const s_npc_type* const npc_type = &g_npc_types[npc->type];
-        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
-
-        if (IsPointInRect(cursor_cam_pos, npc_collider)) {
-            snprintf(world->cursor_hover_str, sizeof(world->cursor_hover_str), "%s (%d/%d)", npc_type->name, npc->hp, npc_type->hp_max);
-        }
+        world->cam_pos = (s_vec_2d){
+            CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
+            CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
+        };
     }
+
+    //
+    //
+    //
+    ZERO_OUT(world->mouse_hover_str);
+    LoadMouseHoverStr(&world->mouse_hover_str, input_state->mouse_pos, world, display_size);
 
     return true;
 }
@@ -156,25 +211,8 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
-    {
-        const s_vec_2d cam_tl = CameraTopLeft(world->cam_pos, rendering_context->display_size);
-        const s_vec_2d cam_size = CameraSize(rendering_context->display_size);
-
-        s_rect_edges_i tilemap_render_range = {
-            .left = floorf(cam_tl.x / TILE_SIZE),
-            .top = floorf(cam_tl.y / TILE_SIZE),
-            .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
-            .bottom = ceilf((cam_tl.y + cam_size.y) / TILE_SIZE)
-        };
-
-        // Clamp the tilemap render range within tilemap bounds.
-        tilemap_render_range.left = CLAMP(tilemap_render_range.left, 0, TILEMAP_WIDTH - 1);
-        tilemap_render_range.top = CLAMP(tilemap_render_range.top, 0, TILEMAP_HEIGHT - 1);
-        tilemap_render_range.right = CLAMP(tilemap_render_range.right, 0, TILEMAP_WIDTH);
-        tilemap_render_range.bottom = CLAMP(tilemap_render_range.bottom, 0, TILEMAP_HEIGHT);
-
-        RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
-    }
+    const s_rect_edges_i tilemap_render_range = TilemapRenderRange(world->cam_pos, rendering_context->display_size);
+    RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
         RenderPlayer(rendering_context, world, textures);
@@ -182,18 +220,18 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     RenderNPCs(rendering_context, &world->npcs, textures);
 
-    RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
-
     RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
+
+    RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
 
     Flush(rendering_context);
 }
 
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_vec_2d_i ui_size = UISize(rendering_context->display_size);
-    const s_vec_2d cursor_ui_pos = DisplayToUIPos(cursor_pos);
+    const s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
 
-    RenderTileHighlight(rendering_context, world, cursor_pos);
+    RenderTileHighlight(rendering_context, world, mouse_pos);
 
     //
     // Popup Texts
@@ -261,16 +299,19 @@ bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_w
     }
 
     //
-    // Cursor Hover String and Item
+    // Mouse Hover String
     //
-    if (world->cursor_hover_str[0]) {
-        if (!RenderStr(rendering_context, world->cursor_hover_str, ek_font_eb_garamond_24, fonts, cursor_ui_pos, ek_str_hor_align_left, ek_str_ver_align_top, WHITE, temp_mem_arena)) {
+    if (world->mouse_hover_str[0]) {
+        if (!RenderStr(rendering_context, world->mouse_hover_str, ek_font_eb_garamond_24, fonts, mouse_ui_pos, ek_str_hor_align_left, ek_str_ver_align_top, WHITE, temp_mem_arena)) {
             return false;
         }
     }
 
-    if (world->cursor_item_held_quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[world->cursor_item_held_type].icon_spr, textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, WHITE);
+    //
+    // Mouse Item Quantity
+    //
+    if (world->mouse_item_held_quantity > 0) {
+        RenderSprite(rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, WHITE);
     }
 
     return true;

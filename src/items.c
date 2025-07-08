@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "game.h"
 
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
@@ -140,6 +141,18 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
     }
 
     return true;
+}
+
+void WriteItemNameStr(char* const str_buf, const int str_buf_size, const e_item_type item_type, const int quantity) {
+    assert(str_buf);
+    assert(str_buf_size > 0);
+    assert(quantity >= 1);
+
+    if (quantity == 1) {
+        snprintf(str_buf, str_buf_size, "%s", g_item_types[item_type].name);
+    } else {
+        snprintf(str_buf, str_buf_size, "%s (%d)", g_item_types[item_type].name, quantity);
+    }
 }
 
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {

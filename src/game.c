@@ -89,7 +89,7 @@ const s_sprite g_sprites[] = {
         .src_rect = {0, 2, 16, 4}
     },
 
-    [ek_sprite_cursor] = {
+    [ek_sprite_mouse] = {
         .tex = ek_texture_misc,
         .src_rect = {2, 2, 4, 4}
     }
@@ -241,9 +241,9 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
         }
     }
 
-    // Render the cursor.
-    const s_vec_2d cursor_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
-    RenderSprite(&func_data->rendering_context, ek_sprite_cursor, &game->textures, cursor_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+    // Render the mouse.
+    const s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
+    RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
 
     Flush(&func_data->rendering_context);
 

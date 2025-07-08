@@ -11,7 +11,7 @@
 
 #define GRAVITY 0.2f
 
-#define CAMERA_LERP 0.25f
+#define CAMERA_LERP 0.3f
 
 #define CAMERA_SCALE 2.0f
 #define UI_SCALE 1.0f
@@ -65,7 +65,7 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slo
 
 #define ITEM_DROP_LIMIT 1024
 
-#define CURSOR_HOVER_STR_BUF_SIZE 32
+#define MOUSE_HOVER_STR_BUF_SIZE 32
 
 typedef enum {
     ek_texture_player,
@@ -110,7 +110,7 @@ typedef enum {
 
     ek_sprite_projectile,
 
-    ek_sprite_cursor,
+    ek_sprite_mouse,
 
     eks_sprite_cnt
 } e_sprite;
@@ -264,6 +264,8 @@ typedef struct {
     s_tilemap_core tilemap_core;
 } s_world_core;
 
+typedef char t_mouse_hover_str_buf[MOUSE_HOVER_STR_BUF_SIZE];
+
 typedef struct world {
     s_world_core core;
 
@@ -289,9 +291,9 @@ typedef struct world {
 
     s_vec_2d cam_pos;
 
-    char cursor_hover_str[CURSOR_HOVER_STR_BUF_SIZE];
-    e_item_type cursor_item_held_type;
-    int cursor_item_held_quantity;
+    t_mouse_hover_str_buf mouse_hover_str;
+    e_item_type mouse_item_held_type;
+    int mouse_item_held_quantity;
 } s_world;
 
 typedef enum {
@@ -428,7 +430,7 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
 bool InitWorld(s_world* const world, const t_world_filename* const filename);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
-bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
 
@@ -479,6 +481,7 @@ extern const s_item_type g_item_types[];
 
 bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos);
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
+void WriteItemNameStr(char* const str_buf, const int str_buf_size, const e_item_type item_type, const int quantity);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 void UpdateItemDrops(s_world* const world);
 void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures);
@@ -567,8 +570,9 @@ void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d
 void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
+s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size);
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
-void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d cursor_pos);
+void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
@@ -592,6 +596,7 @@ int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const
 bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
 bool RenderInventorySlot(const s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_vec_2d pos, const s_color outline_color, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
+s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_i ui_size);
 void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, const s_input_state* const input_state, const s_input_state* const input_state_last);
 void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 bool RenderPlayerInventory(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);

@@ -75,7 +75,7 @@ bool RenderInventorySlot(const s_rendering_context* const rendering_context, con
     return true;
 }
 
-static s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_i ui_size) {
+s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_i ui_size) {
     assert(r >= 0 && r < PLAYER_INVENTORY_ROW_CNT);
     assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
@@ -113,18 +113,6 @@ void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, co
     assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 }
 
-static void WriteItemNameStr(char* const str_buf, const int str_buf_size, const e_item_type item_type, const int quantity) {
-    assert(str_buf);
-    assert(str_buf_size > 0);
-    assert(quantity >= 1);
-
-    if (quantity == 1) {
-        snprintf(str_buf, str_buf_size, "%s", g_item_types[item_type].name);
-    } else {
-        snprintf(str_buf, str_buf_size, "%s (%d)", g_item_types[item_type].name, quantity);
-    }
-}
-
 void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
     assert(world->player_inv_open);
 
@@ -145,40 +133,35 @@ void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* con
             };
 
             if (IsPointInRect(cursor_ui_pos, slot_collider)) {
-                if (slot->quantity > 0) {
-                    // Update cursor hover string with slot item.
-                    WriteItemNameStr(world->cursor_hover_str, sizeof(world->cursor_hover_str), slot->item_type, slot->quantity);
-                }
-
                 // Handle slot click event.
                 const bool clicked = IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last);
 
                 if (clicked) {
-                    if (slot->quantity > 0 && world->cursor_item_held_quantity > 0 && slot->item_type == world->cursor_item_held_type) {
-                        const int to_add = MIN(world->cursor_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
+                    if (slot->quantity > 0 && world->mouse_item_held_quantity > 0 && slot->item_type == world->mouse_item_held_type) {
+                        const int to_add = MIN(world->mouse_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
 
                         if (to_add == 0) {
                             const e_item_type item_type_temp = slot->item_type;
                             const int quantity_temp = slot->quantity;
 
-                            slot->item_type = world->cursor_item_held_type;
-                            slot->quantity = world->cursor_item_held_quantity;
+                            slot->item_type = world->mouse_item_held_type;
+                            slot->quantity = world->mouse_item_held_quantity;
 
-                            world->cursor_item_held_type = item_type_temp;
-                            world->cursor_item_held_quantity = quantity_temp;
+                            world->mouse_item_held_type = item_type_temp;
+                            world->mouse_item_held_quantity = quantity_temp;
                         } else {
                             slot->quantity += to_add;
-                            world->cursor_item_held_quantity -= to_add;
+                            world->mouse_item_held_quantity -= to_add;
                         }
                     } else {
                         const e_item_type item_type_temp = slot->item_type;
                         const int quantity_temp = slot->quantity;
 
-                        slot->item_type = world->cursor_item_held_type;
-                        slot->quantity = world->cursor_item_held_quantity;
+                        slot->item_type = world->mouse_item_held_type;
+                        slot->quantity = world->mouse_item_held_quantity;
 
-                        world->cursor_item_held_type = item_type_temp;
-                        world->cursor_item_held_quantity = quantity_temp;
+                        world->mouse_item_held_type = item_type_temp;
+                        world->mouse_item_held_quantity = quantity_temp;
                     }
                 }
 

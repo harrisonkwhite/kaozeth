@@ -212,6 +212,28 @@ void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size
     }
 }
 
+s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+
+    const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+    const s_vec_2d cam_size = CameraSize(display_size);
+
+    s_rect_edges_i render_range = {
+        .left = floorf(cam_tl.x / TILE_SIZE),
+        .top = floorf(cam_tl.y / TILE_SIZE),
+        .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
+        .bottom = ceilf((cam_tl.y + cam_size.y) / TILE_SIZE)
+    };
+
+    // Clamp the tilemap render range within tilemap bounds.
+    render_range.left = CLAMP(render_range.left, 0, TILEMAP_WIDTH - 1);
+    render_range.top = CLAMP(render_range.top, 0, TILEMAP_HEIGHT - 1);
+    render_range.right = CLAMP(render_range.right, 0, TILEMAP_WIDTH);
+    render_range.bottom = CLAMP(render_range.bottom, 0, TILEMAP_HEIGHT);
+
+    return render_range;
+}
+
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures) {
     assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
     assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
