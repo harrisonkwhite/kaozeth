@@ -102,7 +102,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
     }
 }
 
-bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size) {
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
     const s_vec_2d cam_size = CameraSize(display_size);
@@ -140,7 +140,9 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     UpdateNPCs(world);
     ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
-    UpdateItemDrops(world);
+    if (!UpdateItemDrops(world, audio_sys, snd_types)) {
+        return false;
+    }
 
     UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_state, input_state_last);
 

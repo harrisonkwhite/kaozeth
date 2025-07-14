@@ -174,8 +174,10 @@ bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type i
     return true;
 }
 
-void UpdateItemDrops(s_world* const world) {
+bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
     assert(world);
+
+    bool collected = false; // Was an item drop collected?
 
     const s_rect player_collider = PlayerCollider(world->player.pos);
 
@@ -196,7 +198,10 @@ void UpdateItemDrops(s_world* const world) {
             const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
 
             if (DoRectsInters(player_collider, drop_collider)) {
-                AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
+                collected = true;
+
+                const int remaining = AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
+                assert(remaining == 0); // Sanity check.
 
                 // Remove this item drop.
                 world->item_drop_active_cnt--;
@@ -207,6 +212,15 @@ void UpdateItemDrops(s_world* const world) {
             }
         }
     }
+
+    if (collected) {
+        // This is called here instead of above so the same sound doesn't get stacked.
+        if (!PlaySound(audio_sys, snd_types, ek_sound_type_item_drop_collect, VOL_DEFAULT, PAN_DEFAULT, PITCH_DEFAULT)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures) {

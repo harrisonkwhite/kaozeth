@@ -401,7 +401,7 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
 // world.c
 //
 bool InitWorld(s_world* const world, const t_world_filename* const filename);
-bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size); // Returns true only if successful.
+bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
@@ -456,7 +456,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 void WriteItemNameStr(char* const str_buf, const int str_buf_size, const e_item_type item_type, const int quantity);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
-void UpdateItemDrops(s_world* const world);
+bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
 void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures);
 
 #define ITEM_DROP_ORIGIN (s_vec_2d){0.5f, 0.5f}
