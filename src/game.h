@@ -90,6 +90,13 @@ typedef enum {
 } e_font;
 
 typedef enum {
+    ek_sound_type_button_click,
+    ek_sound_type_item_drop_collect,
+
+    eks_sound_type_cnt
+} e_sound_type;
+
+typedef enum {
     ek_sprite_player,
 
     ek_sprite_slime,
@@ -353,40 +360,6 @@ static inline s_rect ColliderFromSprite(const e_sprite spr, const s_vec_2d pos, 
 //
 // title_screen.c
 //
-#if 0
-typedef enum {
-    ek_title_screen_tick_result_type_default,
-    ek_title_screen_tick_result_type_error,
-    ek_title_screen_tick_result_type_load_world,
-    ek_title_screen_tick_result_type_exit
-} e_title_screen_tick_result_type;
-
-typedef struct {
-    e_title_screen_tick_result_type type;
-    t_world_filename world_filename;
-} s_title_screen_tick_result;
-
-typedef enum {
-    ek_title_screen_page_home,
-    eks_title_screen_page_cnt
-} e_title_screen_page;
-
-typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
-
-typedef struct {
-    e_title_screen_page page;
-    int page_btn_hovered_index;
-
-    t_world_name_buf new_world_name_buf;
-
-    t_world_filenames world_filenames_cache;
-} s_title_screen;
-
-bool InitTitleScreen(s_title_screen* const ts);
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
-bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
-#endif
-
 typedef char t_world_filename[WORLD_FILENAME_BUF_SIZE];
 typedef t_world_filename t_world_filenames[WORLD_LIMIT];
 
@@ -421,7 +394,7 @@ typedef struct {
 } s_title_screen;
 
 bool InitTitleScreen(s_title_screen* const ts);
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //

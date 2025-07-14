@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <zfw_game.h>
 #include "game.h"
+#include "zfw_audio.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
 #define PAGE_ELEM_GAP 48.0f
@@ -451,7 +452,7 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const s_vec_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf);
@@ -482,6 +483,12 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
     if (ts->page_btn_elem_hovered_index != -1) {
         if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
             const s_page_elem* const elem = &page_elems.buf[ts->page_btn_elem_hovered_index];
+
+            if (!PlaySound(audio_sys, snd_types, ek_sound_type_button_click, VOL_DEFAULT, PAN_DEFAULT, PITCH_DEFAULT)) {
+                return (s_title_screen_tick_result){
+                    ek_title_screen_tick_result_type_error
+                };
+            }
 
             if (elem->button_click_func) {
                 s_page_elem_button_click_data btn_click_data = {

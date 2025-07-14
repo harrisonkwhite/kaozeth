@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <zfw_audio.h>
 #include "game.h"
 
 #define RESPAWN_TIME 120
@@ -6,6 +7,7 @@
 typedef struct {
     s_textures textures;
     s_fonts fonts;
+    s_sound_types snd_types;
 
     s_title_screen title_screen;
 
@@ -110,8 +112,6 @@ static const char* TextureIndexToFilePath(const int index) {
             assert(false && "Texture case not handled!");
             return NULL;
     }
-
-    return "assets/sprites.png";
 }
 
 static s_font_load_info FontIndexToLoadInfo(const int index) {
@@ -158,6 +158,17 @@ static s_font_load_info FontIndexToLoadInfo(const int index) {
     }
 }
 
+static const char* SoundTypeIndexToFilePath(const int index) {
+    switch ((e_sound_type)index) {
+        case ek_sound_type_button_click: return "assets/audio/button_click.wav";
+        case ek_sound_type_item_drop_collect: return "assets/audio/item_drop_collect.wav";
+
+        default:
+            assert(false && "Audio case not handled!");
+            return NULL;
+    }
+}
+
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
@@ -166,6 +177,10 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     }
 
     if (!LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+        return false;
+    }
+
+    if (!LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
         return false;
     }
 
@@ -184,7 +199,7 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
             return ek_game_tick_func_result_error;
         }
     } else {
-        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->temp_mem_arena);
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->audio_sys, &game->snd_types, func_data->temp_mem_arena);
 
         switch (tick_res.type) {
             case ek_title_screen_tick_result_type_error:
@@ -251,6 +266,10 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 }
 
 static void CleanGame(void* const user_mem) {
+    s_game* const game = user_mem;
+
+    UnloadFonts(&game->fonts);
+    UnloadTextures(&game->textures);
 }
 
 int main() {
@@ -260,7 +279,7 @@ int main() {
 
         .window_init_size = {1280, 720},
         .window_title = "Terraria Clone",
-        .window_flags = ek_window_flag_hide_cursor | ek_window_flag_resizable,
+        .window_flags = ek_window_flags_hide_cursor | ek_window_flags_resizable,
 
         .init_func = InitGame,
         .tick_func = GameTick,
