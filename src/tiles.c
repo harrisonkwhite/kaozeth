@@ -212,6 +212,25 @@ void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size
     }
 }
 
+void LoadTilemapLightLevels(t_tilemap_light_levels* const tm_light_levels, const t_tilemap_activity* const tm_activity) {
+    assert(IS_ZERO(*tm_light_levels));
+
+    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        int level = 0;
+
+        for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
+            if (IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+                level = MIN(level + 1, TILEMAP_LIGHT_LEVEL_LIMIT);
+            } else {
+                level = 0;
+            }
+
+            // NOTE: Not very cache-friendly but the vibes are in town you know what I'm sayuyiuhodsa?
+            (*tm_light_levels)[ty][tx] = level;
+        }
+    }
+}
+
 s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
 
@@ -264,6 +283,38 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
 
                 RenderSprite(rendering_context, ek_sprite_tile_break_0 + break_index, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
             }
+        }
+    }
+}
+
+void RenderTilemapLighting(const s_rendering_context* const rendering_context, const t_tilemap_light_levels* const tm_light_levels, const s_rect_edges_i range) {
+    assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
+    assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
+    assert(range.top >= 0 && range.top < TILEMAP_HEIGHT);
+    assert(range.bottom >= 0 && range.bottom <= TILEMAP_HEIGHT);
+    assert(range.left <= range.right);
+    assert(range.top <= range.bottom);
+
+    for (int ty = range.top; ty < range.bottom; ty++) {
+        for (int tx = range.left; tx < range.right; tx++) {
+            const int light_lvl = (*tm_light_levels)[ty][tx];
+
+            if (light_lvl == 0) {
+                continue;
+            }
+
+            const s_rect rect = {
+                tx * TILE_SIZE,
+                ty * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE
+            };
+
+            const s_color blend = {
+                .a = (float)light_lvl / TILEMAP_LIGHT_LEVEL_LIMIT
+            };
+
+            RenderRect(rendering_context, rect, blend);
         }
     }
 }

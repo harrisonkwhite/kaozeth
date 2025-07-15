@@ -31,6 +31,8 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
+    LoadTilemapLightLevels(&world->tilemap_light_levels, &world->core.tilemap_core.activity);
+
     return true;
 }
 
@@ -215,6 +217,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     const s_rect_edges_i tilemap_render_range = TilemapRenderRange(world->cam_pos, rendering_context->display_size);
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
+    RenderTilemapLighting(rendering_context, &world->tilemap_light_levels, tilemap_render_range);
 
     if (!world->player.killed) {
         RenderPlayer(rendering_context, world, textures);
