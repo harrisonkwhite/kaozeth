@@ -216,6 +216,7 @@ void LoadTilemapLightLevels(t_tilemap_light_levels* const tm_light_levels, const
     assert(IS_ZERO(*tm_light_levels));
 
     for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        // Downward pass.
         int level = 0;
 
         for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
@@ -227,6 +228,21 @@ void LoadTilemapLightLevels(t_tilemap_light_levels* const tm_light_levels, const
 
             // NOTE: Not very cache-friendly but the vibes are in town you know what I'm sayuyiuhodsa?
             (*tm_light_levels)[ty][tx] = level;
+        }
+
+        // Upward pass.
+        level = 0;
+
+        for (int ty = TILEMAP_HEIGHT - 1; ty >= 0; ty--) {
+            if (IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+                level = MIN(level + 1, TILEMAP_LIGHT_LEVEL_LIMIT);
+            } else {
+                level = 0;
+            }
+
+            // NOTE: Not very cache-friendly but the vibes are in town you know what I'm sayuyiuhodsa?
+            int* const level_cur = &(*tm_light_levels)[ty][tx];
+            *level_cur = MIN(*level_cur, level);
         }
     }
 }

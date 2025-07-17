@@ -115,6 +115,11 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
     switch (item_type->use_type) {
         case ek_item_use_type_tile_place:
             PlaceTile(&world->core.tilemap_core, mouse_tile_pos, item_type->tile_place_type);
+
+            // TEMP
+            ZERO_OUT(world->tilemap_light_levels);
+            LoadTilemapLightLevels(&world->tilemap_light_levels, &world->core.tilemap_core.activity);
+
             break;
 
         case ek_item_use_type_tile_hurt:
