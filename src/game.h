@@ -4,6 +4,7 @@
 #include <zfw_game.h>
 #include <zfw_utils.h>
 #include <zfw_random.h>
+#include "lighting.h"
 
 #define GAME_TITLE "Terraria"
 
@@ -66,8 +67,6 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slo
 #define ITEM_DROP_LIMIT 1024
 
 #define MOUSE_HOVER_STR_BUF_SIZE 32
-
-#define LIGHT_LEVEL_LIMIT 16
 
 typedef enum {
     ek_texture_player,
@@ -267,13 +266,6 @@ typedef struct {
     int invinc_time;
     int item_use_break;
 } s_player;
-
-typedef int t_light_level;
-
-typedef struct {
-    t_light_level* buf;
-    s_vec_2d_i size;
-} s_lightmap;
 
 typedef struct {
     int player_hp_max;
@@ -568,12 +560,7 @@ static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
 }
 
 static inline bool IsTilemapRangeValid(const s_rect_edges_i range) {
-    return range.left >= 0 && range.left < TILEMAP_WIDTH
-        && range.right >= 0 && range.right <= TILEMAP_WIDTH
-        && range.top >= 0 && range.top < TILEMAP_HEIGHT
-        && range.bottom >= 0 && range.bottom <= TILEMAP_HEIGHT
-        && range.left <= range.right
-        && range.top <= range.bottom;
+    return IsRangeValid(range, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
 }
 
 static inline int TileDist(const s_vec_2d_i a, const s_vec_2d_i b) {
@@ -598,15 +585,5 @@ s_vec_2d PlayerInventorySlotPos(const int r, const int c, const s_vec_2d_i ui_si
 void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, const s_input_state* const input_state, const s_input_state* const input_state_last);
 void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 bool RenderPlayerInventory(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
-
-//
-// lighting.c
-//
-s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, s_mem_arena* const temp_mem_arena);
-void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size);
-
-static inline bool IsLightLevelValid(const t_light_level lvl) {
-    return lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT;
-}
 
 #endif

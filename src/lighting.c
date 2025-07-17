@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "game.h"
+#include "lighting.h"
+#include "zfw_math.h"
 
 typedef struct {
     s_vec_2d_i* buf;
@@ -8,7 +9,11 @@ typedef struct {
     int len;
 } s_light_pos_queue;
 
-static bool IsLightPosInBounds(const s_vec_2d_i pos, const s_vec_2d_i map_size) {
+static inline bool IsLightLevelValid(const t_light_level lvl) {
+    return lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT;
+}
+
+static inline bool IsLightPosInBounds(const s_vec_2d_i pos, const s_vec_2d_i map_size) {
     return pos.x >= 0 && pos.x < map_size.x && pos.y >= 0 && pos.y < map_size.y;
 }
 
@@ -71,10 +76,13 @@ static inline void SetLightLevel(const s_lightmap* const map, const s_vec_2d_i p
     map->buf[IndexFrom2D(pos, map->size.x)] = lvl;
 }
 
-s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, s_mem_arena* const temp_mem_arena) {
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, const t_byte* const seed, s_mem_arena* const temp_mem_arena) {
+    assert(size.x > 0 && size.y > 0);
+    assert(seed);
+
     const s_lightmap map = {
-        .buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, TILEMAP_WIDTH * TILEMAP_HEIGHT),
-        .size = {TILEMAP_WIDTH, TILEMAP_HEIGHT}
+        .buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, size.x * size.y),
+        .size = size
     };
 
     if (!map.buf) {
@@ -95,18 +103,20 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* c
         return (s_lightmap){0};
     }
 
-    for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
-        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-            const s_vec_2d_i tp = {tx, ty};
+    for (int y = 0; y < size.y; y++) {
+        for (int x = 0; x < size.x; x++) {
+            const s_vec_2d_i pos = {x, y};
 
-            if (IsTileActive(tm_activity, tp)) {
+            const int i = IndexFrom2D(pos, size.x);
+
+            if (IsBitActive(i, seed, map.size.x * map.size.y)) {
                 continue;
             }
 
-            EnqueueLightPos(&queue, tp, map.size);
-            SetLightLevel(&map, tp, LIGHT_LEVEL_LIMIT);
+            EnqueueLightPos(&queue, pos, map.size);
+            SetLightLevel(&map, pos, LIGHT_LEVEL_LIMIT);
         }
-    }
+    } 
 
     while (queue.len > 0) {
         const s_vec_2d_i light_pos = DequeueLightPos(&queue, map.size);
@@ -147,7 +157,7 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* c
 
 void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size) {
     assert(tile_size > 0.0f);
-    assert(IsTilemapRangeValid(range));
+    assert(IsRangeValid(range, map->size));
 
     for (int ty = range.top; ty < range.bottom; ty++) {
         for (int tx = range.left; tx < range.right; tx++) {

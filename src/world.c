@@ -37,7 +37,7 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, s_m
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
-    world->lightmap = GenLightmap(&world->mem_arena, &world->core.tilemap_core.activity, temp_mem_arena);
+    world->lightmap = GenLightmap(&world->mem_arena, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT}, (const t_byte*)world->core.tilemap_core.activity, temp_mem_arena);
 
     if (IS_ZERO(world->lightmap)) {
         fprintf(stderr, "Failed to generate world lightmap!");
@@ -231,8 +231,8 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
     const s_rect_edges_i tilemap_render_range = TilemapRenderRange(world->cam_pos, rendering_context->display_size);
+
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
-    RenderLightmap(rendering_context, &world->lightmap, tilemap_render_range, TILE_SIZE);
 
     if (!world->player.killed) {
         RenderPlayer(rendering_context, world, textures);
@@ -243,6 +243,8 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
 
     RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
+
+    RenderLightmap(rendering_context, &world->lightmap, tilemap_render_range, TILE_SIZE);
 
     Flush(rendering_context);
 }
