@@ -579,4 +579,23 @@ void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selected, co
 void ProcPlayerInventoryOpenState(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size);
 bool RenderPlayerInventory(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
+//
+// lighting.c
+//
+#define LIGHT_LEVEL_LIMIT 16
+
+typedef int t_light_level;
+
+typedef struct {
+    t_light_level* buf;
+    s_vec_2d_i size;
+} s_lightmap;
+
+void LoadLightmap(s_lightmap* const map);
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const float tile_size);
+
+static inline bool IsLightLevelValid(const t_light_level lvl) {
+    return lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT;
+}
+
 #endif

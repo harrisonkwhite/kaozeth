@@ -173,7 +173,6 @@ static const char* SoundTypeIndexToFilePath(const int index) {
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-#if 0
     if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
         return false;
     }
@@ -189,7 +188,6 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     if (!InitTitleScreen(&game->title_screen)) {
         return false;
     }
-#endif
 
     return true;
 }
@@ -197,7 +195,6 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
 static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-#if 0
     if (game->in_world) {
         if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size, func_data->audio_sys, &game->snd_types)) {
             return ek_game_tick_func_result_error;
@@ -226,7 +223,6 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
             default: break;
         }
     }
-#endif
 
     return ek_game_tick_func_result_default;
 }
@@ -238,157 +234,11 @@ static void InitUIViewMatrix(t_matrix_4x4* const mat) {
     ScaleMatrix4x4(mat, UI_SCALE);
 }
 
-#define LIGHTMAP_WIDTH 32
-#define LIGHTMAP_HEIGHT 32
-
-typedef int t_lightmap[LIGHTMAP_HEIGHT][LIGHTMAP_WIDTH];
-
-#define LIGHT_LIMIT (LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT)
-
-typedef struct {
-    s_vec_2d_i buf[LIGHT_LIMIT];
-    int start;
-    int len;
-} s_light_queue;
-
-bool IsLightPosInBounds(const s_vec_2d_i pos) {
-    return pos.x >= 0 && pos.x < LIGHTMAP_WIDTH && pos.y >= 0 && pos.y < LIGHTMAP_HEIGHT;
-}
-
-bool IsLightQueueValid(const s_light_queue* const queue) {
-    if (queue->start < 0 || queue->start >= LIGHT_LIMIT || queue->len < 0 || queue->len > LIGHT_LIMIT) {
-        return false;
-    }
-
-    for (int i = 0; i < queue->len; i++) {
-        const int bi = (queue->start + i) % LIGHT_LIMIT;
-        const s_vec_2d_i light = queue->buf[bi];
-
-        if (!IsLightPosInBounds(light)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool EnqueueLight(s_light_queue* const queue, const s_vec_2d_i light_pos) {
-    assert(IsLightQueueValid(queue));
-    assert(IsLightPosInBounds(light_pos));
-
-    if (queue->len < LIGHT_LIMIT) {
-        queue->buf[(queue->start + queue->len) % LIGHT_LIMIT] = light_pos;
-        queue->len++;
-        return true;
-    }
-
-    return false;
-}
-
-s_vec_2d_i DequeueLight(s_light_queue* const queue) {
-    assert(IsLightQueueValid(queue));
-    assert(queue->len > 0);
-
-    const s_vec_2d_i light = queue->buf[queue->start];
-
-    queue->start++;
-    queue->start %= LIGHT_LIMIT;
-
-    queue->len--;
-
-    return light;
-}
-
-#define LIGHTMAP_LIGHT_LEVEL_LIMIT 16
-
-static void LoadLightmap(t_lightmap* const map, const s_vec_2d_i init_light_pos) {
-    assert(IS_ZERO(*map));
-    assert(IsLightPosInBounds(init_light_pos));
-
-    // NOTE: Modelled after BFS.
-    s_light_queue queue = {0};
-    EnqueueLight(&queue, init_light_pos);
-    (*map)[init_light_pos.y][init_light_pos.x] = LIGHTMAP_LIGHT_LEVEL_LIMIT;
-
-    EnqueueLight(&queue, (s_vec_2d_i){0});
-    (*map)[0][0] = LIGHTMAP_LIGHT_LEVEL_LIMIT;
-
-    while (queue.len > 0) {
-        const s_vec_2d_i light_pos = DequeueLight(&queue);
-
-        assert((*map)[light_pos.y][light_pos.x] > 0); // Sanity check.
-
-        const s_vec_2d_i neighbour_offsets[4] = {
-            {0, 1},
-            {0, -1},
-            {1, 0},
-            {-1, 0},
-        };
-
-        for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_offsets); i++) {
-            const s_vec_2d_i n = Vec2DISum(light_pos, neighbour_offsets[i]);
-
-            if (!IsLightPosInBounds(n)) {
-                continue;
-            }
-
-            const int new_light_val = (*map)[light_pos.y][light_pos.x] - 1;
-
-            if ((*map)[n.y][n.x] >= new_light_val) {
-                continue;
-            }
-
-            (*map)[n.y][n.x] = new_light_val;
-
-            if ((*map)[n.y][n.x] > 0) {
-                EnqueueLight(&queue, n);
-            }
-        }
-    }
-}
-
-#define LIGHTMAP_TILE_SIZE 32.0f
-
 static bool RenderGame(const s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
 
-    t_lightmap lightmap = {0};
-
-    const s_vec_2d_i mouse_light_pos = {
-        func_data->input_state->mouse_pos.x / LIGHTMAP_TILE_SIZE,
-        func_data->input_state->mouse_pos.y / LIGHTMAP_TILE_SIZE
-    };
-
-    if (IsLightPosInBounds(mouse_light_pos)) {
-        LoadLightmap(&lightmap, mouse_light_pos);
-    }
-
-    for (int ty = 0; ty < LIGHTMAP_HEIGHT; ty++) {
-        for (int tx = 0; tx < LIGHTMAP_WIDTH; tx++) {
-            const int light_lvl = lightmap[ty][tx];
-
-            if (light_lvl == LIGHTMAP_LIGHT_LEVEL_LIMIT) {
-                continue;
-            }
-
-            const s_rect rect = {
-                tx * LIGHTMAP_TILE_SIZE,
-                ty * LIGHTMAP_TILE_SIZE,
-                LIGHTMAP_TILE_SIZE,
-                LIGHTMAP_TILE_SIZE
-            };
-
-            const s_color blend = {
-                .a = 1.0f - ((float)light_lvl / LIGHTMAP_LIGHT_LEVEL_LIMIT)
-            };
-
-            RenderRect(&func_data->rendering_context, rect, blend);
-        }
-    }
-
-#if 0
     if (game->in_world) {
         RenderWorld(&func_data->rendering_context, &game->world, &game->textures);
 
@@ -410,7 +260,6 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
     // Render the mouse.
     const s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
     RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
-#endif
 
     Flush(&func_data->rendering_context);
 
