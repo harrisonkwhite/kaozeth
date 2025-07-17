@@ -12,6 +12,7 @@ add_executable(terraria_clone
     src/world_gen.c
     src/items.c
     src/inventory.c
+    src/lighting.c
     src/player.c
     src/npcs.c
     src/tiles.c

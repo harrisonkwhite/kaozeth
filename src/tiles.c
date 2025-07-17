@@ -235,12 +235,7 @@ s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i displ
 }
 
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures) {
-    assert(range.left >= 0 && range.left < TILEMAP_WIDTH);
-    assert(range.right >= 0 && range.right <= TILEMAP_WIDTH);
-    assert(range.top >= 0 && range.top < TILEMAP_HEIGHT);
-    assert(range.bottom >= 0 && range.bottom <= TILEMAP_HEIGHT);
-    assert(range.left <= range.right);
-    assert(range.top <= range.bottom);
+    assert(IsTilemapRangeValid(range));
 
     for (int ty = range.top; ty < range.bottom; ty++) {
         for (int tx = range.left; tx < range.right; tx++) {

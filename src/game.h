@@ -67,6 +67,8 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slo
 
 #define MOUSE_HOVER_STR_BUF_SIZE 32
 
+#define LIGHT_LEVEL_LIMIT 16
+
 typedef enum {
     ek_texture_player,
     ek_texture_npcs,
@@ -266,6 +268,13 @@ typedef struct {
     int item_use_break;
 } s_player;
 
+typedef int t_light_level;
+
+typedef struct {
+    t_light_level* buf;
+    s_vec_2d_i size;
+} s_lightmap;
+
 typedef struct {
     int player_hp_max;
     s_tilemap_core tilemap_core;
@@ -273,8 +282,14 @@ typedef struct {
 
 typedef char t_mouse_hover_str_buf[MOUSE_HOVER_STR_BUF_SIZE];
 
+#define WORLD_MEM_ARENA_SIZE ((1 << 20) * 2)
+
 typedef struct world {
+    s_mem_arena mem_arena;
+
     s_world_core core;
+
+    s_lightmap lightmap;
 
     int respawn_time;
 
@@ -400,7 +415,8 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
 //
 // world.c
 //
-bool InitWorld(s_world* const world, const t_world_filename* const filename);
+bool InitWorld(s_world* const world, const t_world_filename* const filename, s_mem_arena* const temp_mem_arena);
+void CleanWorld(s_world* const world);
 bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool RenderWorldUI(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
@@ -551,6 +567,15 @@ static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
 }
 
+static inline bool IsTilemapRangeValid(const s_rect_edges_i range) {
+    return range.left >= 0 && range.left < TILEMAP_WIDTH
+        && range.right >= 0 && range.right <= TILEMAP_WIDTH
+        && range.top >= 0 && range.top < TILEMAP_HEIGHT
+        && range.bottom >= 0 && range.bottom <= TILEMAP_HEIGHT
+        && range.left <= range.right
+        && range.top <= range.bottom;
+}
+
 static inline int TileDist(const s_vec_2d_i a, const s_vec_2d_i b) {
     return Dist((s_vec_2d){a.x, a.y}, (s_vec_2d){b.x, b.y});
 }
@@ -577,17 +602,8 @@ bool RenderPlayerInventory(const s_rendering_context* const rendering_context, c
 //
 // lighting.c
 //
-#define LIGHT_LEVEL_LIMIT 16
-
-typedef int t_light_level;
-
-typedef struct {
-    t_light_level* buf;
-    s_vec_2d_i size;
-} s_lightmap;
-
-void LoadLightmap(s_lightmap* const map);
-void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const float tile_size);
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, s_mem_arena* const temp_mem_arena);
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size);
 
 static inline bool IsLightLevelValid(const t_light_level lvl) {
     return lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT;

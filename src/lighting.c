@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "game.h"
 
 typedef struct {
@@ -12,7 +13,10 @@ static bool IsLightPosInBounds(const s_vec_2d_i pos, const s_vec_2d_i map_size) 
 }
 
 static bool IsLightPosQueueValid(const s_light_pos_queue* const queue, const s_vec_2d_i map_size) {
-    if (queue->start < 0 || queue->start >= queue->cap || queue->len < 0 || queue->len > queue->cap) {
+    if (!queue->buf
+        || queue->cap <= 0
+        || queue->start < 0 || queue->start >= queue->cap
+        || queue->len < 0 || queue->len > queue->cap) {
         return false;
     }
 
@@ -67,23 +71,47 @@ static inline void SetLightLevel(const s_lightmap* const map, const s_vec_2d_i p
     map->buf[IndexFrom2D(pos, map->size.x)] = lvl;
 }
 
-void LoadLightmap(s_lightmap* const map) {
-    assert(IS_ZERO(*map));
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, s_mem_arena* const temp_mem_arena) {
+    const s_lightmap map = {
+        .buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, TILEMAP_WIDTH * TILEMAP_HEIGHT),
+        .size = {TILEMAP_WIDTH, TILEMAP_HEIGHT}
+    };
+
+    if (!map.buf) {
+        fprintf(stderr, "Failed to allocate memory for lightmap!\n");
+        return (s_lightmap){0};
+    }
 
     // NOTE: Modelled after BFS.
-    s_light_pos_queue queue = {0};
+    const int light_limit = map.size.x * map.size.y;
 
-    for (int ty = 0; ty < map->size.y / 4; ty++) {
-        for (int tx = 0; tx < map->size.x / 4; tx++) {
-            EnqueueLightPos(&queue, (s_vec_2d_i){tx, ty}, map->size);
-            SetLightLevel(map, (s_vec_2d_i){tx, ty}, LIGHT_LEVEL_LIMIT);
+    s_light_pos_queue queue = {
+        .buf = MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, s_vec_2d_i, light_limit),
+        .cap = light_limit
+    };
+
+    if (!queue.buf) {
+        fprintf(stderr, "Failed to allocate memory for light position queue!\n");
+        return (s_lightmap){0};
+    }
+
+    for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            const s_vec_2d_i tp = {tx, ty};
+
+            if (IsTileActive(tm_activity, tp)) {
+                continue;
+            }
+
+            EnqueueLightPos(&queue, tp, map.size);
+            SetLightLevel(&map, tp, LIGHT_LEVEL_LIMIT);
         }
     }
 
     while (queue.len > 0) {
-        const s_vec_2d_i light_pos = DequeueLightPos(&queue, map->size);
+        const s_vec_2d_i light_pos = DequeueLightPos(&queue, map.size);
 
-        assert(LightLevel(map, light_pos) > 0); // Sanity check.
+        assert(LightLevel(&map, light_pos) > 0); // Sanity check.
 
         const s_vec_2d_i neighbour_pos_offsets[4] = {
             {0, 1},
@@ -95,31 +123,34 @@ void LoadLightmap(s_lightmap* const map) {
         for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
             const s_vec_2d_i neighbour_pos = Vec2DISum(light_pos, neighbour_pos_offsets[i]);
 
-            if (!IsLightPosInBounds(neighbour_pos, map->size)) {
+            if (!IsLightPosInBounds(neighbour_pos, map.size)) {
                 continue;
             }
 
-            const t_light_level new_neighbour_light_level = LightLevel(map, light_pos) - 1;
+            const t_light_level new_neighbour_light_level = LightLevel(&map, light_pos) - 1;
             assert(IsLightLevelValid(new_neighbour_light_level));
 
-            if (LightLevel(map, neighbour_pos) >= new_neighbour_light_level) {
+            if (LightLevel(&map, neighbour_pos) >= new_neighbour_light_level) {
                 continue;
             }
 
-            SetLightLevel(map, neighbour_pos, new_neighbour_light_level);
+            SetLightLevel(&map, neighbour_pos, new_neighbour_light_level);
 
-            if (LightLevel(map, neighbour_pos) > 0) {
-                EnqueueLightPos(&queue, neighbour_pos, map->size);
+            if (LightLevel(&map, neighbour_pos) > 0) {
+                EnqueueLightPos(&queue, neighbour_pos, map.size);
             }
         }
     }
+
+    return map;
 }
 
-void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const float tile_size) {
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size) {
     assert(tile_size > 0.0f);
+    assert(IsTilemapRangeValid(range));
 
-    for (int ty = 0; ty < map->size.y; ty++) {
-        for (int tx = 0; tx < map->size.x; tx++) {
+    for (int ty = range.top; ty < range.bottom; ty++) {
+        for (int tx = range.left; tx < range.right; tx++) {
             const t_light_level light_lvl = LightLevel(map, (s_vec_2d_i){tx, ty});
 
             assert(IsLightLevelValid(light_lvl));

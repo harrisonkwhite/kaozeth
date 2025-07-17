@@ -209,11 +209,11 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
             case ek_title_screen_tick_result_type_load_world:
                 ZERO_OUT(game->title_screen);
 
-                game->in_world = true;
-
-                if (!InitWorld(&game->world, &tick_res.world_filename)) {
+                if (!InitWorld(&game->world, &tick_res.world_filename, func_data->temp_mem_arena)) {
                     return ek_game_tick_func_result_error;
                 }
+
+                game->in_world = true;
 
                 break;
 
@@ -268,6 +268,10 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
 
 static void CleanGame(void* const user_mem) {
     s_game* const game = user_mem;
+
+    if (game->in_world) {
+        CleanWorld(&game->world);
+    }
 
     UnloadFonts(&game->fonts);
     UnloadTextures(&game->textures);

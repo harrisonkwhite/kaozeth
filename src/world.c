@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_utils.h"
 
 #define RESPAWN_TIME 120
 
@@ -17,9 +18,14 @@ static void InitCameraViewMatrix(t_matrix_4x4* const mat, const s_vec_2d cam_pos
     ScaleMatrix4x4(mat, CAMERA_SCALE);
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename) {
+bool InitWorld(s_world* const world, const t_world_filename* const filename, s_mem_arena* const temp_mem_arena) {
     assert(world && IS_ZERO(*world));
     assert(filename);
+
+    if (!InitMemArena(&world->mem_arena, WORLD_MEM_ARENA_SIZE)) {
+        fprintf(stderr, "Failed to initialise world memory arena!\n");
+        return false;
+    }
 
     if (!LoadWorldCoreFromFile(&world->core, filename)) {
         return false;
@@ -31,7 +37,18 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename) {
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
+    world->lightmap = GenLightmap(&world->mem_arena, &world->core.tilemap_core.activity, temp_mem_arena);
+
+    if (IS_ZERO(world->lightmap)) {
+        fprintf(stderr, "Failed to generate world lightmap!");
+        return false;
+    }
+
     return true;
+}
+
+void CleanWorld(s_world* const world) {
+    CleanMemArena(&world->mem_arena);
 }
 
 static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const s_vec_2d mouse_pos, const s_world* const world, const s_vec_2d_i display_size) {
@@ -215,6 +232,7 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     const s_rect_edges_i tilemap_render_range = TilemapRenderRange(world->cam_pos, rendering_context->display_size);
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
+    RenderLightmap(rendering_context, &world->lightmap, tilemap_render_range, TILE_SIZE);
 
     if (!world->player.killed) {
         RenderPlayer(rendering_context, world, textures);
