@@ -59,7 +59,6 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slo
 #define TILE_HIGHLIGHT_ALPHA 0.4f
 #define TILEMAP_WIDTH 640
 #define TILEMAP_HEIGHT 200
-#define TILEMAP_LIGHT_LEVEL_LIMIT 10
 
 #define WORLD_WIDTH (TILEMAP_WIDTH * TILE_SIZE)
 #define WORLD_HEIGHT (TILEMAP_HEIGHT * TILE_SIZE)
@@ -256,7 +255,6 @@ typedef struct {
 } s_tilemap_core;
 
 typedef int t_tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
-typedef int t_tilemap_light_levels[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 
 typedef struct {
     bool killed;
@@ -291,7 +289,6 @@ typedef struct world {
     int item_drop_active_cnt;
 
     t_tilemap_tile_lifes tilemap_tile_lifes;
-    t_tilemap_light_levels tilemap_light_levels;
 
     bool player_inv_open;
     s_inventory_slot player_inv_slots[PLAYER_INVENTORY_ROW_CNT][PLAYER_INVENTORY_COLUMN_CNT];
@@ -546,10 +543,8 @@ void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d
 void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-void LoadTilemapLightLevels(t_tilemap_light_levels* const tm_light_levels, const t_tilemap_activity* const tm_activity);
 s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size);
 void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
-void RenderTilemapLighting(const s_rendering_context* const rendering_context, const t_tilemap_light_levels* const tm_light_levels, const s_rect_edges_i range);
 void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos);
 
 static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
