@@ -299,7 +299,7 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
     s_game* const game = func_data->user_mem;
 
     if (game->in_world) {
-        if (!WorldTick(&game->world, func_data->input_state, func_data->input_state_last, func_data->window_state.size, func_data->audio_sys, &game->snd_types)) {
+        if (!WorldTick(&game->world, &game->settings, func_data->input_state, func_data->input_state_last, func_data->window_state.size, func_data->audio_sys, &game->snd_types)) {
             return ek_game_tick_func_result_error;
         }
     } else {

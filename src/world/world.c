@@ -50,7 +50,7 @@ void CleanWorld(s_world* const world) {
     CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
     const s_vec_2d cam_size = CameraSize(display_size);
@@ -84,7 +84,7 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     UpdateNPCs(world);
     ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
-    if (!UpdateItemDrops(world, audio_sys, snd_types)) {
+    if (!UpdateItemDrops(world, audio_sys, snd_types, settings)) {
         return false;
     }
 
@@ -104,19 +104,17 @@ bool WorldTick(s_world* const world, const s_input_state* const input_state, con
     {
         const s_vec_2d cam_pos_dest = world->player.pos;
 
-        world->cam_pos = LerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
+        if (SettingToggle(settings, ek_setting_smooth_camera)) {
+            world->cam_pos = LerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
 
-        world->cam_pos = (s_vec_2d){
-            CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
-            CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
-        };
+            world->cam_pos = (s_vec_2d){
+                CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
+                CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
+            };
+        } else {
+            world->cam_pos = cam_pos_dest;
+        }
     }
-
-    //
-    //
-    //
-    //ZERO_OUT(world->mouse_hover_str);
-    //LoadMouseHoverStr(&world->mouse_hover_str, input_state->mouse_pos, world, display_size);
 
     return true;
 }

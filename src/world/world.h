@@ -256,7 +256,7 @@ static inline s_vec_2d CameraToUIPos(const s_vec_2d pos, const s_vec_2d cam_pos,
 //
 bool InitWorld(s_world* const world, const t_world_filename* const filename, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
-bool WorldTick(s_world* const world, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
+bool WorldTick(s_world* const world, const t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
@@ -370,7 +370,7 @@ static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_ve
 bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos);
 bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size);
 bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity);
-bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types);
+bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, const t_settings* const settings);
 void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures);
 
 static inline s_vec_2d ItemDropColliderSize(const e_item_type item_type) {

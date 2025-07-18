@@ -104,7 +104,7 @@ bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type i
     return true;
 }
 
-bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
+bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, const t_settings* const settings) {
     assert(world);
 
     bool collected = false; // Was an item drop collected?
@@ -145,7 +145,7 @@ bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s
 
     if (collected) {
         // This is called here instead of above so the same sound doesn't get stacked.
-        if (!PlaySound(audio_sys, snd_types, ek_sound_type_item_drop_collect, VOL_DEFAULT, PAN_DEFAULT, PITCH_DEFAULT)) {
+        if (!PlaySound(audio_sys, snd_types, ek_sound_type_item_drop_collect, VOL_DEFAULT * SettingPerc(settings, ek_setting_volume), PAN_DEFAULT, PITCH_DEFAULT)) {
             return false;
         }
     }

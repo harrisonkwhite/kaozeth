@@ -541,12 +541,6 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
         if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
             const s_page_elem* const elem = &page_elems.buf[ts->page_btn_elem_hovered_index];
 
-            if (!PlaySound(audio_sys, snd_types, ek_sound_type_button_click, VOL_DEFAULT, PAN_DEFAULT, PITCH_DEFAULT)) {
-                return (s_title_screen_tick_result){
-                    ek_title_screen_tick_result_type_error
-                };
-            }
-
             if (elem->button_click_func) {
                 s_page_elem_button_click_data btn_click_data = {
                     .ts = ts,
@@ -561,6 +555,12 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
                 }
             } else {
                 assert(false && "Button click function not set!");
+            }
+
+            if (!PlaySound(audio_sys, snd_types, ek_sound_type_button_click, SettingPerc(settings, ek_setting_volume), PAN_DEFAULT, PITCH_DEFAULT)) {
+                return (s_title_screen_tick_result){
+                    ek_title_screen_tick_result_type_error
+                };
             }
         }
     }
