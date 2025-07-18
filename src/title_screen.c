@@ -10,6 +10,7 @@ static_assert(WORLD_NAME_LEN_LIMIT <= PAGE_ELEM_STR_BUF_SIZE - 1, "A page elemen
 
 typedef struct {
     s_title_screen* ts;
+    t_settings* settings;
     s_title_screen_tick_result* tick_result;
 } s_page_elem_button_click_data;
 
@@ -207,20 +208,48 @@ static bool NewWorldPageBackButtonClick(const int index, void* const data_generi
     return true;
 }
 
+static bool SettingsPageSettingButtonClick(const int index, void* const data_generic) {
+    const s_page_elem_button_click_data* const data = data_generic;
+
+    assert(index >= 0 && index < eks_setting_cnt);
+
+    int limit;
+    int inc = 1;
+
+    switch (g_settings[index].type) {
+        case ek_setting_type_toggle:
+            limit = 1;
+            break;
+
+        case ek_setting_type_perc:
+            limit = 100;
+            inc = 5;
+            break;
+    }
+
+    if ((*data->settings)[index] == limit) {
+        (*data->settings)[index] = 0;
+    } else {
+        (*data->settings)[index] += inc;
+    }
+
+    return true;
+}
+
 static bool SettingsPageBackButtonClick(const int index, void* const data_generic) {
     const s_page_elem_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_home;
     return true;
 }
 
-static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf) {
+static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
     int elem_cnt;
 
     switch (page) {
         case ek_title_screen_page_home: elem_cnt = 4; break;
         case ek_title_screen_page_worlds: elem_cnt = 1 + WORLD_LIMIT + 2; break;
         case ek_title_screen_page_new_world: elem_cnt = 4; break;
-        case ek_title_screen_page_settings: elem_cnt = 1; break;
+        case ek_title_screen_page_settings: elem_cnt = eks_setting_cnt + 1; break;
 
         default:
             assert(false && "Unhandled page case!");
@@ -364,13 +393,42 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
             break;
 
         case ek_title_screen_page_settings:
-            elems[0] = (s_page_elem){
+            for (int i = 0; i < eks_setting_cnt; i++) {
+                elems[i] = (s_page_elem){
+                    .font = PAGE_ELEM_COMMON_FONT,
+
+                    .button = true,
+                    .button_click_func = SettingsPageSettingButtonClick
+                };
+
+                switch ((e_setting_type)g_settings[i].type) {
+                    case ek_setting_type_toggle:
+                        if (SettingToggle(settings, i)) {
+                            snprintf(elems[i].str, sizeof(elems[i].str), "%s: Enabled", g_settings[i].name);
+                        } else {
+                            snprintf(elems[i].str, sizeof(elems[i].str), "%s: Disabled", g_settings[i].name);
+                        }
+
+                        break;
+
+                    case ek_setting_type_perc:
+                        snprintf(elems[i].str, sizeof(elems[i].str), "%s: %d%%", g_settings[i].name, (int)(*settings)[i]);
+                        break;
+                }
+
+            }
+
+            elems[eks_setting_cnt] = (s_page_elem){
                 .str = "Back",
                 .font = PAGE_ELEM_COMMON_FONT,
                 .button = true,
                 .button_click_func = SettingsPageBackButtonClick
-            }; 
+            };
 
+            break;
+
+        default:
+            assert(false && "Unhandled switch case!");
             break;
     }
 
@@ -451,10 +509,10 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const s_vec_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
-    const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf);
+    const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
     if (IS_ZERO(page_elems)) {
         return (s_title_screen_tick_result){
@@ -492,6 +550,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
             if (elem->button_click_func) {
                 s_page_elem_button_click_data btn_click_data = {
                     .ts = ts,
+                    .settings = settings,
                     .tick_result = &result
                 };
 
@@ -535,8 +594,8 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, const s_inp
     return result;
 }
 
-bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
-    const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf);
+bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
     if (IS_ZERO(page_elems)) {
         return false;

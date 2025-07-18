@@ -73,6 +73,37 @@ typedef struct {
 
 extern const s_sprite g_sprites[];
 
+typedef enum {
+    ek_setting_type_toggle,
+    ek_setting_type_perc
+} e_setting_type;
+
+typedef enum {
+    ek_setting_smooth_camera,
+    ek_setting_volume,
+
+    eks_setting_cnt
+} e_setting;
+
+typedef struct {
+    e_setting_type type;
+    const char* name;
+} s_setting;
+
+typedef t_byte t_settings[eks_setting_cnt];
+
+extern const s_setting g_settings[];
+
+static inline bool SettingToggle(const t_settings* const settings, const e_setting setting) {
+    assert(g_settings[setting].type == ek_setting_type_toggle);
+    return (*settings)[setting];
+}
+
+static inline float SettingPerc(const t_settings* const settings, const e_setting setting) {
+    assert(g_settings[setting].type == ek_setting_type_perc);
+    return (float)(*settings)[setting] / 100.0f;
+}
+
 static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_textures* const textures, const s_vec_2d pos, const s_vec_2d origin, const s_vec_2d scale, const float rot, const s_color blend) {
     RenderTexture(context, g_sprites[spr].tex, textures, g_sprites[spr].src_rect, pos, origin, scale, rot, blend);
 }

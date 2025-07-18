@@ -10,6 +10,8 @@ typedef struct {
     s_fonts fonts;
     s_sound_types snd_types;
 
+    t_settings settings;
+
     s_title_screen title_screen;
 
     bool in_world;
@@ -187,6 +189,20 @@ const s_item_type g_item_types[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
+const s_setting g_settings[] = {
+    [ek_setting_smooth_camera] = {
+        .type = ek_setting_type_toggle,
+        .name = "Smooth Camera"
+    },
+
+    [ek_setting_volume] = {
+        .type = ek_setting_type_perc,
+        .name = "Volume"
+    }
+};
+
+static_assert(STATIC_ARRAY_LEN(g_settings) == eks_setting_cnt, "Invalid array length!");
+
 static const char* TextureIndexToFilePath(const int index) {
     switch ((e_texture)index) {
         case ek_texture_player: return "assets/textures/player.png";
@@ -287,7 +303,7 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
             return ek_game_tick_func_result_error;
         }
     } else {
-        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->audio_sys, &game->snd_types, func_data->temp_mem_arena);
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, &game->settings, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->audio_sys, &game->snd_types, func_data->temp_mem_arena);
 
         switch (tick_res.type) {
             case ek_title_screen_tick_result_type_error:
@@ -339,7 +355,7 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
         ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
-        if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     }
