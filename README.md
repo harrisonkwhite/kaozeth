@@ -1,5 +1,11 @@
 # Terraria Clone in C
 
+<img src="https://github.com/user-attachments/assets/51337b89-61ac-4869-9b24-da9d5ed54959" alt="Terraria Clone Screenshot" style="max-width: 100%; height: auto;" />
+
+---
+
+## About
+
 This is a personal project I am developing to improve my programming skills.
 
 It began as an original game, but I eventually realised it would be more productive to just clone an existing one so I could focus solely on programming technique and not have to worry about game design.
