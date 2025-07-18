@@ -7,18 +7,26 @@ add_subdirectory(zeta_framework)
 
 add_executable(terraria_clone
     src/game.c
-    src/title_screen.c
-    src/world.c
-    src/world_gen.c
-    src/items.c
-    src/inventory.c
-    src/lighting.c
-    src/player.c
-    src/npcs.c
-    src/tiles.c
-    src/projectiles.c
-
     src/game.h
+
+    src/inventory.c
+    src/inventory.h
+
+    src/lighting.c
+    src/lighting.h
+
+    src/title_screen.c
+    src/title_screen.h
+
+    src/world/world.c
+    src/world/world_ui.c
+    src/world/world_gen.c
+    src/world/player.c
+    src/world/npcs.c
+    src/world/projectiles.c
+    src/world/tiles.c
+    src/world/items.c
+    src/world/world.h
 )
 
 target_include_directories(terraria_clone PRIVATE zeta_framework/include)

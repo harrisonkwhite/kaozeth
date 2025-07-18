@@ -1,14 +1,5 @@
 #include <stdio.h>
-#include "game.h"
-
-const s_projectile_type g_projectile_types[] = {
-    [ek_projectile_type_wooden_arrow] = {
-        .spr = ek_sprite_projectile,
-        .flags = ek_projectile_type_flags_rot_is_dir
-    }
-};
-
-static_assert(STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
+#include "world.h"
 
 static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_vec_2d pos_before, const s_vec_2d pos_after) {
     const s_rect colliders[2] = {

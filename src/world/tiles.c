@@ -1,26 +1,6 @@
-#include "game.h"
+#include "world.h"
 
 #define TILEMAP_CONTACT_PRECISE_JUMP_SIZE 0.1f
-
-const s_tile_type g_tile_types[] = {
-    [ek_tile_type_dirt] = {
-        .spr = ek_sprite_dirt_tile,
-        .drop_item = ek_item_type_dirt_block,
-        .life = 5
-    },
-    [ek_tile_type_stone] = {
-        .spr = ek_sprite_stone_tile,
-        .drop_item = ek_item_type_stone_block,
-        .life = 8
-    },
-    [ek_tile_type_grass] = {
-        .spr = ek_sprite_grass_tile,
-        .drop_item = ek_item_type_grass_block,
-        .life = 3
-    }
-};
-
-static_assert(STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
 
 static void ActivateTile(t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
     assert(tm_activity);
@@ -259,31 +239,6 @@ void RenderTilemap(const s_rendering_context* const rendering_context, const s_t
 
                 RenderSprite(rendering_context, ek_sprite_tile_break_0 + break_index, textures, tile_world_pos, VEC_2D_ZERO, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
             }
-        }
-    }
-}
-
-void RenderTileHighlight(const s_rendering_context* const rendering_context, const s_world* const world, const s_vec_2d mouse_pos) {
-    const s_inventory_slot* const active_slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
-
-    if (!world->player_inv_open && active_slot->quantity > 0) {
-        const s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, world->cam_pos, rendering_context->display_size);
-        const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
-
-        const s_item_type* const active_item = &g_item_types[active_slot->item_type];
-
-        if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, world, mouse_tile_pos)) {
-            const s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
-
-            const s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
-            const float highlight_size = (float)(TILE_SIZE * CAMERA_SCALE) / UI_SCALE;
-            const s_rect highlight_rect = {
-                .x = highlight_pos.x,
-                .y = highlight_pos.y,
-                .width = highlight_size,
-                .height = highlight_size
-            };
-            RenderRect(rendering_context, highlight_rect, (s_color){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
         }
     }
 }

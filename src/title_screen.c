@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <zfw_game.h>
 #include "game.h"
-#include "zfw_audio.h"
+#include "title_screen.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
 #define PAGE_ELEM_GAP 48.0f

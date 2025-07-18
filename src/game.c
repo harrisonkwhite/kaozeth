@@ -1,7 +1,7 @@
 #include <stdlib.h>
-#include <zfw_audio.h>
 #include "game.h"
-#include "zfw_utils.h"
+#include "world/world.h"
+#include "title_screen.h"
 
 #define RESPAWN_TIME 120
 
@@ -99,6 +99,93 @@ const s_sprite g_sprites[] = {
 };
 
 static_assert(STATIC_ARRAY_LEN(g_sprites) == eks_sprite_cnt, "Invalid array length!");
+
+const s_projectile_type g_projectile_types[] = {
+    [ek_projectile_type_wooden_arrow] = {
+        .spr = ek_sprite_projectile,
+        .flags = ek_projectile_type_flags_rot_is_dir
+    }
+};
+
+static_assert(STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
+
+const s_tile_type g_tile_types[] = {
+    [ek_tile_type_dirt] = {
+        .spr = ek_sprite_dirt_tile,
+        .drop_item = ek_item_type_dirt_block,
+        .life = 5
+    },
+    [ek_tile_type_stone] = {
+        .spr = ek_sprite_stone_tile,
+        .drop_item = ek_item_type_stone_block,
+        .life = 8
+    },
+    [ek_tile_type_grass] = {
+        .spr = ek_sprite_grass_tile,
+        .drop_item = ek_item_type_grass_block,
+        .life = 3
+    }
+};
+
+#define TILE_PLACE_DEFAULT_USE_BREAK 2
+
+static_assert(STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
+
+const s_item_type g_item_types[] = {
+    [ek_item_type_dirt_block] = {
+        .name = "Dirt Block",
+        .icon_spr = ek_sprite_dirt_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_dirt
+    },
+
+    [ek_item_type_stone_block] = {
+        .name = "Stone Block",
+        .icon_spr = ek_sprite_stone_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_stone
+    },
+
+    [ek_item_type_grass_block] = {
+        .name = "Grass Block",
+        .icon_spr = ek_sprite_grass_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_grass
+    },
+
+    [ek_item_type_copper_pickaxe] = {
+        .name = "Copper Pickaxe",
+        .icon_spr = ek_sprite_copper_pickaxe_item_icon,
+        .use_type = ek_item_use_type_tile_hurt,
+        .use_break = 10,
+        .tile_hurt_dist = 4
+    },
+
+    [ek_item_type_wooden_sword] = {
+        .name = "Wooden Sword",
+        .icon_spr = ek_sprite_item_icon_template,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = 10
+    },
+
+    [ek_item_type_wooden_bow] = {
+        .name = "Wooden Bow",
+        .icon_spr = ek_sprite_item_icon_template,
+        .use_type = ek_item_use_type_shoot,
+        .use_break = 10,
+        .shoot_proj_type = ek_projectile_type_wooden_arrow,
+        .shoot_proj_spd = 7.0f,
+        .shoot_proj_dmg = 3
+    }
+};
+
+static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
 static const char* TextureIndexToFilePath(const int index) {
     switch ((e_texture)index) {

@@ -38,5 +38,4 @@ You can also use the "run.sh" shell script if on a platform which supports it.
 - Biomes  
 - Liquids  
 - Falling Tiles (e.g. Sand)  
-- Tilemap Lighting  
 - Day/Night Cycle
