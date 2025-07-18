@@ -7,6 +7,8 @@
 
 #define GAME_TITLE "Terraria"
 
+#define SETTINGS_FILENAME "settings.dat"
+
 #define ITEM_QUANTITY_LIMIT 99 // TEMP
 
 #define UI_SCALE 1.0f
@@ -88,6 +90,7 @@ typedef enum {
 typedef struct {
     e_setting_type type;
     const char* name;
+    t_byte preset;
 } s_setting;
 
 typedef t_byte t_settings[eks_setting_cnt];

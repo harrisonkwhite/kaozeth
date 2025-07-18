@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "game.h"
 #include "world/world.h"
 #include "title_screen.h"
@@ -203,6 +204,11 @@ const s_setting g_settings[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_settings) == eks_setting_cnt, "Invalid array length!");
 
+static const t_settings g_settings_default = {
+    [ek_setting_smooth_camera] = 1,
+    [ek_setting_volume] = 100
+};
+
 static const char* TextureIndexToFilePath(const int index) {
     switch ((e_texture)index) {
         case ek_texture_player: return "assets/textures/player.png";
@@ -273,6 +279,54 @@ static const char* SoundTypeIndexToFilePath(const int index) {
     }
 }
 
+static bool LoadSettingsFromFile(t_settings* const settings) {
+    assert(IS_ZERO(*settings));
+
+    FILE* const fs = fopen(SETTINGS_FILENAME, "rb");
+
+    if (!fs) {
+        return false;
+    }
+
+    const int read = fread(settings, 1, sizeof(*settings), fs);
+
+    fclose(fs);
+
+    if (read < sizeof(*settings)) {
+        ZERO_OUT(*settings);
+        return false;
+    }
+
+    return true;
+}
+
+static void LoadSettings(t_settings* const settings) {
+    assert(IS_ZERO(*settings));
+
+    if (!LoadSettingsFromFile(settings)) {
+        // Failed to load settings file, so load defaults.
+        memcpy(settings, g_settings_default, sizeof(t_settings));
+    }
+}
+
+static bool WriteSettingsToFile(t_settings* const settings) {
+    FILE* const fs = fopen(SETTINGS_FILENAME, "wb");
+
+    if (!fs) {
+        return false;
+    }
+
+    const int written = fwrite(settings, 1, sizeof(*settings), fs);
+
+    fclose(fs);
+
+    if (written != sizeof(*settings)) {
+        return false;
+    }
+
+    return true;
+}
+
 static bool InitGame(const s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
@@ -287,6 +341,8 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     if (!LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
         return false;
     }
+
+    LoadSettings(&game->settings);
 
     if (!InitTitleScreen(&game->title_screen)) {
         return false;
@@ -375,6 +431,8 @@ static void CleanGame(void* const user_mem) {
     if (game->in_world) {
         CleanWorld(&game->world);
     }
+
+    WriteSettingsToFile(&game->settings);
 
     UnloadFonts(&game->fonts);
     UnloadTextures(&game->textures);
