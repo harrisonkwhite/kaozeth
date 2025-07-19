@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "game.h"
+#include "particles.h"
 #include "world/world.h"
 #include "title_screen.h"
 
@@ -95,6 +96,26 @@ const s_sprite g_sprites[] = {
         .src_rect = {0, 2, 16, 4}
     },
 
+    [ek_sprite_dirt_particle] = {
+        .tex = ek_texture_particles,
+        .src_rect = {2, 2, 4, 4}
+    },
+
+    [ek_sprite_stone_particle] = {
+        .tex = ek_texture_particles,
+        .src_rect = {10, 2, 4, 4}
+    },
+
+    [ek_sprite_grass_particle] = {
+        .tex = ek_texture_particles,
+        .src_rect = {18, 2, 4, 4}
+    },
+
+    [ek_sprite_gel_particle] = {
+        .tex = ek_texture_particles,
+        .src_rect = {26, 2, 4, 4}
+    },
+
     [ek_sprite_mouse] = {
         .tex = ek_texture_misc,
         .src_rect = {2, 2, 4, 4}
@@ -116,17 +137,20 @@ const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
         .spr = ek_sprite_dirt_tile,
         .drop_item = ek_item_type_dirt_block,
-        .life = 5
+        .life = 5,
+        .particle_template = ek_particle_template_dirt
     },
     [ek_tile_type_stone] = {
         .spr = ek_sprite_stone_tile,
         .drop_item = ek_item_type_stone_block,
-        .life = 8
+        .life = 8,
+        .particle_template = ek_particle_template_stone
     },
     [ek_tile_type_grass] = {
         .spr = ek_sprite_grass_tile,
         .drop_item = ek_item_type_grass_block,
-        .life = 3
+        .life = 3,
+        .particle_template = ek_particle_template_grass
     }
 };
 
@@ -216,6 +240,7 @@ static const char* TextureIndexToFilePath(const int index) {
         case ek_texture_tiles: return "assets/textures/tiles.png";
         case ek_texture_item_icons: return "assets/textures/item_icons.png";
         case ek_texture_projectiles: return "assets/textures/projectiles.png";
+        case ek_texture_particles: return "assets/textures/particles.png";
         case ek_texture_misc: return "assets/textures/misc.png";
 
         default:

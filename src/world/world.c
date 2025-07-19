@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "world.h"
+#include "zfw_random.h"
 
 #define RESPAWN_TIME 120
 
@@ -114,11 +115,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
         }
     }
 
-    if (IsKeyPressed(ek_key_code_space, input_state, input_state_last)) {
-        SpawnParticleFromTemplate(&world->particles, world->player.pos, world->player.vel, ek_particle_template_dirt);
-    }
-
-    UpdateParticles(&world->particles);
+    UpdateParticles(&world->particles, GRAVITY);
 
     return true;
 }
@@ -219,6 +216,25 @@ void HurtWorldTile(s_world* const world, const s_vec_2d_i pos) {
     world->tilemap_tile_lifes[pos.y][pos.x]++;
 
     const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+
+    {
+        // Spawn particles.
+        const s_vec_2d tile_mid = {
+            (pos.x + 0.5f) * TILE_SIZE,
+            (pos.y + 0.5f) * TILE_SIZE
+        };
+
+        const int part_cnt = RandRangeI(4, 6);
+
+        for (int i = 0; i < part_cnt; i++) {
+            const s_vec_2d vel = {
+                RandRangeIncl(-1.0f, 1.0f),
+                RandRangeIncl(-3.5f, -2.0f)
+            };
+
+            SpawnParticleFromTemplate(&world->particles, tile_mid, vel, tile_type->particle_template);
+        }
+    }
 
     if (world->tilemap_tile_lifes[pos.y][pos.x] == tile_type->life) {
         DestroyWorldTile(world, pos);

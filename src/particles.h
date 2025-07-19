@@ -3,7 +3,7 @@
 
 #include <zfw_rendering.h>
 #include <zfw_math.h>
-#include "game.h"
+#include "sprites.h"
 
 #define PARTICLE_LIMIT 1024
 
@@ -20,7 +20,12 @@ typedef struct {
 } s_particle_rot_info;
 
 typedef enum {
-    ek_particle_template_dirt
+    ek_particle_template_dirt,
+    ek_particle_template_stone,
+    ek_particle_template_grass,
+    ek_particle_template_gel,
+
+    eks_particle_template_cnt
 } e_particle_template;
 
 typedef struct {
@@ -33,7 +38,7 @@ typedef struct {
 
 int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr);
 int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_particle_template template);
-void UpdateParticles(s_particles* const particles);
+void UpdateParticles(s_particles* const particles, const float grav);
 void RenderParticles(const s_rendering_context* const rendering_context, const s_particles* const particles, const s_textures* const textures);
 
 #endif
