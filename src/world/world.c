@@ -123,6 +123,28 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
     return true;
 }
 
+static s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size) {
+    assert(display_size.x > 0 && display_size.y > 0);
+
+    const s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+    const s_vec_2d cam_size = CameraSize(display_size);
+
+    s_rect_edges_i render_range = {
+        .left = floorf(cam_tl.x / TILE_SIZE),
+        .top = floorf(cam_tl.y / TILE_SIZE),
+        .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
+        .bottom = ceilf((cam_tl.y + cam_size.y) / TILE_SIZE)
+    };
+
+    // Clamp the tilemap render range within tilemap bounds.
+    render_range.left = CLAMP(render_range.left, 0, TILEMAP_WIDTH - 1);
+    render_range.top = CLAMP(render_range.top, 0, TILEMAP_HEIGHT - 1);
+    render_range.right = CLAMP(render_range.right, 0, TILEMAP_WIDTH);
+    render_range.bottom = CLAMP(render_range.bottom, 0, TILEMAP_HEIGHT);
+
+    return render_range;
+}
+
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
     ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
@@ -186,6 +208,77 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     }
 
     fclose(fs);
+
+    return true;
+}
+
+void HurtWorldTile(s_world* const world, const s_vec_2d_i pos) {
+    assert(IsTilePosInBounds(pos));
+    assert(IsTileActive(&world->core.tilemap_core.activity, pos));
+
+    world->tilemap_tile_lifes[pos.y][pos.x]++;
+
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+
+    if (world->tilemap_tile_lifes[pos.y][pos.x] == tile_type->life) {
+        DestroyWorldTile(world, pos);
+    }
+}
+
+void DestroyWorldTile(s_world* const world, const s_vec_2d_i pos) {
+assert(world);
+    assert(IsTilePosInBounds(pos));
+    assert(IsTileActive(&world->core.tilemap_core.activity, pos));
+
+    RemoveTile(&world->core.tilemap_core, pos);
+
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+    const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
+    SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
+}
+
+bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos) {
+    assert(world);
+    assert(IsTilePosInBounds(tile_pos));
+    assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
+
+    const s_rect tile_collider = {
+        tile_pos.x * TILE_SIZE,
+        tile_pos.y * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+    };
+
+    // Check for player.
+    const s_rect player_collider = PlayerCollider(world->player.pos);
+
+    if (DoRectsInters(tile_collider, player_collider)) {
+        return false;
+    }
+
+    // Check for NPCs.
+    for (int i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActive(&world->npcs.activity, i)) {
+            continue;
+        }
+
+        const s_npc* const npc = &world->npcs.buf[i];
+        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+        if (DoRectsInters(tile_collider, npc_collider)) {
+            return false;
+        }
+    }
+
+    // Check for projectiles.
+    for (int i = 0; i < world->proj_cnt; i++) {
+        const s_projectile* const proj = &world->projectiles[i];
+        const s_rect proj_collider = ProjectileCollider(proj->type, proj->pos);
+
+        if (DoRectsInters(tile_collider, proj_collider)) {
+            return false;
+        }
+    }
 
     return true;
 }

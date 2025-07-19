@@ -15,6 +15,9 @@ add_executable(terraria_clone
     src/lighting.c
     src/lighting.h
 
+    src/tilemap.c
+    src/tilemap.h
+
     src/particles.c
     src/particles.h
 
@@ -27,7 +30,6 @@ add_executable(terraria_clone
     src/world/player.c
     src/world/npcs.c
     src/world/projectiles.c
-    src/world/tiles.c
     src/world/items.c
     src/world/world.h
 )

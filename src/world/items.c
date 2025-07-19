@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "world.h"
 
 bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos) {
@@ -56,11 +55,11 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
 
     switch (item_type->use_type) {
         case ek_item_use_type_tile_place:
-            PlaceTile(&world->core.tilemap_core, mouse_tile_pos, item_type->tile_place_type);
+            AddTile(&world->core.tilemap_core, mouse_tile_pos, item_type->tile_place_type);
             break;
 
         case ek_item_use_type_tile_hurt:
-            HurtTile(world, mouse_tile_pos);
+            HurtWorldTile(world, mouse_tile_pos);
             break;
 
         case ek_item_use_type_shoot:

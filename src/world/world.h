@@ -5,6 +5,7 @@
 #include "../lighting.h"
 #include "../inventory.h"
 #include "../particles.h"
+#include "../tilemap.h"
 
 typedef struct world s_world;
 
@@ -22,11 +23,8 @@ typedef struct world s_world;
 #define POPUP_TEXT_FADE_VEL_Y_ABS_THRESH 0.002f
 #define POPUP_TEXT_ALPHA_MULT 0.9f
 
-#define TILE_SIZE 8
 #define TILE_PLACE_DIST 4
 #define TILE_HIGHLIGHT_ALPHA 0.4f
-#define TILEMAP_WIDTH 640 // TEMP: Make dynamic!
-#define TILEMAP_HEIGHT 200 // TEMP: Make dynamic!
 
 #define WORLD_WIDTH (TILEMAP_WIDTH * TILE_SIZE)
 #define WORLD_HEIGHT (TILEMAP_HEIGHT * TILE_SIZE)
@@ -144,18 +142,6 @@ typedef struct {
 } s_projectile;
 
 //
-// Tilemap
-//
-typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
-
-typedef int t_tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
-
-typedef struct {
-    t_tilemap_activity activity;
-    e_tile_type tile_types[TILEMAP_HEIGHT][TILEMAP_WIDTH];
-} s_tilemap_core;
-
-//
 // Items
 //
 #define ITEM_DROP_LIMIT 1024
@@ -263,7 +249,9 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
 void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
-
+void HurtWorldTile(s_world* const world, const s_vec_2d_i pos);
+void DestroyWorldTile(s_world* const world, const s_vec_2d_i pos);
+bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos);
 s_popup_text* SpawnPopupText(s_world* const world, const s_vec_2d pos, const float vel_y);
 
 //
@@ -331,40 +319,6 @@ void RenderProjectiles(const s_rendering_context* const rendering_context, const
 
 static inline s_rect ProjectileCollider(const e_projectile_type proj_type, const s_vec_2d pos) {
     return ColliderFromSprite(g_projectile_types[proj_type].spr, pos, (s_vec_2d){0.5f, 0.5f});
-}
-
-//
-// tiles.c
-//
-s_rect_edges_i RectTilemapSpan(const s_rect rect);
-void PlaceTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
-void HurtTile(s_world* const world, const s_vec_2d_i pos);
-void DestroyTile(s_world* const world, const s_vec_2d_i pos);
-bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos);
-bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
-void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-void ProcVerTileCollisions(s_vec_2d* const pos, float* const vel_y, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-void MakeContactWithTilemap(s_vec_2d* const pos, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-void MakeContactWithTilemapByJumpSize(s_vec_2d* const pos, const float jump_size, const e_cardinal_dir dir, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_i display_size);
-void RenderTilemap(const s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_i range, const s_textures* const textures);
-
-static inline bool IsTilePosInBounds(const s_vec_2d_i pos) {
-    return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
-}
-
-static inline bool IsTilemapRangeValid(const s_rect_edges_i range) {
-    return IsRangeValid(range, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
-}
-
-static inline int TileDist(const s_vec_2d_i a, const s_vec_2d_i b) {
-    return Dist((s_vec_2d){a.x, a.y}, (s_vec_2d){b.x, b.y});
-}
-
-static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_vec_2d_i pos) {
-    assert(tm_activity);
-    assert(IsTilePosInBounds(pos));
-    return IsBitActive(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 //
