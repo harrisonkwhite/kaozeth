@@ -98,9 +98,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
 
     UpdateWorldUI(world, input_state, input_state_last, display_size);
 
-    //
-    // Camera
-    //
+    // Update the camera.
     {
         const s_vec_2d cam_pos_dest = world->player.pos;
 
@@ -115,6 +113,12 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
             world->cam_pos = cam_pos_dest;
         }
     }
+
+    if (IsKeyPressed(ek_key_code_space, input_state, input_state_last)) {
+        SpawnParticleFromTemplate(&world->particles, world->player.pos, world->player.vel, ek_particle_template_dirt);
+    }
+
+    UpdateParticles(&world->particles);
 
     return true;
 }
@@ -136,6 +140,8 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
     RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
 
     RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
+
+    RenderParticles(rendering_context, &world->particles, textures);
 
     RenderLightmap(rendering_context, &world->lightmap, tilemap_render_range, TILE_SIZE);
 

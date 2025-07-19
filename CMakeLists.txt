@@ -15,6 +15,9 @@ add_executable(terraria_clone
     src/lighting.c
     src/lighting.h
 
+    src/particles.c
+    src/particles.h
+
     src/title_screen.c
     src/title_screen.h
 

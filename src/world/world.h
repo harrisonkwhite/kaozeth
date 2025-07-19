@@ -4,6 +4,7 @@
 #include "../game.h"
 #include "../lighting.h"
 #include "../inventory.h"
+#include "../particles.h"
 
 typedef struct world s_world;
 
@@ -209,6 +210,8 @@ typedef struct world {
     t_mouse_hover_str_buf mouse_hover_str;
     e_item_type mouse_item_held_type;
     int mouse_item_held_quantity;
+
+    s_particles particles;
 } s_world;
 
 static inline s_vec_2d_i CameraToTilePos(const s_vec_2d pos) {
