@@ -155,6 +155,59 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, cons
     return map;
 }
 
+bool PropagateLight(const s_lightmap* const map, const s_vec_2d_i init_light_pos, s_mem_arena* const temp_mem_arena) {
+    const int light_limit = map->size.x * map->size.y;
+
+    s_light_pos_queue queue = {
+        .buf = MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, s_vec_2d_i, light_limit),
+        .cap = light_limit
+    };
+
+    if (!queue.buf) {
+        fprintf(stderr, "Failed to allocate memory for light position queue!\n");
+        return false;
+    }
+
+    EnqueueLightPos(&queue, init_light_pos, map->size);
+    SetLightLevel(map, init_light_pos, LIGHT_LEVEL_LIMIT);
+
+    while (queue.len > 0) {
+        const s_vec_2d_i light_pos = DequeueLightPos(&queue, map->size);
+
+        assert(LightLevel(map, light_pos) > 0); // Sanity check.
+
+        const s_vec_2d_i neighbour_pos_offsets[4] = {
+            {0, 1},
+            {0, -1},
+            {1, 0},
+            {-1, 0},
+        };
+
+        for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
+            const s_vec_2d_i neighbour_pos = Vec2DISum(light_pos, neighbour_pos_offsets[i]);
+
+            if (!IsLightPosInBounds(neighbour_pos, map->size)) {
+                continue;
+            }
+
+            const t_light_level new_neighbour_light_level = LightLevel(map, light_pos) - 1;
+            assert(IsLightLevelValid(new_neighbour_light_level));
+
+            if (LightLevel(map, neighbour_pos) >= new_neighbour_light_level) {
+                continue;
+            }
+
+            SetLightLevel(map, neighbour_pos, new_neighbour_light_level);
+
+            if (LightLevel(map, neighbour_pos) > 0) {
+                EnqueueLightPos(&queue, neighbour_pos, map->size);
+            }
+        }
+    }
+
+    return true;
+}
+
 void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size) {
     assert(tile_size > 0.0f);
     assert(IsRangeValid(range, map->size));

@@ -26,7 +26,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size) {
+bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size, s_mem_arena* const temp_mem_arena) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -59,7 +59,10 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
             break;
 
         case ek_item_use_type_tile_hurt:
-            HurtWorldTile(world, mouse_tile_pos);
+            if (!HurtWorldTile(world, mouse_tile_pos, temp_mem_arena)) {
+                return false;
+            }
+
             break;
 
         case ek_item_use_type_shoot:

@@ -6,6 +6,8 @@
 #define TILEMAP_WIDTH 640 // TEMP: Make dynamic!
 #define TILEMAP_HEIGHT 200 // TEMP: Make dynamic!
 
+#define CHUNK_WIDTH 100
+
 #define TILE_SIZE 8
 
 typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];

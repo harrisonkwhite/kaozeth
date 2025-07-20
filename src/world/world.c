@@ -51,7 +51,7 @@ void CleanWorld(s_world* const world) {
     CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
     const s_vec_2d cam_size = CameraSize(display_size);
@@ -89,7 +89,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_i
         return false;
     }
 
-    if (!ProcItemUsage(world, input_state, display_size)) {
+    if (!ProcItemUsage(world, input_state, display_size, temp_mem_arena)) {
         return false;
     }
 
@@ -209,7 +209,7 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-void HurtWorldTile(s_world* const world, const s_vec_2d_i pos) {
+bool HurtWorldTile(s_world* const world, const s_vec_2d_i pos, s_mem_arena* const temp_mem_arena) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
@@ -237,20 +237,35 @@ void HurtWorldTile(s_world* const world, const s_vec_2d_i pos) {
     }
 
     if (world->tilemap_tile_lifes[pos.y][pos.x] == tile_type->life) {
-        DestroyWorldTile(world, pos);
+        if (!DestroyWorldTile(world, pos, temp_mem_arena)) {
+            return false;
+        }
     }
+
+    return true;
 }
 
-void DestroyWorldTile(s_world* const world, const s_vec_2d_i pos) {
+bool DestroyWorldTile(s_world* const world, const s_vec_2d_i pos, s_mem_arena* const temp_mem_arena) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
     RemoveTile(&world->core.tilemap_core, pos);
 
-    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+    // Update lightmap.
+    if (!PropagateLight(&world->lightmap, pos, temp_mem_arena)) {
+        return false;
+    }
+
+    // Spawn item drop.
     const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
-    SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1);
+    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+
+    if (!SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1)) {
+        return false;
+    }
+
+    return true;
 }
 
 bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos) {

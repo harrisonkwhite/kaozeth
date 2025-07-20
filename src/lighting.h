@@ -15,6 +15,7 @@ typedef struct {
 } s_lightmap;
 
 s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, const t_byte* const seed, s_mem_arena* const temp_mem_arena);
+bool PropagateLight(const s_lightmap* const map, const s_vec_2d_i init_light_pos, s_mem_arena* const temp_mem_arena);
 void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size);
 
 #endif
