@@ -61,7 +61,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames) {
     do {
         const char* name = find_data.cFileName;
 
-        if (DoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
+        if (ZFWDoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
             const int name_len = strlen(name);
 
             if (name_len >= WORLD_FILENAME_BUF_SIZE) {

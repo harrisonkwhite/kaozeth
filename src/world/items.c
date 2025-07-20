@@ -23,10 +23,14 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
 
         case ek_item_use_type_shoot:
             return true;
+
+        default:
+            assert(false && "Unhandled switch case!");
+            return false;
    }
 }
 
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i display_size, zfw_s_mem_arena* const temp_mem_arena) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -55,11 +59,11 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_st
 
     switch (item_type->use_type) {
         case ek_item_use_type_tile_place:
-            PlaceWorldTile(world, mouse_tile_pos, item_type->tile_place_type, temp_mem_arena);
+            PlaceWorldTile(world, mouse_tile_pos, item_type->tile_place_type);
             break;
 
         case ek_item_use_type_tile_hurt:
-            if (!HurtWorldTile(world, mouse_tile_pos, temp_mem_arena)) {
+            if (!HurtWorldTile(world, mouse_tile_pos)) {
                 return false;
             }
 

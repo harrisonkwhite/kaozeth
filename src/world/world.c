@@ -39,23 +39,6 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, zfw
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
-#if 0
-    world->lightmap = GenLightmap(&world->mem_arena, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
-
-    if (ZFW_IS_ZERO(world->lightmap)) {
-        return false;
-    }
-
-    if (!PropagateLights(&world->lightmap, (const t_byte*)world->core.tilemap_core.activity, temp_mem_arena, false)) {
-        return false;
-    }
-
-    if (ZFW_IS_ZERO(world->lightmap)) {
-        fprintf(stderr, "Failed to generate world lightmap!");
-        return false;
-    }
-#endif
-
     return true;
 }
 
@@ -63,7 +46,7 @@ void CleanWorld(s_world* const world) {
     ZFWCleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i display_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, zfw_s_mem_arena* const temp_mem_arena) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i display_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
     assert(display_size.x > 0 && display_size.y > 0); 
 
     const zfw_s_vec_2d cam_size = CameraSize(display_size);
@@ -101,7 +84,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         return false;
     }
 
-    if (!ProcItemUsage(world, input_state, display_size, temp_mem_arena)) {
+    if (!ProcItemUsage(world, input_state, display_size)) {
         return false;
     }
 
@@ -246,46 +229,13 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, const e_tile_type type, zfw_s_mem_arena* const temp_mem_arena) {
+bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, const e_tile_type type) {
     AddTile(&world->core.tilemap_core, pos, type);
     world->tilemap_tile_lifes[pos.y][pos.x] = 0;
-
-#if 0
-    // Update lightmap.
-    {
-        t_byte* const seed = ZFW_MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, t_byte, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
-
-        if (!seed) {
-            return false;
-        }
-
-        memset(seed, 255, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
-
-        world->lightmap.buf[IndexFrom2D(pos, world->lightmap.size.x)] = 0;
-
-        const s_vec_2d_i neighbour_pos_offsets[] = {
-            {1, 0},
-            {-1, 0},
-            {0, 1},
-            {0, -1}
-        }; // TODO: Move this to lighting.h.
-
-        for (int i = 0; i < ZFW_STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
-            const s_vec_2d_i neighbour_pos = Vec2DISum(pos, neighbour_pos_offsets[i]);
-
-            DeactivateBit(IndexFrom2D(neighbour_pos, world->lightmap.size.x), seed, world->lightmap.size.x * world->lightmap.size.y);
-        }
-
-        if (!PropagateLights(&world->lightmap, seed, temp_mem_arena, true)) {
-            return false;
-        }
-    }
-#endif
-
     return true;
 }
 
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, zfw_s_mem_arena* const temp_mem_arena) {
+bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
@@ -313,7 +263,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, zfw_s_mem_are
     }
 
     if (world->tilemap_tile_lifes[pos.y][pos.x] == tile_type->life) {
-        if (!DestroyWorldTile(world, pos, temp_mem_arena)) {
+        if (!DestroyWorldTile(world, pos)) {
             return false;
         }
     }
@@ -321,29 +271,12 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, zfw_s_mem_are
     return true;
 }
 
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, zfw_s_mem_arena* const temp_mem_arena) {
+bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
     RemoveTile(&world->core.tilemap_core, pos);
-
-#if 0
-    // Update lightmap.
-    t_byte* const seed = ZFW_MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, t_byte, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
-
-    if (!seed) {
-        return false;
-    }
-
-    memset(seed, 255, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
-
-    DeactivateBit(IndexFrom2D(pos, world->lightmap.size.x), seed, world->lightmap.size.x * world->lightmap.size.y);
-
-    if (!PropagateLights(&world->lightmap, seed, temp_mem_arena, false)) {
-        return false;
-    }
-#endif
 
     // Spawn item drop.
     const zfw_s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
