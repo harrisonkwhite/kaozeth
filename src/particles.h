@@ -8,16 +8,20 @@
 #define PARTICLE_LIMIT 1024
 
 typedef struct {
+    e_sprite spr; // NOTE: Not needed during tick!
+
     s_vec_2d pos;
     s_vec_2d vel;
-    float vel_mult;
-} s_particle_pos_info;
+
+    float rot;
+
+    int life;
+} s_particle;
 
 typedef struct {
-    float rot;
-    float rot_change;
-    float rot_change_mult;
-} s_particle_rot_info;
+    s_particle buf[PARTICLE_LIMIT];
+    int cnt;
+} s_particles;
 
 typedef enum {
     ek_particle_template_dirt,
@@ -28,18 +32,15 @@ typedef enum {
     eks_particle_template_cnt
 } e_particle_template;
 
-typedef struct {
-    s_particle_pos_info pos_infos[PARTICLE_LIMIT];
-    s_particle_rot_info rot_infos[PARTICLE_LIMIT];
-    e_sprite sprites[PARTICLE_LIMIT];
-    int lifes[PARTICLE_LIMIT];
-
-    int cnt;
-} s_particles;
-
-int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr, const int life);
-int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_particle_template template);
+void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const s_vec_2d pos, const s_vec_2d vel, const float rot);
+int AddParticle(s_particles* const particles, const s_particle* const part);
 void UpdateParticles(s_particles* const particles, const float grav);
 void RenderParticles(const s_rendering_context* const rendering_context, const s_particles* const particles, const s_textures* const textures);
+
+static inline int SpawnParticleFromTemplate(s_particles* const particles, const e_particle_template temp, const s_vec_2d pos, const s_vec_2d vel, const float rot) {
+    s_particle part = {0};
+    InitParticleFromTemplate(&part, temp, pos, vel, rot);
+    return AddParticle(particles, &part);
+}
 
 #endif

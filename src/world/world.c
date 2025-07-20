@@ -224,15 +224,15 @@ void HurtWorldTile(s_world* const world, const s_vec_2d_i pos) {
             (pos.y + 0.5f) * TILE_SIZE
         };
 
-        const int part_cnt = RandRangeI(4, 6);
+        const int part_cnt = RandRangeI(3, 5);
 
         for (int i = 0; i < part_cnt; i++) {
             const s_vec_2d vel = {
-                RandRangeIncl(-1.0f, 1.0f),
-                RandRangeIncl(-3.5f, -2.0f)
+                RandRangeIncl(-0.5f, 0.5f),
+                RandRangeIncl(-2.5f, -1.0f)
             };
 
-            SpawnParticleFromTemplate(&world->particles, tile_mid, vel, tile_type->particle_template);
+            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, RandRot());
         }
     }
 

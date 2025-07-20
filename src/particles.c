@@ -1,124 +1,76 @@
-#include <zfw_random.h>
 #include "particles.h"
 #include "sprites.h"
 
-static e_sprite g_particle_template_sprites[] = {
-    [ek_particle_template_dirt] = ek_sprite_dirt_particle,
-    [ek_particle_template_stone] = ek_sprite_stone_particle,
-    [ek_particle_template_grass] = ek_sprite_grass_particle,
-    [ek_particle_template_gel] = ek_sprite_gel_particle
-};
+void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const s_vec_2d pos, const s_vec_2d vel, const float rot) {
+    assert(IS_ZERO(*part));
 
-static_assert(STATIC_ARRAY_LEN(g_particle_template_sprites) == eks_particle_template_cnt, "Invalid array length!");
+    part->pos = pos;
+    part->vel = vel;
+    part->rot = rot;
 
-static int ParticleTemplateLife(const e_particle_template template) {
-    switch (template) {
+    switch (temp) {
         case ek_particle_template_dirt:
+            part->spr = ek_sprite_dirt_particle;
+            part->life = RandRangeI(20, 25);
+            break;
+
         case ek_particle_template_stone:
+            part->spr = ek_sprite_stone_particle;
+            part->life = RandRangeI(20, 25);
+            break;
+
         case ek_particle_template_grass:
+            part->spr = ek_sprite_grass_particle;
+            part->life = RandRangeI(20, 25);
+            break;
+
         case ek_particle_template_gel:
-            return RandRangeI(10, 15);
+            part->spr = ek_sprite_gel_particle;
+            part->life = RandRangeI(20, 25);
             break;
 
         default:
             assert(false && "Unhandled switch case!");
-            return 0;
+            break;
     }
 }
 
-int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr, const int life) {
-    assert(life > 0);
+int AddParticle(s_particles* const particles, const s_particle* const part) {
+    assert(part->life > 0);
 
     if (particles->cnt == PARTICLE_LIMIT) {
         return -1;
     }
 
     const int index = particles->cnt;
-
-    particles->pos_infos[index] = (s_particle_pos_info){
-        .pos = pos,
-        .vel = vel,
-        .vel_mult = 1.0f
-    };
-
-    particles->sprites[index] = spr;
-    particles->lifes[index] = life;
-
+    particles->buf[index] = *part;
     particles->cnt++;
-
-    return index;
-}
-
-int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_particle_template template) {
-    const int index = SpawnParticle(particles, pos, vel, g_particle_template_sprites[template], ParticleTemplateLife(template));
-
-    if (index != -1) {
-        switch (template) {
-            case ek_particle_template_dirt:
-                break;
-
-            case ek_particle_template_stone:
-                break;
-
-            case ek_particle_template_grass:
-                break;
-
-            case ek_particle_template_gel:
-                break;
-
-            default:
-
-                break;
-        }
-    }
-
     return index;
 }
 
 void UpdateParticles(s_particles* const particles, const float grav) {
-    // Update lifes.
     for (int i = 0; i < particles->cnt; i++) {
-        assert(particles->lifes[i] > 0);
+        s_particle* const part = &particles->buf[i];
 
-        particles->lifes[i]--;
+        // Update life.
+        assert(part->life > 0);
 
-        if (particles->lifes[i] == 0) {
+        part->life--;
+
+        if (part->life == 0) {
             particles->cnt--;
-
-            particles->pos_infos[i] = particles->pos_infos[particles->cnt];
-            particles->rot_infos[i] = particles->rot_infos[particles->cnt];
-            particles->sprites[i] = particles->sprites[particles->cnt];
-            particles->lifes[i] = particles->lifes[particles->cnt];
+            *part = particles->buf[particles->cnt];
         }
 
-        s_particle_pos_info* const pos_info = &particles->pos_infos[i];
-        pos_info->pos = Vec2DSum(pos_info->pos, pos_info->vel);
-        pos_info->vel.y += grav;
-        pos_info->vel = Vec2DScaled(pos_info->vel, pos_info->vel_mult);
-    }
-
-    // Update positions.
-    for (int i = 0; i < particles->cnt; i++) {
-        s_particle_pos_info* const pos_info = &particles->pos_infos[i];
-        pos_info->pos = Vec2DSum(pos_info->pos, pos_info->vel);
-        pos_info->vel.y += grav;
-        pos_info->vel = Vec2DScaled(pos_info->vel, pos_info->vel_mult);
-    }
-
-    // Update rotations.
-    for (int i = 0; i < particles->cnt; i++) {
-        s_particle_rot_info* const rot_info = &particles->rot_infos[i];
-        rot_info->rot += rot_info->rot_change;
-        rot_info->rot_change *= rot_info->rot_change_mult;
+        // Update position.
+        part->vel.y += grav;
+        part->pos = Vec2DSum(part->pos, part->vel);
     }
 }
 
 void RenderParticles(const s_rendering_context* const rendering_context, const s_particles* const particles, const s_textures* const textures) {
     for (int i = 0; i < particles->cnt; i++) {
-        const s_vec_2d pos = particles->pos_infos[i].pos;
-        const float rot = particles->rot_infos[i].rot;
-        const s_vec_2d origin = {0.5f, 0.5f};
-
-        RenderSprite(rendering_context, particles->sprites[i], textures, pos, origin, (s_vec_2d){1.0f, 1.0f}, rot, WHITE);
+        const s_particle* const part = &particles->buf[i];
+        RenderSprite(rendering_context, part->spr, textures, part->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, part->rot, WHITE);
     }
 }
