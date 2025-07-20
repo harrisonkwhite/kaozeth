@@ -32,11 +32,12 @@ typedef struct {
     s_particle_pos_info pos_infos[PARTICLE_LIMIT];
     s_particle_rot_info rot_infos[PARTICLE_LIMIT];
     e_sprite sprites[PARTICLE_LIMIT];
+    int lifes[PARTICLE_LIMIT];
 
     int cnt;
 } s_particles;
 
-int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr);
+int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr, const int life);
 int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_particle_template template);
 void UpdateParticles(s_particles* const particles, const float grav);
 void RenderParticles(const s_rendering_context* const rendering_context, const s_particles* const particles, const s_textures* const textures);

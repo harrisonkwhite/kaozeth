@@ -1,3 +1,4 @@
+#include <zfw_random.h>
 #include "particles.h"
 #include "sprites.h"
 
@@ -10,7 +11,24 @@ static e_sprite g_particle_template_sprites[] = {
 
 static_assert(STATIC_ARRAY_LEN(g_particle_template_sprites) == eks_particle_template_cnt, "Invalid array length!");
 
-int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr) {
+static int ParticleTemplateLife(const e_particle_template template) {
+    switch (template) {
+        case ek_particle_template_dirt:
+        case ek_particle_template_stone:
+        case ek_particle_template_grass:
+        case ek_particle_template_gel:
+            return RandRangeI(10, 15);
+            break;
+
+        default:
+            assert(false && "Unhandled switch case!");
+            return 0;
+    }
+}
+
+int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_sprite spr, const int life) {
+    assert(life > 0);
+
     if (particles->cnt == PARTICLE_LIMIT) {
         return -1;
     }
@@ -24,6 +42,7 @@ int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_
     };
 
     particles->sprites[index] = spr;
+    particles->lifes[index] = life;
 
     particles->cnt++;
 
@@ -31,7 +50,7 @@ int SpawnParticle(s_particles* const particles, const s_vec_2d pos, const s_vec_
 }
 
 int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, const s_vec_2d vel, const e_particle_template template) {
-    const int index = SpawnParticle(particles, pos, vel, g_particle_template_sprites[template]); // TEMP
+    const int index = SpawnParticle(particles, pos, vel, g_particle_template_sprites[template], ParticleTemplateLife(template));
 
     if (index != -1) {
         switch (template) {
@@ -57,6 +76,27 @@ int SpawnParticleFromTemplate(s_particles* const particles, const s_vec_2d pos, 
 }
 
 void UpdateParticles(s_particles* const particles, const float grav) {
+    // Update lifes.
+    for (int i = 0; i < particles->cnt; i++) {
+        assert(particles->lifes[i] > 0);
+
+        particles->lifes[i]--;
+
+        if (particles->lifes[i] == 0) {
+            particles->cnt--;
+
+            particles->pos_infos[i] = particles->pos_infos[particles->cnt];
+            particles->rot_infos[i] = particles->rot_infos[particles->cnt];
+            particles->sprites[i] = particles->sprites[particles->cnt];
+            particles->lifes[i] = particles->lifes[particles->cnt];
+        }
+
+        s_particle_pos_info* const pos_info = &particles->pos_infos[i];
+        pos_info->pos = Vec2DSum(pos_info->pos, pos_info->vel);
+        pos_info->vel.y += grav;
+        pos_info->vel = Vec2DScaled(pos_info->vel, pos_info->vel_mult);
+    }
+
     // Update positions.
     for (int i = 0; i < particles->cnt; i++) {
         s_particle_pos_info* const pos_info = &particles->pos_infos[i];
