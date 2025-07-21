@@ -36,7 +36,7 @@ typedef struct {
 #include <windows.h>
 
 static bool LoadWorldFilenames(t_world_filenames* const filenames) {
-    assert(filenames && IS_ZERO(*filenames));
+    assert(filenames && ZFW_IS_ZERO(*filenames));
 
     char search_path[MAX_PATH];
     snprintf(search_path, sizeof(search_path), "*%s", WORLD_FILENAME_EXT);
@@ -81,7 +81,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames) {
 #include <dirent.h>
 
 static bool LoadWorldFilenames(t_world_filenames* const filenames) {
-    assert(filenames && IS_ZERO(*filenames));
+    assert(filenames && ZFW_IS_ZERO(*filenames));
 
     DIR* const dir = opendir(".");
 
@@ -97,7 +97,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames) {
     while ((dir_entry = readdir(dir)) != NULL && cnt < WORLD_LIMIT) {
         const char* const name = dir_entry->d_name;
 
-        if (DoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
+        if (ZFWDoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
             const int name_len = strlen(name);
 
             if (name_len >= WORLD_FILENAME_BUF_SIZE) {
@@ -168,7 +168,7 @@ static bool WorldsPageWorldButtonClick(const int index, void* const data_generic
 static bool WorldsPageCreateButtonClick(const int index, void* const data_generic) {
     const s_page_elem_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_new_world;
-    assert(IS_ZERO(data->ts->new_world_name_buf));
+    assert(ZFW_IS_ZERO(data->ts->new_world_name_buf));
     return true;
 }
 
@@ -195,16 +195,16 @@ static bool NewWorldPageAcceptButtonClick(const int index, void* const data_gene
         }
     }
 
-    ZERO_OUT(data->ts->new_world_name_buf);
+    ZFW_ZERO_OUT(data->ts->new_world_name_buf);
 
-    ZERO_OUT(data->ts->world_filenames_cache);
+    ZFW_ZERO_OUT(data->ts->world_filenames_cache);
     return LoadWorldFilenames(&data->ts->world_filenames_cache);
 }
 
 static bool NewWorldPageBackButtonClick(const int index, void* const data_generic) {
     const s_page_elem_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_worlds;
-    ZERO_OUT(data->ts->new_world_name_buf);
+    ZFW_ZERO_OUT(data->ts->new_world_name_buf);
     return true;
 }
 
@@ -242,7 +242,7 @@ static bool SettingsPageBackButtonClick(const int index, void* const data_generi
     return true;
 }
 
-static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
+static s_page_elems PushPageElems(zfw_s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
     int elem_cnt;
 
     switch (page) {
@@ -256,7 +256,7 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
             break;
     }
 
-    s_page_elem* const elems = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_page_elem, elem_cnt);
+    s_page_elem* const elems = ZFW_MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_page_elem, elem_cnt);
 
     if (!elems) {
         return (s_page_elems){0};
@@ -438,8 +438,8 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
     };
 }
 
-static const s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const s_page_elems* const elems, const s_vec_2d_i ui_size) {
-    s_vec_2d* const positions = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_vec_2d, elems->cnt);
+static const zfw_s_vec_2d* PushPageElemPositions(zfw_s_mem_arena* const mem_arena, const s_page_elems* const elems, const zfw_s_vec_2d_i ui_size) {
+    zfw_s_vec_2d* const positions = ZFW_MEM_ARENA_PUSH_TYPE_MANY(mem_arena, zfw_s_vec_2d, elems->cnt);
 
     if (positions) {
         float span_y = 0.0f;
@@ -449,7 +449,7 @@ static const s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const
 
             span_y += elem->padding_top;
 
-            positions[i] = (s_vec_2d){
+            positions[i] = (zfw_s_vec_2d){
                 ui_size.x / 2.0f,
                 span_y
             };
@@ -471,7 +471,7 @@ static const s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const
 }
 
 bool InitTitleScreen(s_title_screen* const ts) {
-    assert(IS_ZERO(*ts));
+    assert(ZFW_IS_ZERO(*ts));
 
     ts->page_btn_elem_hovered_index = -1;
 
@@ -482,7 +482,7 @@ bool InitTitleScreen(s_title_screen* const ts) {
     return true;
 }
 
-static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const s_vec_2d* const elem_positions, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const zfw_s_vec_2d* const elem_positions, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
     assert(index);
 
     *index = -1;
@@ -494,13 +494,13 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const s_vec_
             continue;
         }
 
-        s_rect collider = {0};
+        zfw_s_rect collider = {0};
 
-        if (!LoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], ek_str_hor_align_center, ek_str_ver_align_center, temp_mem_arena)) {
+        if (!ZFWLoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, temp_mem_arena)) {
             return false;
         }
 
-        if (IsPointInRect(cursor_ui_pos, collider)) {
+        if (ZFWIsPointInRect(cursor_ui_pos, collider)) {
             *index = i;
             break;
         }
@@ -509,27 +509,27 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const s_vec_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const t_unicode_buf* const unicode_buf, const s_vec_2d_i display_size, const s_fonts* const fonts, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_i display_size, const zfw_s_fonts* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, zfw_s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
-    if (IS_ZERO(page_elems)) {
+    if (ZFW_IS_ZERO(page_elems)) {
         return (s_title_screen_tick_result){
             ek_title_screen_tick_result_type_error
         };
     }
 
-    const s_vec_2d_i ui_size = UISize(display_size);
-    const s_vec_2d* const elem_positions = PushPageElemPositions(temp_mem_arena, &page_elems, ui_size);
+    const zfw_s_vec_2d_i ui_size = UISize(display_size);
+    const zfw_s_vec_2d* const elem_positions = PushPageElemPositions(temp_mem_arena, &page_elems, ui_size);
 
-    if (IS_ZERO(page_elems)) {
+    if (ZFW_IS_ZERO(page_elems)) {
         return (s_title_screen_tick_result){
             ek_title_screen_tick_result_type_error
         };
     }
 
-    const s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
+    const zfw_s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
     if (!LoadIndexOfFirstHoveredButtonPageElem(&ts->page_btn_elem_hovered_index, cursor_ui_pos, &page_elems, elem_positions, fonts, temp_mem_arena)) {
         return (s_title_screen_tick_result){
@@ -538,7 +538,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
     }
 
     if (ts->page_btn_elem_hovered_index != -1) {
-        if (IsMouseButtonPressed(ek_mouse_button_code_left, input_state, input_state_last)) {
+        if (ZFWIsMouseButtonPressed(zfw_ek_mouse_button_code_left, input_state, input_state_last)) {
             const s_page_elem* const elem = &page_elems.buf[ts->page_btn_elem_hovered_index];
 
             if (elem->button_click_func) {
@@ -557,7 +557,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
                 assert(false && "Button click function not set!");
             }
 
-            if (!PlaySound(audio_sys, snd_types, ek_sound_type_button_click, SettingPerc(settings, ek_setting_volume), PAN_DEFAULT, PITCH_DEFAULT)) {
+            if (!ZFWPlaySound(audio_sys, snd_types, ek_sound_type_button_click, SettingPerc(settings, ek_setting_volume), ZFW_PAN_DEFAULT, ZFW_PITCH_DEFAULT)) {
                 return (s_title_screen_tick_result){
                     ek_title_screen_tick_result_type_error
                 };
@@ -584,7 +584,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
         }
 
         if (nw_name_buf_index > 0) {
-            if (IsKeyPressed(ek_key_code_backspace, input_state, input_state_last)) {
+            if (ZFWIsKeyPressed(zfw_ek_key_code_backspace, input_state, input_state_last)) {
                 nw_name_buf_index--;
                 ts->new_world_name_buf[nw_name_buf_index] = '\0';
             }
@@ -594,14 +594,14 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
     return result;
 }
 
-bool RenderTitleScreen(const s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const s_textures* const textures, const s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
-    if (IS_ZERO(page_elems)) {
+    if (ZFW_IS_ZERO(page_elems)) {
         return false;
     }
 
-    const s_vec_2d* const positions = PushPageElemPositions(temp_mem_arena, &page_elems, UISize(rendering_context->display_size));
+    const zfw_s_vec_2d* const positions = PushPageElemPositions(temp_mem_arena, &page_elems, UISize(rendering_context->display_size));
 
     if (!positions) {
         return false;
@@ -610,17 +610,17 @@ bool RenderTitleScreen(const s_rendering_context* const rendering_context, const
     for (int i = 0; i < page_elems.cnt; i++) {
         const s_page_elem* const elem = &page_elems.buf[i];
 
-        s_color color = WHITE;
+        zfw_s_color color = ZFW_WHITE;
 
         if (elem->button) {
             if (elem->button_inactive) {
-                color = GRAY;
+                color = ZFW_GRAY;
             } else if (ts->page_btn_elem_hovered_index == i) {
-                color = YELLOW;
+                color = ZFW_YELLOW;
             }
         }
 
-        if (!RenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], ek_str_hor_align_center, ek_str_ver_align_center, color, temp_mem_arena)) {
+        if (!ZFWRenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, color, temp_mem_arena)) {
             return false;
         }
     }

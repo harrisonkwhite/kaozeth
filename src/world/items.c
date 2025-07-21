@@ -1,7 +1,7 @@
 #include "world.h"
 
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_vec_2d_i mouse_tile_pos) {
-    const s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_i mouse_tile_pos) {
+    const zfw_s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
     const int player_to_mouse_tile_dist = TileDist(player_tile_pos, mouse_tile_pos);
 
     switch (g_item_types[item_type].use_type) {
@@ -26,7 +26,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const s_input_state* const input_state, const s_vec_2d_i display_size, s_mem_arena* const temp_mem_arena) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i display_size, zfw_s_mem_arena* const temp_mem_arena) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -43,10 +43,10 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
         return true;
     }
 
-    const s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
-    const s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+    const zfw_s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
-    if (!IsMouseButtonDown(ek_mouse_button_code_left, input_state)
+    if (!ZFWIsMouseButtonDown(zfw_ek_mouse_button_code_left, input_state)
         || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
         return true;
     }
@@ -67,8 +67,8 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
 
         case ek_item_use_type_shoot:
             {
-                const s_vec_2d dir = Vec2DDir(world->player.pos, mouse_cam_pos);
-                const s_vec_2d vel = Vec2DScaled(dir, item_type->shoot_proj_spd);
+                const zfw_s_vec_2d dir = ZFWVec2DDir(world->player.pos, mouse_cam_pos);
+                const zfw_s_vec_2d vel = ZFWVec2DScaled(dir, item_type->shoot_proj_spd);
 
                 if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
                     return false;
@@ -87,7 +87,7 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
     return true;
 }
 
-bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
+bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
     assert(world);
     assert(item_quantity > 0);
 
@@ -96,7 +96,7 @@ bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type i
     }
 
     s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
-    assert(IS_ZERO(*drop));
+    assert(ZFW_IS_ZERO(*drop));
     drop->item_type = item_type;
     drop->quantity = item_quantity;
     drop->pos = pos;
@@ -106,12 +106,12 @@ bool SpawnItemDrop(s_world* const world, const s_vec_2d pos, const e_item_type i
     return true;
 }
 
-bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, const t_settings* const settings) {
+bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, const t_settings* const settings) {
     assert(world);
 
     bool collected = false; // Was an item drop collected?
 
-    const s_rect player_collider = PlayerCollider(world->player.pos);
+    const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
 
     for (int i = 0; i < world->item_drop_active_cnt; i++) {
         s_item_drop* const drop = &world->item_drops[i];
@@ -121,15 +121,15 @@ bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s
 
         ProcVerTileCollisions(&drop->pos, &drop->vel.y, ItemDropColliderSize(drop->item_type), ITEM_DROP_ORIGIN, &world->core.tilemap_core.activity);
 
-        drop->pos = Vec2DSum(drop->pos, drop->vel);
+        drop->pos = ZFWVec2DSum(drop->pos, drop->vel);
 
         // Process collection.
         const bool collectable = DoesInventoryHaveRoomFor((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
 
         if (collectable) {
-            const s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
+            const zfw_s_rect drop_collider = ItemDropCollider(drop->pos, drop->item_type);
 
-            if (DoRectsInters(player_collider, drop_collider)) {
+            if (ZFWDoRectsInters(player_collider, drop_collider)) {
                 collected = true;
 
                 const int remaining = AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
@@ -138,7 +138,7 @@ bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s
                 // Remove this item drop.
                 world->item_drop_active_cnt--;
                 world->item_drops[i] = world->item_drops[world->item_drop_active_cnt];
-                ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
+                ZFW_ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
 
                 i--;
             }
@@ -147,7 +147,7 @@ bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s
 
     if (collected) {
         // This is called here instead of above so the same sound doesn't get stacked.
-        if (!PlaySound(audio_sys, snd_types, ek_sound_type_item_drop_collect, VOL_DEFAULT * SettingPerc(settings, ek_setting_volume), PAN_DEFAULT, PITCH_DEFAULT)) {
+        if (!ZFWPlaySound(audio_sys, snd_types, ek_sound_type_item_drop_collect, ZFW_VOL_DEFAULT * SettingPerc(settings, ek_setting_volume), ZFW_PAN_DEFAULT, ZFW_PITCH_DEFAULT)) {
             return false;
         }
     }
@@ -155,7 +155,7 @@ bool UpdateItemDrops(s_world* const world, s_audio_sys* const audio_sys, const s
     return true;
 }
 
-void RenderItemDrops(const s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const s_textures* const textures) {
+void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_textures* const textures) {
     assert(rendering_context);
     assert(drops);
     assert(drop_cnt >= 0);
@@ -163,6 +163,6 @@ void RenderItemDrops(const s_rendering_context* const rendering_context, const s
     for (int i = 0; i < drop_cnt; i++) {
         const s_item_drop* const drop = &drops[i];
         const e_sprite spr = g_item_types[drop->item_type].icon_spr;
-        RenderSprite(rendering_context, spr, textures, drop->pos, ITEM_DROP_ORIGIN, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+        RenderSprite(rendering_context, spr, textures, drop->pos, ITEM_DROP_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
     }
 }

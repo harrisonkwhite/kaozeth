@@ -8,9 +8,9 @@
 #define RESPAWN_TIME 120
 
 typedef struct {
-    s_textures textures;
-    s_fonts fonts;
-    s_sound_types snd_types;
+    zfw_s_textures textures;
+    zfw_s_fonts fonts;
+    zfw_s_sound_types snd_types;
 
     t_settings settings;
 
@@ -122,7 +122,7 @@ const s_sprite g_sprites[] = {
     }
 };
 
-static_assert(STATIC_ARRAY_LEN(g_sprites) == eks_sprite_cnt, "Invalid array length!");
+static_assert(ZFW_STATIC_ARRAY_LEN(g_sprites) == eks_sprite_cnt, "Invalid array length!");
 
 const s_projectile_type g_projectile_types[] = {
     [ek_projectile_type_wooden_arrow] = {
@@ -131,7 +131,7 @@ const s_projectile_type g_projectile_types[] = {
     }
 };
 
-static_assert(STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
+static_assert(ZFW_STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
 
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
@@ -156,7 +156,7 @@ const s_tile_type g_tile_types[] = {
 
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
 
-static_assert(STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
+static_assert(ZFW_STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
 
 const s_item_type g_item_types[] = {
     [ek_item_type_dirt_block] = {
@@ -212,7 +212,7 @@ const s_item_type g_item_types[] = {
     }
 };
 
-static_assert(STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
+static_assert(ZFW_STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
 
 const s_setting g_settings[] = {
     [ek_setting_smooth_camera] = {
@@ -226,7 +226,7 @@ const s_setting g_settings[] = {
     }
 };
 
-static_assert(STATIC_ARRAY_LEN(g_settings) == eks_setting_cnt, "Invalid array length!");
+static_assert(ZFW_STATIC_ARRAY_LEN(g_settings) == eks_setting_cnt, "Invalid array length!");
 
 static const t_settings g_settings_default = {
     [ek_setting_smooth_camera] = 1,
@@ -249,47 +249,47 @@ static const char* TextureIndexToFilePath(const int index) {
     }
 }
 
-static s_font_load_info FontIndexToLoadInfo(const int index) {
+static zfw_s_font_load_info FontIndexToLoadInfo(const int index) {
     switch ((e_font)index) {
         case ek_font_eb_garamond_20:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 20
             };
 
         case ek_font_eb_garamond_24:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 24
             };
 
         case ek_font_eb_garamond_28:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 28
             };
 
         case ek_font_eb_garamond_32:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 32
             };
 
         case ek_font_eb_garamond_48:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 48
             };
 
         case ek_font_eb_garamond_80:
-            return (s_font_load_info){
+            return (zfw_s_font_load_info){
                 .file_path = "assets/fonts/eb_garamond.ttf",
                 .height = 80
             };
 
         default:
             assert(false && "Font case not handled!");
-            return (s_font_load_info){0};
+            return (zfw_s_font_load_info){0};
     }
 }
 
@@ -305,7 +305,7 @@ static const char* SoundTypeIndexToFilePath(const int index) {
 }
 
 static bool LoadSettingsFromFile(t_settings* const settings) {
-    assert(IS_ZERO(*settings));
+    assert(ZFW_IS_ZERO(*settings));
 
     FILE* const fs = fopen(SETTINGS_FILENAME, "rb");
 
@@ -318,7 +318,7 @@ static bool LoadSettingsFromFile(t_settings* const settings) {
     fclose(fs);
 
     if (read < sizeof(*settings)) {
-        ZERO_OUT(*settings);
+        ZFW_ZERO_OUT(*settings);
         return false;
     }
 
@@ -326,7 +326,7 @@ static bool LoadSettingsFromFile(t_settings* const settings) {
 }
 
 static void LoadSettings(t_settings* const settings) {
-    assert(IS_ZERO(*settings));
+    assert(ZFW_IS_ZERO(*settings));
 
     if (!LoadSettingsFromFile(settings)) {
         // Failed to load settings file, so load defaults.
@@ -352,18 +352,18 @@ static bool WriteSettingsToFile(t_settings* const settings) {
     return true;
 }
 
-static bool InitGame(const s_game_init_func_data* const func_data) {
+static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    if (!LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
+    if (!ZFWLoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
         return false;
     }
 
-    if (!LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+    if (!ZFWLoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
         return false;
     }
 
-    if (!LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
+    if (!ZFWLoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
         return false;
     }
 
@@ -376,7 +376,7 @@ static bool InitGame(const s_game_init_func_data* const func_data) {
     return true;
 }
 
-static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_data) {
+static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     if (game->in_world) {
@@ -391,7 +391,7 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
                 return ek_game_tick_func_result_error;
 
             case ek_title_screen_tick_result_type_load_world:
-                ZERO_OUT(game->title_screen);
+                ZFW_ZERO_OUT(game->title_screen);
 
                 if (!InitWorld(&game->world, &tick_res.world_filename, func_data->temp_mem_arena)) {
                     return ek_game_tick_func_result_error;
@@ -411,29 +411,29 @@ static e_game_tick_func_result GameTick(const s_game_tick_func_data* const func_
     return ek_game_tick_func_result_default;
 }
 
-static void InitUIViewMatrix(t_matrix_4x4* const mat) {
-    assert(mat && IS_ZERO(*mat));
+static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
+    assert(mat && ZFW_IS_ZERO(*mat));
 
-    InitIdenMatrix4x4(mat);
-    ScaleMatrix4x4(mat, UI_SCALE);
+    ZFWInitIdenMatrix4x4(mat);
+    ZFWScaleMatrix4x4(mat, UI_SCALE);
 }
 
-static bool RenderGame(const s_game_render_func_data* const func_data) {
+static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    RenderClear((s_color){0.2, 0.3, 0.4, 1.0});
+    ZFWRenderClear((zfw_s_color){0.2, 0.3, 0.4, 1.0});
 
     if (game->in_world) {
         RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena);
 
-        ZERO_OUT(func_data->rendering_context.state->view_mat);
+        ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
         if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->input_state->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     } else {
-        ZERO_OUT(func_data->rendering_context.state->view_mat);
+        ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
         if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
@@ -442,10 +442,10 @@ static bool RenderGame(const s_game_render_func_data* const func_data) {
     }
 
     // Render the mouse.
-    const s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
-    RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, 0.0f, WHITE);
+    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
+    RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
-    Flush(&func_data->rendering_context);
+    ZFWFlush(&func_data->rendering_context);
 
     return true;
 }
@@ -459,18 +459,18 @@ static void CleanGame(void* const user_mem) {
 
     WriteSettingsToFile(&game->settings);
 
-    UnloadFonts(&game->fonts);
-    UnloadTextures(&game->textures);
+    ZFWUnloadFonts(&game->fonts);
+    ZFWUnloadTextures(&game->textures);
 }
 
 int main() {
-    const s_game_info game_info = {
+    const zfw_s_game_info game_info = {
         .user_mem_size = sizeof(s_game),
-        .user_mem_alignment = ALIGN_OF(s_game),
+        .user_mem_alignment = ZFW_ALIGN_OF(s_game),
 
         .window_init_size = {1280, 720},
         .window_title = "Terraria Clone",
-        .window_flags = ek_window_flags_hide_cursor | ek_window_flags_resizable,
+        .window_flags = zfw_ek_window_flags_hide_cursor | zfw_ek_window_flags_resizable,
 
         .init_func = InitGame,
         .tick_func = GameTick,
@@ -478,5 +478,5 @@ int main() {
         .clean_func = CleanGame,
     };
 
-    return RunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ZFWRunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

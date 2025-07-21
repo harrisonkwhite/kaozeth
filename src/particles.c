@@ -1,8 +1,8 @@
 #include "particles.h"
 #include "sprites.h"
 
-void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const s_vec_2d pos, const s_vec_2d vel, const float rot) {
-    assert(IS_ZERO(*part));
+void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel, const float rot) {
+    assert(ZFW_IS_ZERO(*part));
 
     part->pos = pos;
     part->vel = vel;
@@ -11,22 +11,22 @@ void InitParticleFromTemplate(s_particle* const part, const e_particle_template 
     switch (temp) {
         case ek_particle_template_dirt:
             part->spr = ek_sprite_dirt_particle;
-            part->life = RandRangeI(20, 25);
+            part->life = ZFWRandRangeI(20, 25);
             break;
 
         case ek_particle_template_stone:
             part->spr = ek_sprite_stone_particle;
-            part->life = RandRangeI(20, 25);
+            part->life = ZFWRandRangeI(20, 25);
             break;
 
         case ek_particle_template_grass:
             part->spr = ek_sprite_grass_particle;
-            part->life = RandRangeI(20, 25);
+            part->life = ZFWRandRangeI(20, 25);
             break;
 
         case ek_particle_template_gel:
             part->spr = ek_sprite_gel_particle;
-            part->life = RandRangeI(20, 25);
+            part->life = ZFWRandRangeI(20, 25);
             break;
 
         default:
@@ -64,13 +64,13 @@ void UpdateParticles(s_particles* const particles, const float grav) {
 
         // Update position.
         part->vel.y += grav;
-        part->pos = Vec2DSum(part->pos, part->vel);
+        part->pos = ZFWVec2DSum(part->pos, part->vel);
     }
 }
 
-void RenderParticles(const s_rendering_context* const rendering_context, const s_particles* const particles, const s_textures* const textures) {
+void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_textures* const textures) {
     for (int i = 0; i < particles->cnt; i++) {
         const s_particle* const part = &particles->buf[i];
-        RenderSprite(rendering_context, part->spr, textures, part->pos, (s_vec_2d){0.5f, 0.5f}, (s_vec_2d){1.0f, 1.0f}, part->rot, WHITE);
+        RenderSprite(rendering_context, part->spr, textures, part->pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, part->rot, ZFW_WHITE);
     }
 }

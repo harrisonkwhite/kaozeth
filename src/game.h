@@ -29,10 +29,10 @@ typedef enum {
 typedef struct {
     e_setting_type type;
     const char* name;
-    t_byte preset;
+    zfw_t_byte preset;
 } s_setting;
 
-typedef t_byte t_settings[eks_setting_cnt];
+typedef zfw_t_byte t_settings[eks_setting_cnt];
 
 extern const s_setting g_settings[];
 
@@ -46,22 +46,22 @@ static inline float SettingPerc(const t_settings* const settings, const e_settin
     return (float)(*settings)[setting] / 100.0f;
 }
 
-static inline s_vec_2d_i UISize(const s_vec_2d_i display_size) {
+static inline zfw_s_vec_2d_i UISize(const zfw_s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
-    return Vec2DIScaled(display_size, 1.0f / UI_SCALE);
+    return ZFWVec2DIScaled(display_size, 1.0f / UI_SCALE);
 }
 
-static inline s_vec_2d DisplayToUIPos(const s_vec_2d pos) {
-    return Vec2DScaled(pos, 1.0f / UI_SCALE);
+static inline zfw_s_vec_2d DisplayToUIPos(const zfw_s_vec_2d pos) {
+    return ZFWVec2DScaled(pos, 1.0f / UI_SCALE);
 }
 
-static inline s_rect Collider(const s_vec_2d pos, const s_vec_2d size, const s_vec_2d origin) {
+static inline zfw_s_rect Collider(const zfw_s_vec_2d pos, const zfw_s_vec_2d size, const zfw_s_vec_2d origin) {
     assert(size.x > 0.0f && size.y > 0.0f);
-    return (s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
+    return (zfw_s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
 }
 
-static inline s_rect ColliderFromSprite(const e_sprite spr, const s_vec_2d pos, const s_vec_2d origin) {
-    return Collider(pos, (s_vec_2d){g_sprites[spr].src_rect.width, g_sprites[spr].src_rect.height}, origin);
+static inline zfw_s_rect ColliderFromSprite(const e_sprite spr, const zfw_s_vec_2d pos, const zfw_s_vec_2d origin) {
+    return Collider(pos, (zfw_s_vec_2d){g_sprites[spr].src_rect.width, g_sprites[spr].src_rect.height}, origin);
 }
 
 //
