@@ -137,25 +137,32 @@ static zfw_s_rect_edges_i TilemapRenderRange(const zfw_s_vec_2d cam_pos, const z
     return render_range;
 }
 
-static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_i tm_render_range) {
+static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_i tm_render_range, zfw_s_mem_arena* const temp_mem_arena) {
     const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_i){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
 
-    if (!ZFW_IS_ZERO(lightmap)) {
-        for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
-            for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
-                if (IsTileActive(tm_activity, (zfw_s_vec_2d_i){tx, ty})) {
-                    continue;
-                }
+    if (!IsLightmapInitted(&lightmap)) {
+        return (s_lightmap){0};
+    }
 
-                PropagateLight(&lightmap, (zfw_s_vec_2d_i){tx - tm_render_range.left, ty - tm_render_range.top}, LIGHT_LEVEL_LIMIT);
+    for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
+        for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
+            if (IsTileActive(tm_activity, (zfw_s_vec_2d_i){tx, ty})) {
+                continue;
             }
+
+            const zfw_s_vec_2d_i lp = {tx - tm_render_range.left, ty - tm_render_range.top};
+            SetLightLevel(&lightmap, lp, LIGHT_LEVEL_LIMIT);
         }
+    }
+
+    if (!PropagateLights(&lightmap, temp_mem_arena)) {
+        return (s_lightmap){0};
     }
 
     return lightmap;
 }
 
-void RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena) {
+bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena) {
     ZFW_ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
@@ -175,16 +182,17 @@ void RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
 
     RenderParticles(rendering_context, &world->particles, textures);
 
-    const s_lightmap world_lightmap = GenWorldLightmap(temp_mem_arena, &world->core.tilemap_core.activity, tilemap_render_range);
+    const s_lightmap world_lightmap = GenWorldLightmap(temp_mem_arena, &world->core.tilemap_core.activity, tilemap_render_range, temp_mem_arena);
 
-    if (ZFW_IS_ZERO(world_lightmap)) {
-        // TODO: Return false!
-        return;
+    if (!IsLightmapInitted(&world_lightmap)) {
+        return false;
     }
 
     RenderLightmap(rendering_context, &world_lightmap, (zfw_s_vec_2d){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
 
     ZFWFlush(rendering_context);
+
+    return true;
 }
 
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename) {

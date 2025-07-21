@@ -1,13 +1,59 @@
 #include <stdio.h>
 #include "lighting.h"
 
-static inline bool IsLightPosInBounds(const zfw_s_vec_2d_i pos, const zfw_s_vec_2d_i map_size) {
-    return pos.x >= 0 && pos.x < map_size.x && pos.y >= 0 && pos.y < map_size.y;
+// NOTE: Using a queue system instead of recursion as that would blow up the stack.
+typedef struct {
+    zfw_s_vec_2d_i* buf;
+    int cap;
+    int start;
+    int len;
+} s_light_pos_queue;
+
+static bool IsLightPosQueueValid(const s_light_pos_queue* const queue, const zfw_s_vec_2d_i map_size) {
+    if (!queue->buf
+        || queue->cap <= 0
+        || queue->start < 0 || queue->start >= queue->cap
+        || queue->len < 0 || queue->len > queue->cap) {
+        return false;
+    }
+
+    for (int i = 0; i < queue->len; i++) {
+        const int bi = (queue->start + i) % queue->cap;
+        const zfw_s_vec_2d_i pos = queue->buf[bi];
+
+        if (!IsLightPosInBounds(pos, map_size)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-static inline t_light_level LightLevel(const s_lightmap* const map, const zfw_s_vec_2d_i pos) {
-    assert(IsLightPosInBounds(pos, map->size));
-    return map->buf[ZFWIndexFrom2D(pos, map->size.x)];
+static bool EnqueueLightPos(s_light_pos_queue* const queue, const zfw_s_vec_2d_i light_pos, const zfw_s_vec_2d_i map_size) {
+    assert(IsLightPosQueueValid(queue, map_size));
+    assert(IsLightPosInBounds(light_pos, map_size));
+
+    if (queue->len < queue->cap) {
+        queue->buf[(queue->start + queue->len) % queue->cap] = light_pos;
+        queue->len++;
+        return true;
+    }
+
+    return false;
+}
+
+static zfw_s_vec_2d_i DequeueLightPos(s_light_pos_queue* const queue, const zfw_s_vec_2d_i map_size) {
+    assert(IsLightPosQueueValid(queue, map_size));
+    assert(queue->len > 0);
+
+    const zfw_s_vec_2d_i light = queue->buf[queue->start];
+
+    queue->start++;
+    queue->start %= queue->cap;
+
+    queue->len--;
+
+    return light;
 }
 
 s_lightmap GenLightmap(zfw_s_mem_arena* const mem_arena, const zfw_s_vec_2d_i size) {
@@ -26,27 +72,70 @@ s_lightmap GenLightmap(zfw_s_mem_arena* const mem_arena, const zfw_s_vec_2d_i si
     };
 }
 
-void PropagateLight(const s_lightmap* const lightmap, const zfw_s_vec_2d_i pos, const t_light_level level) {
-    assert(level > 0);
+bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const temp_mem_arena) {
+    assert(lightmap->buf && lightmap->size.x > 0 && lightmap->size.y > 0);
 
-    if (!IsLightPosInBounds(pos, lightmap->size)) {
-        return;
+    // Set up the light position queue.
+    const int light_limit = lightmap->size.x * lightmap->size.y;
+
+    s_light_pos_queue light_pos_queue = {
+        .buf = ZFW_MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, zfw_s_vec_2d_i, light_limit),
+        .cap = light_limit
+    };
+
+    if (!light_pos_queue.buf) {
+        fprintf(stderr, "Failed to allocate memory for light position queue!\n");
+        return false;
     }
 
-    const int index = ZFWIndexFrom2D(pos, lightmap->size.x);
+    // Enqueue lights already in the map.
+    for (int y = 0; y < lightmap->size.y; y++) {
+        for (int x = 0; x < lightmap->size.x; x++) {
+            const zfw_s_vec_2d_i pos = {x, y};
+            const int i = ZFWIndexFrom2D(pos, lightmap->size.x);
 
-    if (lightmap->buf[index] >= level) {
-        return;
+            const int lvl = LightLevel(lightmap, pos);
+            assert(lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT);
+
+            if (lvl > 0) {
+                EnqueueLightPos(&light_pos_queue, pos, lightmap->size);
+            }
+        }
     }
 
-    lightmap->buf[index] = level;
+    // Propagate lights (BFS).
+    while (light_pos_queue.len > 0) {
+        const zfw_s_vec_2d_i pos = DequeueLightPos(&light_pos_queue, lightmap->size);
 
-    if (level > 1) {
-        PropagateLight(lightmap, (zfw_s_vec_2d_i){pos.x + 1, pos.y}, level - 1);
-        PropagateLight(lightmap, (zfw_s_vec_2d_i){pos.x - 1, pos.y}, level - 1);
-        PropagateLight(lightmap, (zfw_s_vec_2d_i){pos.x, pos.y + 1}, level - 1);
-        PropagateLight(lightmap, (zfw_s_vec_2d_i){pos.x, pos.y - 1}, level - 1);
+        const zfw_s_vec_2d_i neighbour_pos_offsets[] = {
+            {0, 1},
+            {0, -1},
+            {1, 0},
+            {-1, 0},
+        };
+
+        for (int i = 0; i < ZFW_STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
+            const zfw_s_vec_2d_i neighbour_pos = ZFWVec2DISum(pos, neighbour_pos_offsets[i]);
+
+            if (!IsLightPosInBounds(neighbour_pos, lightmap->size)) {
+                continue;
+            }
+
+            const t_light_level new_neighbour_light_level = LightLevel(lightmap, pos) - 1;
+
+            // Only brighten a neighbour, don't darken it.
+            if (LightLevel(lightmap, neighbour_pos) < new_neighbour_light_level) {
+                SetLightLevel(lightmap, neighbour_pos, new_neighbour_light_level);
+
+                // No point in adding it to the queue it if it's completely dark, as there'd be no brightness to propagate.
+                if (LightLevel(lightmap, neighbour_pos) > 0) {
+                    EnqueueLightPos(&light_pos_queue, neighbour_pos, lightmap->size);
+                }
+            }
+        }
     }
+
+    return true;
 }
 
 void RenderLightmap(const zfw_s_rendering_context* const rendering_context, const s_lightmap* const map, const zfw_s_vec_2d pos, const float tile_size) {

@@ -424,7 +424,9 @@ static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     ZFWRenderClear((zfw_s_color){0.2, 0.3, 0.4, 1.0});
 
     if (game->in_world) {
-        RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena);
+        if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena)) {
+            return false;
+        }
 
         ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
