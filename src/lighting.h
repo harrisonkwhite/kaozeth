@@ -5,7 +5,7 @@
 #include <zfw_math.h>
 #include <zfw_utils.h>
 
-#define LIGHT_LEVEL_LIMIT 16
+#define LIGHT_LEVEL_LIMIT 12
 
 typedef int t_light_level;
 
@@ -14,8 +14,8 @@ typedef struct {
     s_vec_2d_i size;
 } s_lightmap;
 
-s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, const t_byte* const seed, s_mem_arena* const temp_mem_arena);
-bool PropagateLight(const s_lightmap* const map, const s_vec_2d_i init_light_pos, s_mem_arena* const temp_mem_arena);
-void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_rect_edges_i range, const float tile_size);
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size);
+void PropagateLight(const s_lightmap* const lightmap, const s_vec_2d_i pos, const t_light_level level);
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_vec_2d pos, const float tile_size);
 
 #endif

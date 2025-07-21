@@ -2,19 +2,19 @@
 
 #define TILEMAP_CONTACT_PRECISE_JUMP_SIZE 0.1f
 
-void AddTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type) {
+void AddTile(s_tilemap_core* const tm_core, const s_vec_2d_i pos, const e_tile_type tile_type) {
     assert(IsTilePosInBounds(pos));
-    assert(!IsTileActive(&tilemap->activity, pos));
+    assert(!IsTileActive(&tm_core->activity, pos));
 
-    ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tilemap->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
-    tilemap->tile_types[pos.y][pos.x] = tile_type;
+    ActivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    tm_core->tile_types[pos.y][pos.x] = tile_type;
 }
 
-void RemoveTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos) {
+void RemoveTile(s_tilemap_core* const tm_core, const s_vec_2d_i pos) {
     assert(IsTilePosInBounds(pos));
-    assert(IsTileActive(&tilemap->activity, pos));
+    assert(IsTileActive(&tm_core->activity, pos));
 
-    DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tilemap->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    DeactivateBit(IndexFrom2D(pos, TILEMAP_WIDTH), (t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 s_rect_edges_i RectTilemapSpan(const s_rect rect) {

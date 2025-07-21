@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "world.h"
+#include "zfw_math.h"
 #include "zfw_random.h"
+#include "zfw_utils.h"
 
 #define RESPAWN_TIME 120
 
@@ -37,12 +39,22 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, s_m
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
-    world->lightmap = GenLightmap(&world->mem_arena, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT}, (const t_byte*)world->core.tilemap_core.activity, temp_mem_arena);
+#if 0
+    world->lightmap = GenLightmap(&world->mem_arena, (s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
+
+    if (IS_ZERO(world->lightmap)) {
+        return false;
+    }
+
+    if (!PropagateLights(&world->lightmap, (const t_byte*)world->core.tilemap_core.activity, temp_mem_arena, false)) {
+        return false;
+    }
 
     if (IS_ZERO(world->lightmap)) {
         fprintf(stderr, "Failed to generate world lightmap!");
         return false;
     }
+#endif
 
     return true;
 }
@@ -142,7 +154,25 @@ static s_rect_edges_i TilemapRenderRange(const s_vec_2d cam_pos, const s_vec_2d_
     return render_range;
 }
 
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures) {
+static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const s_rect_edges_i tm_render_range) {
+    const s_lightmap lightmap = GenLightmap(mem_arena, (s_vec_2d_i){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
+
+    if (!IS_ZERO(lightmap)) {
+        for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
+            for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
+                if (IsTileActive(tm_activity, (s_vec_2d_i){tx, ty})) {
+                    continue;
+                }
+
+                PropagateLight(&lightmap, (s_vec_2d_i){tx - tm_render_range.left, ty - tm_render_range.top}, LIGHT_LEVEL_LIMIT);
+            }
+        }
+    }
+
+    return lightmap;
+}
+
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, s_mem_arena* const temp_mem_arena) {
     ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
 
@@ -162,7 +192,14 @@ void RenderWorld(const s_rendering_context* const rendering_context, const s_wor
 
     RenderParticles(rendering_context, &world->particles, textures);
 
-    RenderLightmap(rendering_context, &world->lightmap, tilemap_render_range, TILE_SIZE);
+    const s_lightmap world_lightmap = GenWorldLightmap(temp_mem_arena, &world->core.tilemap_core.activity, tilemap_render_range);
+
+    if (IS_ZERO(world_lightmap)) {
+        // TODO: Return false!
+        return;
+    }
+
+    RenderLightmap(rendering_context, &world_lightmap, (s_vec_2d){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
 
     Flush(rendering_context);
 }
@@ -205,6 +242,45 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     }
 
     fclose(fs);
+
+    return true;
+}
+
+bool PlaceWorldTile(s_world* const world, const s_vec_2d_i pos, const e_tile_type type, s_mem_arena* const temp_mem_arena) {
+    AddTile(&world->core.tilemap_core, pos, type);
+    world->tilemap_tile_lifes[pos.y][pos.x] = 0;
+
+#if 0
+    // Update lightmap.
+    {
+        t_byte* const seed = MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, t_byte, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
+
+        if (!seed) {
+            return false;
+        }
+
+        memset(seed, 255, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
+
+        world->lightmap.buf[IndexFrom2D(pos, world->lightmap.size.x)] = 0;
+
+        const s_vec_2d_i neighbour_pos_offsets[] = {
+            {1, 0},
+            {-1, 0},
+            {0, 1},
+            {0, -1}
+        }; // TODO: Move this to lighting.h.
+
+        for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
+            const s_vec_2d_i neighbour_pos = Vec2DISum(pos, neighbour_pos_offsets[i]);
+
+            DeactivateBit(IndexFrom2D(neighbour_pos, world->lightmap.size.x), seed, world->lightmap.size.x * world->lightmap.size.y);
+        }
+
+        if (!PropagateLights(&world->lightmap, seed, temp_mem_arena, true)) {
+            return false;
+        }
+    }
+#endif
 
     return true;
 }
@@ -252,10 +328,22 @@ assert(world);
 
     RemoveTile(&world->core.tilemap_core, pos);
 
+#if 0
     // Update lightmap.
-    if (!PropagateLight(&world->lightmap, pos, temp_mem_arena)) {
+    t_byte* const seed = MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, t_byte, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
+
+    if (!seed) {
         return false;
     }
+
+    memset(seed, 255, BITS_TO_BYTES(world->lightmap.size.x * world->lightmap.size.y));
+
+    DeactivateBit(IndexFrom2D(pos, world->lightmap.size.x), seed, world->lightmap.size.x * world->lightmap.size.y);
+
+    if (!PropagateLights(&world->lightmap, seed, temp_mem_arena, false)) {
+        return false;
+    }
+#endif
 
     // Spawn item drop.
     const s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};

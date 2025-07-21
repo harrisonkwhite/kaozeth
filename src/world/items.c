@@ -55,7 +55,7 @@ bool ProcItemUsage(s_world* const world, const s_input_state* const input_state,
 
     switch (item_type->use_type) {
         case ek_item_use_type_tile_place:
-            AddTile(&world->core.tilemap_core, mouse_tile_pos, item_type->tile_place_type);
+            PlaceWorldTile(world, mouse_tile_pos, item_type->tile_place_type, temp_mem_arena);
             break;
 
         case ek_item_use_type_tile_hurt:

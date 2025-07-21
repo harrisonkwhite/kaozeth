@@ -1,7 +1,82 @@
 #include <stdio.h>
 #include "lighting.h"
-#include "zfw_math.h"
 
+static inline bool IsLightPosInBounds(const s_vec_2d_i pos, const s_vec_2d_i map_size) {
+    return pos.x >= 0 && pos.x < map_size.x && pos.y >= 0 && pos.y < map_size.y;
+}
+
+static inline t_light_level LightLevel(const s_lightmap* const map, const s_vec_2d_i pos) {
+    assert(IsLightPosInBounds(pos, map->size));
+    return map->buf[IndexFrom2D(pos, map->size.x)];
+}
+
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size) {
+    assert(size.x > 0 && size.y > 0);
+
+    t_light_level* const buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, size.x * size.y);
+
+    if (!buf) {
+        fprintf(stderr, "Failed to allocate memory for lightmap!\n");
+        return (s_lightmap){0};
+    }
+
+    return (s_lightmap){
+        .buf = buf,
+        .size = size
+    };
+}
+
+void PropagateLight(const s_lightmap* const lightmap, const s_vec_2d_i pos, const t_light_level level) {
+    assert(level > 0);
+
+    if (!IsLightPosInBounds(pos, lightmap->size)) {
+        return;
+    }
+
+    const int index = IndexFrom2D(pos, lightmap->size.x);
+
+    if (lightmap->buf[index] >= level) {
+        return;
+    }
+
+    lightmap->buf[index] = level;
+
+    if (level > 1) {
+        PropagateLight(lightmap, (s_vec_2d_i){pos.x + 1, pos.y}, level - 1);
+        PropagateLight(lightmap, (s_vec_2d_i){pos.x - 1, pos.y}, level - 1);
+        PropagateLight(lightmap, (s_vec_2d_i){pos.x, pos.y + 1}, level - 1);
+        PropagateLight(lightmap, (s_vec_2d_i){pos.x, pos.y - 1}, level - 1);
+    }
+}
+
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap* const map, const s_vec_2d pos, const float tile_size) {
+    assert(tile_size > 0.0f);
+
+    for (int ty = 0; ty < map->size.y; ty++) {
+        for (int tx = 0; tx < map->size.x; tx++) {
+            const t_light_level light_lvl = LightLevel(map, (s_vec_2d_i){tx, ty});
+
+            if (light_lvl == LIGHT_LEVEL_LIMIT) {
+                continue;
+            }
+
+            const s_rect rect = {
+                pos.x + (tx * tile_size),
+                pos.y + (ty * tile_size),
+                tile_size,
+                tile_size
+            };
+
+            const s_color blend = {
+                .a = 1.0f - ((float)light_lvl / LIGHT_LEVEL_LIMIT)
+            };
+
+            RenderRect(rendering_context, rect, blend);
+        }
+    }
+}
+
+#if 0
 typedef struct {
     s_vec_2d_i* buf;
     int cap;
@@ -76,22 +151,24 @@ static inline void SetLightLevel(const s_lightmap* const map, const s_vec_2d_i p
     map->buf[IndexFrom2D(pos, map->size.x)] = lvl;
 }
 
-s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, const t_byte* const seed, s_mem_arena* const temp_mem_arena) {
+s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size) {
     assert(size.x > 0 && size.y > 0);
-    assert(seed);
 
-    const s_lightmap map = {
-        .buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, size.x * size.y),
-        .size = size
-    };
+    t_light_level* const buf = MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, size.x * size.y);
 
-    if (!map.buf) {
+    if (!buf) {
         fprintf(stderr, "Failed to allocate memory for lightmap!\n");
         return (s_lightmap){0};
     }
 
-    // NOTE: Modelled after BFS.
-    const int light_limit = map.size.x * map.size.y;
+    return (s_lightmap){
+        .buf = buf,
+        .size = size
+    };
+}
+
+bool PropagateLights(const s_lightmap* const map, const t_byte* const seed, s_mem_arena* const temp_mem_arena, const bool special) {
+    const int light_limit = map->size.x * map->size.y;
 
     s_light_pos_queue queue = {
         .buf = MEM_ARENA_PUSH_TYPE_MANY(temp_mem_arena, s_vec_2d_i, light_limit),
@@ -100,28 +177,31 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, cons
 
     if (!queue.buf) {
         fprintf(stderr, "Failed to allocate memory for light position queue!\n");
-        return (s_lightmap){0};
+        return false;
     }
 
-    for (int y = 0; y < size.y; y++) {
-        for (int x = 0; x < size.x; x++) {
+    for (int y = 0; y < map->size.y; y++) {
+        for (int x = 0; x < map->size.x; x++) {
             const s_vec_2d_i pos = {x, y};
 
-            const int i = IndexFrom2D(pos, size.x);
+            const int i = IndexFrom2D(pos, map->size.x);
 
-            if (IsBitActive(i, seed, map.size.x * map.size.y)) {
+            if (IsBitActive(i, seed, map->size.x * map->size.y)) {
                 continue;
             }
 
-            EnqueueLightPos(&queue, pos, map.size);
-            SetLightLevel(&map, pos, LIGHT_LEVEL_LIMIT);
+            EnqueueLightPos(&queue, pos, map->size);
+
+            if (!special) {
+                SetLightLevel(map, pos, LIGHT_LEVEL_LIMIT);
+            }
         }
-    } 
+    }
 
     while (queue.len > 0) {
-        const s_vec_2d_i light_pos = DequeueLightPos(&queue, map.size);
+        const s_vec_2d_i light_pos = DequeueLightPos(&queue, map->size);
 
-        assert(LightLevel(&map, light_pos) > 0); // Sanity check.
+        assert(LightLevel(map, light_pos) > 0); // Sanity check.
 
         const s_vec_2d_i neighbour_pos_offsets[4] = {
             {0, 1},
@@ -133,26 +213,26 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_vec_2d_i size, cons
         for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
             const s_vec_2d_i neighbour_pos = Vec2DISum(light_pos, neighbour_pos_offsets[i]);
 
-            if (!IsLightPosInBounds(neighbour_pos, map.size)) {
+            if (!IsLightPosInBounds(neighbour_pos, map->size)) {
                 continue;
             }
 
-            const t_light_level new_neighbour_light_level = LightLevel(&map, light_pos) - 1;
+            const t_light_level new_neighbour_light_level = LightLevel(map, light_pos) - 1;
             assert(IsLightLevelValid(new_neighbour_light_level));
 
-            if (LightLevel(&map, neighbour_pos) >= new_neighbour_light_level) {
+            if (LightLevel(map, neighbour_pos) >= new_neighbour_light_level) {
                 continue;
             }
 
-            SetLightLevel(&map, neighbour_pos, new_neighbour_light_level);
+            SetLightLevel(map, neighbour_pos, new_neighbour_light_level);
 
-            if (LightLevel(&map, neighbour_pos) > 0) {
-                EnqueueLightPos(&queue, neighbour_pos, map.size);
+            if (LightLevel(map, neighbour_pos) > 0) {
+                EnqueueLightPos(&queue, neighbour_pos, map->size);
             }
         }
     }
 
-    return map;
+    return true;
 }
 
 bool PropagateLight(const s_lightmap* const map, const s_vec_2d_i init_light_pos, s_mem_arena* const temp_mem_arena) {
@@ -237,3 +317,4 @@ void RenderLightmap(const s_rendering_context* const rendering_context, const s_
         }
     }
 }
+#endif

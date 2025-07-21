@@ -4,7 +4,7 @@
 #include "game.h"
 
 #define TILEMAP_WIDTH 640 // TEMP: Make dynamic!
-#define TILEMAP_HEIGHT 200 // TEMP: Make dynamic!
+#define TILEMAP_HEIGHT 128 // TEMP: Make dynamic!
 
 #define CHUNK_WIDTH 100
 
@@ -19,8 +19,8 @@ typedef struct {
     e_tile_type tile_types[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 } s_tilemap_core;
 
-void AddTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos, const e_tile_type tile_type);
-void RemoveTile(s_tilemap_core* const tilemap, const s_vec_2d_i pos);
+void AddTile(s_tilemap_core* const tm_core, const s_vec_2d_i pos, const e_tile_type tile_type);
+void RemoveTile(s_tilemap_core* const tm_core, const s_vec_2d_i pos);
 s_rect_edges_i RectTilemapSpan(const s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_vec_2d* const pos, s_vec_2d* const vel, const s_vec_2d collider_size, const s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);

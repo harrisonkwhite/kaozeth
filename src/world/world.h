@@ -169,8 +169,6 @@ typedef struct world {
 
     s_world_core core;
 
-    s_lightmap lightmap;
-
     int respawn_time;
 
     s_player player;
@@ -246,9 +244,10 @@ static inline s_vec_2d CameraToUIPos(const s_vec_2d pos, const s_vec_2d cam_pos,
 bool InitWorld(s_world* const world, const t_world_filename* const filename, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
 bool WorldTick(s_world* const world, const t_settings* const settings, const s_input_state* const input_state, const s_input_state* const input_state_last, const s_vec_2d_i display_size, s_audio_sys* const audio_sys, const s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena);
-void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures);
+void RenderWorld(const s_rendering_context* const rendering_context, const s_world* const world, const s_textures* const textures, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
+bool PlaceWorldTile(s_world* const world, const s_vec_2d_i pos, const e_tile_type type, s_mem_arena* const temp_mem_arena);
 bool HurtWorldTile(s_world* const world, const s_vec_2d_i pos, s_mem_arena* const temp_mem_arena);
 bool DestroyWorldTile(s_world* const world, const s_vec_2d_i pos, s_mem_arena* const temp_mem_arena);
 bool IsTilePosFree(const s_world* const world, const s_vec_2d_i tile_pos);
