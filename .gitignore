@@ -2,5 +2,6 @@ build/
 .cache/
 compile_commands.json
 *.wrld
-debug.sh
 settings.dat
+perf.data
+perf.data.old

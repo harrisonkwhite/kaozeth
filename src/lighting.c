@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "lighting.h"
 
+#define DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS false // Having this enabled slows things down tremendously. Only have active if needing to make sure the queue never enters an invalid state.
+
 // NOTE: Using a queue system instead of recursion as that would blow up the stack.
 typedef struct {
     zfw_s_vec_2d_i* buf;
@@ -30,7 +32,9 @@ static bool IsLightPosQueueValid(const s_light_pos_queue* const queue, const zfw
 }
 
 static bool EnqueueLightPos(s_light_pos_queue* const queue, const zfw_s_vec_2d_i light_pos, const zfw_s_vec_2d_i map_size) {
+#if DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS
     assert(IsLightPosQueueValid(queue, map_size));
+#endif
     assert(IsLightPosInBounds(light_pos, map_size));
 
     if (queue->len < queue->cap) {
@@ -43,7 +47,9 @@ static bool EnqueueLightPos(s_light_pos_queue* const queue, const zfw_s_vec_2d_i
 }
 
 static zfw_s_vec_2d_i DequeueLightPos(s_light_pos_queue* const queue, const zfw_s_vec_2d_i map_size) {
+#if DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS
     assert(IsLightPosQueueValid(queue, map_size));
+#endif
     assert(queue->len > 0);
 
     const zfw_s_vec_2d_i light = queue->buf[queue->start];
@@ -73,7 +79,7 @@ s_lightmap GenLightmap(zfw_s_mem_arena* const mem_arena, const zfw_s_vec_2d_i si
 }
 
 bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const temp_mem_arena) {
-    assert(lightmap->buf && lightmap->size.x > 0 && lightmap->size.y > 0);
+    assert(IsLightmapInitted(lightmap));
 
     // Set up the light position queue.
     const int light_limit = lightmap->size.x * lightmap->size.y;
@@ -139,6 +145,7 @@ bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const te
 }
 
 void RenderLightmap(const zfw_s_rendering_context* const rendering_context, const s_lightmap* const map, const zfw_s_vec_2d pos, const float tile_size) {
+    assert(IsLightmapInitted(map));
     assert(tile_size > 0.0f);
 
     for (int ty = 0; ty < map->size.y; ty++) {

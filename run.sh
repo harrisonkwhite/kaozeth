@@ -6,4 +6,4 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 cmake --build .
 cp compile_commands.json ..
 cd ..
-build/terraria_clone
+./build/terraria_clone
