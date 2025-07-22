@@ -14,7 +14,6 @@ typedef struct world s_world;
 #define GRAVITY 0.2f
 
 #define CAMERA_LERP 0.3f
-#define CAMERA_SCALE 2.0f
 
 #define POPUP_TEXT_LIMIT 1024
 #define POPUP_TEXT_STR_BUF_SIZE 32
@@ -155,6 +154,14 @@ typedef struct {
 } s_item_drop;
 
 //
+// Camera
+//
+typedef struct {
+    zfw_s_vec_2d pos;
+    float scale;
+} s_camera;
+
+//
 //
 //
 #define WORLD_MEM_ARENA_SIZE ((1 << 20) * 2)
@@ -189,7 +196,7 @@ typedef struct world {
 
     s_popup_text popup_texts[POPUP_TEXT_LIMIT];
 
-    zfw_s_vec_2d cam_pos;
+    s_camera cam;
 
     t_mouse_hover_str_buf mouse_hover_str;
     e_item_type mouse_item_held_type;
@@ -205,45 +212,50 @@ static inline zfw_s_vec_2d_i CameraToTilePos(const zfw_s_vec_2d pos) {
     };
 }
 
-static inline zfw_s_vec_2d CameraSize(const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
-    return (zfw_s_vec_2d){display_size.x / CAMERA_SCALE, display_size.y / CAMERA_SCALE};
+static inline zfw_s_vec_2d CameraSize(const float cam_scale, const zfw_s_vec_2d_i window_size) {
+    assert(cam_scale > 0.0f);
+    assert(window_size.x > 0 && window_size.y > 0);
+    return (zfw_s_vec_2d){window_size.x / cam_scale, window_size.y / cam_scale};
 }
 
-static inline zfw_s_vec_2d CameraTopLeft(const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
-    const zfw_s_vec_2d size = CameraSize(display_size);
-    return (zfw_s_vec_2d){cam_pos.x - (size.x / 2.0f), cam_pos.y - (size.y / 2.0f)};
+static inline zfw_s_vec_2d CameraTopLeft(const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
+
+    const zfw_s_vec_2d size = CameraSize(cam->scale, window_size);
+    return (zfw_s_vec_2d){cam->pos.x - (size.x / 2.0f), cam->pos.y - (size.y / 2.0f)};
 }
 
-static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
-    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
+
+    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
     return (zfw_s_vec_2d) {
-        (pos.x - cam_tl.x) * CAMERA_SCALE,
-        (pos.y - cam_tl.y) * CAMERA_SCALE
+        (pos.x - cam_tl.x) * cam->scale,
+        (pos.y - cam_tl.y) * cam->scale
     };
 }
 
-static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
-    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
+static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
+
+    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
     return (zfw_s_vec_2d) {
-        cam_tl.x + (pos.x / CAMERA_SCALE),
-        cam_tl.y + (pos.y / CAMERA_SCALE)
+        cam_tl.x + (pos.x / cam->scale),
+        cam_tl.y + (pos.y / cam->scale)
     };
 }
 
-static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
-    return DisplayToUIPos(CameraToDisplayPos(pos, cam_pos, display_size));
+static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
+    return DisplayToUIPos(CameraToDisplayPos(pos, cam, window_size));
 }
 
 //
 // world.c
 //
-bool InitWorld(s_world* const world, const t_world_filename* const filename, zfw_s_mem_arena* const temp_mem_arena);
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i display_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
 bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
@@ -256,7 +268,7 @@ s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const
 //
 // world_ui.c
 //
-void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i display_size);
+void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size);
 bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena);
 
 //
@@ -324,7 +336,7 @@ static inline zfw_s_rect ProjectileCollider(const e_projectile_type proj_type, c
 // items.c
 //
 bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_i mouse_tile_pos);
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i display_size);
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i window_size);
 bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, const t_settings* const settings);
 void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_textures* const textures);

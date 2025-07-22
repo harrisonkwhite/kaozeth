@@ -122,7 +122,7 @@ static void WriteItemNameStr(char* const str_buf, const int str_buf_size, const 
 static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_i display_size) {
     assert(display_size.x > 0 && display_size.y > 0);
 
-    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, world->cam_pos, display_size);
+    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, display_size);
     const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
 
     // TODO: The sequencing of the below should really correspond to draw layering. Maybe add some layer depth variable?
@@ -230,7 +230,7 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
     const s_inventory_slot* const active_slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
     if (!world->player_inv_open && active_slot->quantity > 0) {
-        const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, world->cam_pos, rendering_context->display_size);
+        const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, rendering_context->display_size);
         const zfw_s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
@@ -238,8 +238,8 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
         if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, world, mouse_tile_pos)) {
             const zfw_s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
 
-            const zfw_s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, world->cam_pos, rendering_context->display_size);
-            const float highlight_size = (float)(TILE_SIZE * CAMERA_SCALE) / UI_SCALE;
+            const zfw_s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, &world->cam, rendering_context->display_size);
+            const float highlight_size = (float)(TILE_SIZE * world->cam.scale) / UI_SCALE;
             const zfw_s_rect highlight_rect = {
                 .x = highlight_pos.x,
                 .y = highlight_pos.y,
@@ -263,7 +263,7 @@ static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_c
 
     // Render the item icon.
     if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[slot.item_type].icon_spr, textures, ZFWRectCenter(slot_rect), (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, g_item_types[slot.item_type].icon_spr, textures, ZFWRectCenter(slot_rect), (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
     }
 
     return true;
@@ -330,7 +330,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
             continue;
         }
 
-        const zfw_s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, world->cam_pos, rendering_context->display_size);
+        const zfw_s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, &world->cam, rendering_context->display_size);
         const zfw_s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos);
         const zfw_s_color popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
 
@@ -398,7 +398,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Mouse Item Quantity
     //
     if (world->mouse_item_held_quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){CAMERA_SCALE / UI_SCALE, CAMERA_SCALE / UI_SCALE}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){world->cam.scale / UI_SCALE, world->cam.scale / UI_SCALE}, 0.0f, ZFW_WHITE);
     }
 
     return true;

@@ -221,7 +221,7 @@ bool ProcEnemySpawning(s_world* const world, const float cam_width) {
         const int npc_cnt = NPCCnt(&world->npcs.activity);
 
         if (npc_cnt < spawn_limit) {
-            const float spawn_x = GenEnemySpawnX(world->cam_pos.x, cam_width, cam_width, -(cam_width / 4.0f));
+            const float spawn_x = GenEnemySpawnX(world->cam.pos.x, cam_width, cam_width, -(cam_width / 4.0f));
 
             if (SpawnNPC(world, (zfw_s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime, &world->core.tilemap_core.activity) == -1) {
                 return false;

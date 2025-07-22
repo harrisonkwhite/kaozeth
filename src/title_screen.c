@@ -421,6 +421,7 @@ static s_page_elems PushPageElems(zfw_s_mem_arena* const mem_arena, const e_titl
             elems[eks_setting_cnt] = (s_page_elem){
                 .str = "Back",
                 .font = PAGE_ELEM_COMMON_FONT,
+                .padding_top = PAGE_ELEM_COMMON_PADDING,
                 .button = true,
                 .button_click_func = SettingsPageBackButtonClick
             };

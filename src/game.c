@@ -393,7 +393,7 @@ static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* con
             case ek_title_screen_tick_result_type_load_world:
                 ZFW_ZERO_OUT(game->title_screen);
 
-                if (!InitWorld(&game->world, &tick_res.world_filename, func_data->temp_mem_arena)) {
+                if (!InitWorld(&game->world, &tick_res.world_filename, func_data->window_state.size, func_data->temp_mem_arena)) {
                     return ek_game_tick_func_result_error;
                 }
 

@@ -6,21 +6,25 @@
 
 #define RESPAWN_TIME 120
 
-static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
+static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
     assert(mat && ZFW_IS_ZERO(*mat));
-    assert(display_size.x > 0 && display_size.y > 0);
+    assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d view_pos = {
-        (-cam_pos.x * CAMERA_SCALE) + (display_size.x / 2.0f),
-        (-cam_pos.y * CAMERA_SCALE) + (display_size.y / 2.0f)
+        (-cam->pos.x * cam->scale) + (window_size.x / 2.0f),
+        (-cam->pos.y * cam->scale) + (window_size.y / 2.0f)
     };
 
     ZFWInitIdenMatrix4x4(mat);
     ZFWTranslateMatrix4x4(mat, view_pos);
-    ZFWScaleMatrix4x4(mat, CAMERA_SCALE);
+    ZFWScaleMatrix4x4(mat, cam->scale);
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename, zfw_s_mem_arena* const temp_mem_arena) {
+static inline float CalcCameraScale(const zfw_s_vec_2d_i display_size) {
+    return display_size.x > 1600.0f || display_size.y > 900.0f ? 3.0f : 2.0f;
+}
+
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena) {
     assert(world && ZFW_IS_ZERO(*world));
     assert(filename);
 
@@ -35,7 +39,10 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, zfw
 
     InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
 
-    world->cam_pos = world->player.pos;
+    world->cam = (s_camera){
+        .pos = world->player.pos,
+        .scale = CalcCameraScale(window_size)
+    };
 
     AddToInventory((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, ek_item_type_copper_pickaxe, 1);
 
@@ -46,10 +53,11 @@ void CleanWorld(s_world* const world) {
     ZFWCleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i display_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
-    assert(display_size.x > 0 && display_size.y > 0); 
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
+    assert(window_size.x > 0 && window_size.y > 0); 
 
-    const zfw_s_vec_2d cam_size = CameraSize(display_size);
+    world->cam.scale = CalcCameraScale(window_size);
+    const zfw_s_vec_2d cam_size = CameraSize(world->cam.scale, window_size);
 
     if (!world->player.killed) {
         ProcPlayerMovement(world, input_state, input_state_last);
@@ -84,7 +92,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         return false;
     }
 
-    if (!ProcItemUsage(world, input_state, display_size)) {
+    if (!ProcItemUsage(world, input_state, window_size)) {
         return false;
     }
 
@@ -92,21 +100,21 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         return false;
     }
 
-    UpdateWorldUI(world, input_state, input_state_last, display_size);
+    UpdateWorldUI(world, input_state, input_state_last, window_size);
 
     // Update the camera.
     {
         const zfw_s_vec_2d cam_pos_dest = world->player.pos;
 
         if (SettingToggle(settings, ek_setting_smooth_camera)) {
-            world->cam_pos = ZFWLerpVec2D(world->cam_pos, cam_pos_dest, CAMERA_LERP);
+            world->cam.pos = ZFWLerpVec2D(world->cam.pos, cam_pos_dest, CAMERA_LERP);
 
-            world->cam_pos = (zfw_s_vec_2d){
-                ZFW_CLAMP(world->cam_pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
-                ZFW_CLAMP(world->cam_pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
+            world->cam.pos = (zfw_s_vec_2d){
+                ZFW_CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
+                ZFW_CLAMP(world->cam.pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
             };
         } else {
-            world->cam_pos = cam_pos_dest;
+            world->cam.pos = cam_pos_dest;
         }
     }
 
@@ -115,11 +123,11 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     return true;
 }
 
-static zfw_s_rect_edges_i TilemapRenderRange(const zfw_s_vec_2d cam_pos, const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
+static zfw_s_rect_edges_i TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
 
-    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam_pos, display_size);
-    const zfw_s_vec_2d cam_size = CameraSize(display_size);
+    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
+    const zfw_s_vec_2d cam_size = CameraSize(cam->scale, window_size);
 
     zfw_s_rect_edges_i render_range = {
         .left = floorf(cam_tl.x / TILE_SIZE),
@@ -164,9 +172,9 @@ static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_til
 
 bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena) {
     ZFW_ZERO_OUT(rendering_context->state->view_mat);
-    InitCameraViewMatrix(&rendering_context->state->view_mat, world->cam_pos, rendering_context->display_size);
+    InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->display_size);
 
-    const zfw_s_rect_edges_i tilemap_render_range = TilemapRenderRange(world->cam_pos, rendering_context->display_size);
+    const zfw_s_rect_edges_i tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->display_size);
 
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 

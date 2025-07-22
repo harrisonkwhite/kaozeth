@@ -47,7 +47,7 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_st
         return true;
     }
 
-    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, world->cam_pos, display_size);
+    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, &world->cam, display_size);
     const zfw_s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
     if (!ZFWIsMouseButtonDown(zfw_ek_mouse_button_code_left, input_state)
