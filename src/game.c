@@ -7,6 +7,8 @@
 
 #define RESPAWN_TIME 120
 
+float g_ui_scale = 1.0f;
+
 typedef struct {
     zfw_s_textures textures;
     zfw_s_fonts fonts;
@@ -376,8 +378,22 @@ static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     return true;
 }
 
+static inline float CalcUIScale(const zfw_s_vec_2d_i window_size) {
+    if (window_size.x > 1920 && window_size.y > 1080) {
+        return 2.0f;
+    }
+
+    if (window_size.x > 1600 && window_size.y > 900) {
+        return 1.5f;
+    }
+
+    return 1.0f;
+}
+
 static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
+
+    g_ui_scale = CalcUIScale(func_data->window_state.size);
 
     if (game->in_world) {
         if (!WorldTick(&game->world, &game->settings, func_data->input_state, func_data->input_state_last, func_data->window_state.size, func_data->audio_sys, &game->snd_types)) {
@@ -415,7 +431,7 @@ static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
     assert(mat && ZFW_IS_ZERO(*mat));
 
     ZFWInitIdenMatrix4x4(mat);
-    ZFWScaleMatrix4x4(mat, UI_SCALE);
+    ZFWScaleMatrix4x4(mat, g_ui_scale);
 }
 
 static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {

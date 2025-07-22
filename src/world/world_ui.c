@@ -239,7 +239,7 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
             const zfw_s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
 
             const zfw_s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, &world->cam, rendering_context->display_size);
-            const float highlight_size = (float)(TILE_SIZE * world->cam.scale) / UI_SCALE;
+            const float highlight_size = (float)(TILE_SIZE * world->cam.scale) / g_ui_scale;
             const zfw_s_rect highlight_rect = {
                 .x = highlight_pos.x,
                 .y = highlight_pos.y,
@@ -398,7 +398,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Mouse Item Quantity
     //
     if (world->mouse_item_held_quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){world->cam.scale / UI_SCALE, world->cam.scale / UI_SCALE}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){world->cam.scale / g_ui_scale, world->cam.scale / g_ui_scale}, 0.0f, ZFW_WHITE);
     }
 
     return true;

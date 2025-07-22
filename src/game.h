@@ -3,6 +3,7 @@
 
 #include <zfw_game.h>
 #include <zfw_utils.h>
+#include <zfw_rendering.h>
 #include <zfw_random.h>
 #include "particles.h"
 
@@ -12,7 +13,7 @@
 
 #define ITEM_QUANTITY_LIMIT 99 // TEMP
 
-#define UI_SCALE 1.0f
+extern float g_ui_scale; // TEMP: Figure out a good system for readonly globals.
 
 typedef enum {
     ek_setting_type_toggle,
@@ -46,13 +47,13 @@ static inline float SettingPerc(const t_settings* const settings, const e_settin
     return (float)(*settings)[setting] / 100.0f;
 }
 
-static inline zfw_s_vec_2d_i UISize(const zfw_s_vec_2d_i display_size) {
-    assert(display_size.x > 0 && display_size.y > 0);
-    return ZFWVec2DIScaled(display_size, 1.0f / UI_SCALE);
+static inline zfw_s_vec_2d_i UISize(const zfw_s_vec_2d_i window_size) {
+    assert(window_size.x > 0 && window_size.y > 0);
+    return ZFWVec2DIScaled(window_size, 1.0f / g_ui_scale);
 }
 
 static inline zfw_s_vec_2d DisplayToUIPos(const zfw_s_vec_2d pos) {
-    return ZFWVec2DScaled(pos, 1.0f / UI_SCALE);
+    return ZFWVec2DScaled(pos, 1.0f / g_ui_scale);
 }
 
 static inline zfw_s_rect Collider(const zfw_s_vec_2d pos, const zfw_s_vec_2d size, const zfw_s_vec_2d origin) {

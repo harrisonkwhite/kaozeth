@@ -21,7 +21,7 @@ static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* co
 }
 
 static inline float CalcCameraScale(const zfw_s_vec_2d_i display_size) {
-    return display_size.x > 1600.0f || display_size.y > 900.0f ? 3.0f : 2.0f;
+    return display_size.x > 1600 || display_size.y > 900 ? 3.0f : 2.0f;
 }
 
 bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena) {
