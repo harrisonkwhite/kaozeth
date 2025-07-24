@@ -1,9 +1,7 @@
 #ifndef LIGHTING_H
 #define LIGHTING_H
 
-#include <zfw_rendering.h>
-#include <zfw_math.h>
-#include <zfw_utils.h>
+#include <zfw.h>
 
 typedef char t_light_level;
 
@@ -24,7 +22,7 @@ static inline bool IsLightPosInBounds(const zfw_s_vec_2d_i pos, const zfw_s_vec_
 
 static inline t_light_level LightLevel(const s_lightmap* const map, const zfw_s_vec_2d_i pos) {
     assert(IsLightPosInBounds(pos, map->size));
-    return map->buf[ZFWIndexFrom2D(pos, map->size.x)];
+    return map->buf[ZFW_IndexFrom2D(pos, map->size.x)];
 }
 
 static inline bool IsLightLevelValid(const t_light_level lvl) {
@@ -35,7 +33,7 @@ static inline void SetLightLevel(const s_lightmap* const map, const zfw_s_vec_2d
     assert(IsLightPosInBounds(pos, map->size));
     assert(IsLightLevelValid(lvl));
 
-    map->buf[ZFWIndexFrom2D(pos, map->size.x)] = lvl;
+    map->buf[ZFW_IndexFrom2D(pos, map->size.x)] = lvl;
 }
 
 static inline bool IsLightmapInitted(const s_lightmap* const map) {

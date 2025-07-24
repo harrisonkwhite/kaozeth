@@ -1,10 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <zfw_game.h>
-#include <zfw_utils.h>
-#include <zfw_rendering.h>
-#include <zfw_random.h>
+#include <zfw.h>
 #include "particles.h"
 
 #define GAME_TITLE "Terraria"
@@ -49,11 +46,11 @@ static inline float SettingPerc(const t_settings* const settings, const e_settin
 
 static inline zfw_s_vec_2d_i UISize(const zfw_s_vec_2d_i window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
-    return ZFWVec2DIScaled(window_size, 1.0f / g_ui_scale);
+    return ZFW_Vec2DIScaled(window_size, 1.0f / g_ui_scale);
 }
 
 static inline zfw_s_vec_2d DisplayToUIPos(const zfw_s_vec_2d pos) {
-    return ZFWVec2DScaled(pos, 1.0f / g_ui_scale);
+    return ZFW_Vec2DScaled(pos, 1.0f / g_ui_scale);
 }
 
 static inline zfw_s_rect Collider(const zfw_s_vec_2d pos, const zfw_s_vec_2d size, const zfw_s_vec_2d origin) {

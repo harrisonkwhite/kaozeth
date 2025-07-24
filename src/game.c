@@ -1,11 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "game.h"
-#include "particles.h"
-#include "world/world.h"
-#include "title_screen.h"
 
-#define RESPAWN_TIME 120
+#include <stdio.h>
+#include "title_screen.h"
+#include "world/world.h"
+#include "zfw_graphics.h"
 
 float g_ui_scale = 1.0f;
 
@@ -21,110 +19,6 @@ typedef struct {
     bool in_world;
     s_world world;
 } s_game;
-
-const s_sprite g_sprites[] = {
-    [ek_sprite_player] = {
-        .tex = ek_texture_player,
-        .src_rect = {1, 1, 14, 22}
-    },
-
-    [ek_sprite_slime] = {
-        .tex = ek_texture_npcs,
-        .src_rect = {1, 1, 14, 14}
-    },
-
-    [ek_sprite_dirt_tile] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {0, 0, 8, 8}
-    },
-
-    [ek_sprite_stone_tile] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {8, 0, 8, 8}
-    },
-
-    [ek_sprite_grass_tile] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {16, 0, 8, 8}
-    },
-
-    [ek_sprite_tile_break_0] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {0, 8, 8, 8}
-    },
-
-    [ek_sprite_tile_break_1] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {8, 8, 8, 8}
-    },
-
-    [ek_sprite_tile_break_2] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {16, 8, 8, 8}
-    },
-
-    [ek_sprite_tile_break_3] = {
-        .tex = ek_texture_tiles,
-        .src_rect = {24, 8, 8, 8}
-    },
-
-    [ek_sprite_dirt_block_item_icon] = {
-        .tex = ek_texture_item_icons,
-        .src_rect = {1, 1, 6, 6}
-    },
-
-    [ek_sprite_stone_block_item_icon] = {
-        .tex = ek_texture_item_icons,
-        .src_rect = {9, 1, 6, 6}
-    },
-
-    [ek_sprite_grass_block_item_icon] = {
-        .tex = ek_texture_item_icons,
-        .src_rect = {17, 1, 6, 6}
-    },
-
-    [ek_sprite_copper_pickaxe_item_icon] = {
-        .tex = ek_texture_item_icons,
-        .src_rect = {2, 9, 12, 14}
-    },
-
-    [ek_sprite_item_icon_template] = {
-        .tex = ek_texture_item_icons,
-        .src_rect = {0, 24, 16, 16}
-    },
-
-    [ek_sprite_projectile] = {
-        .tex = ek_texture_projectiles,
-        .src_rect = {0, 2, 16, 4}
-    },
-
-    [ek_sprite_dirt_particle] = {
-        .tex = ek_texture_particles,
-        .src_rect = {2, 2, 4, 4}
-    },
-
-    [ek_sprite_stone_particle] = {
-        .tex = ek_texture_particles,
-        .src_rect = {10, 2, 4, 4}
-    },
-
-    [ek_sprite_grass_particle] = {
-        .tex = ek_texture_particles,
-        .src_rect = {18, 2, 4, 4}
-    },
-
-    [ek_sprite_gel_particle] = {
-        .tex = ek_texture_particles,
-        .src_rect = {26, 2, 4, 4}
-    },
-
-    [ek_sprite_mouse] = {
-        .tex = ek_texture_misc,
-        .src_rect = {2, 2, 4, 4}
-    }
-};
-
-static_assert(ZFW_STATIC_ARRAY_LEN(g_sprites) == eks_sprite_cnt, "Invalid array length!");
 
 const s_projectile_type g_projectile_types[] = {
     [ek_projectile_type_wooden_arrow] = {
@@ -235,66 +129,6 @@ static const t_settings g_settings_default = {
     [ek_setting_volume] = 100
 };
 
-static const char* TextureIndexToFilePath(const int index) {
-    switch ((e_texture)index) {
-        case ek_texture_player: return "assets/textures/player.png";
-        case ek_texture_npcs: return "assets/textures/npcs.png";
-        case ek_texture_tiles: return "assets/textures/tiles.png";
-        case ek_texture_item_icons: return "assets/textures/item_icons.png";
-        case ek_texture_projectiles: return "assets/textures/projectiles.png";
-        case ek_texture_particles: return "assets/textures/particles.png";
-        case ek_texture_misc: return "assets/textures/misc.png";
-
-        default:
-            assert(false && "Texture case not handled!");
-            return NULL;
-    }
-}
-
-static zfw_s_font_load_info FontIndexToLoadInfo(const int index) {
-    switch ((e_font)index) {
-        case ek_font_eb_garamond_20:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 20
-            };
-
-        case ek_font_eb_garamond_24:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 24
-            };
-
-        case ek_font_eb_garamond_28:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 28
-            };
-
-        case ek_font_eb_garamond_32:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 32
-            };
-
-        case ek_font_eb_garamond_48:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 48
-            };
-
-        case ek_font_eb_garamond_80:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 80
-            };
-
-        default:
-            assert(false && "Font case not handled!");
-            return (zfw_s_font_load_info){0};
-    }
-}
-
 static const char* SoundTypeIndexToFilePath(const int index) {
     switch ((e_sound_type)index) {
         case ek_sound_type_button_click: return "assets/audio/button_click.wav";
@@ -357,21 +191,21 @@ static bool WriteSettingsToFile(t_settings* const settings) {
 static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    if (!ZFWLoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
+    if (!ZFW_LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
         return false;
     }
 
-    if (!ZFWLoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+    if (!ZFW_LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
         return false;
     }
 
-    if (!ZFWLoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
+    if (!ZFW_LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
         return false;
     }
 
     LoadSettings(&game->settings);
 
-    if (!InitTitleScreen(&game->title_screen)) {
+    if (!InitTitleScreen(&game->title_screen, func_data->temp_mem_arena)) {
         return false;
     }
 
@@ -430,14 +264,14 @@ static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* con
 static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
     assert(mat && ZFW_IS_ZERO(*mat));
 
-    ZFWInitIdenMatrix4x4(mat);
-    ZFWScaleMatrix4x4(mat, g_ui_scale);
+    ZFW_InitIdenMatrix4x4(mat);
+    ZFW_ScaleMatrix4x4(mat, g_ui_scale);
 }
 
 static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    ZFWRenderClear((zfw_s_color){0.2, 0.3, 0.4, 1.0});
+    ZFW_RenderClear((zfw_s_vec_4d){0.2, 0.3, 0.4, 1.0});
 
     if (game->in_world) {
         if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena)) {
@@ -447,7 +281,7 @@ static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
         ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
-        if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->input_state->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     } else {
@@ -460,10 +294,10 @@ static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     }
 
     // Render the mouse.
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->input_state->mouse_pos);
+    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->mouse_pos);
     RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
-    ZFWFlush(&func_data->rendering_context);
+    ZFW_SubmitBatch(&func_data->rendering_context);
 
     return true;
 }
@@ -477,8 +311,8 @@ static void CleanGame(void* const user_mem) {
 
     WriteSettingsToFile(&game->settings);
 
-    ZFWUnloadFonts(&game->fonts);
-    ZFWUnloadTextures(&game->textures);
+    ZFW_UnloadFonts(&game->fonts);
+    ZFW_UnloadTextures(&game->textures);
 }
 
 int main() {
@@ -487,7 +321,7 @@ int main() {
         .user_mem_alignment = ZFW_ALIGN_OF(s_game),
 
         .window_init_size = {1280, 720},
-        .window_title = "Terraria Clone",
+        .window_title = GAME_TITLE,
         .window_flags = zfw_ek_window_flags_hide_cursor | zfw_ek_window_flags_resizable,
 
         .init_func = InitGame,
@@ -496,5 +330,5 @@ int main() {
         .clean_func = CleanGame,
     };
 
-    return ZFWRunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ZFW_RunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

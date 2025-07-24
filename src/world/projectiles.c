@@ -7,7 +7,7 @@ static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type p
         ProjectileCollider(proj_type, pos_after)
     };
 
-    return ZFWGenSpanningRect(colliders, 2);
+    return ZFW_GenSpanningRect(colliders, 2);
 }
 
 s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel) {
@@ -63,11 +63,11 @@ bool UpdateProjectiles(s_world* const world) {
         }
 
         const zfw_s_vec_2d pos_before_trans = proj->pos;
-        proj->pos = ZFWVec2DSum(proj->pos, proj->vel);
+        proj->pos = ZFW_Vec2DSum(proj->pos, proj->vel);
 
         // Update rotation in accordance with direction if flag is set.
         if (proj_type->flags & ek_projectile_type_flags_rot_is_dir) {
-            proj->rot = ZFWDir(proj->vel);
+            proj->rot = ZFW_Dir(proj->vel);
         }
 
         // Perform collision detection.
@@ -81,7 +81,7 @@ bool UpdateProjectiles(s_world* const world) {
 
                 s_npc* const npc = &world->npcs.buf[j];
                 
-                if (ZFWDoRectsInters(proj_trans_collider, npc_colliders[j])) {
+                if (ZFW_DoRectsInters(proj_trans_collider, npc_colliders[j])) {
                     if (!HurtNPC(world, j, proj->dmg, proj->vel)) {
                         return false;
                     }
@@ -90,7 +90,7 @@ bool UpdateProjectiles(s_world* const world) {
                 }
             }
         } else {
-            if (ZFWDoRectsInters(proj_trans_collider, player_collider)) {
+            if (ZFW_DoRectsInters(proj_trans_collider, player_collider)) {
                 if (!HurtPlayer(world, proj->dmg, proj->vel)) {
                     return false;
                 }

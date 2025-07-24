@@ -10,7 +10,7 @@
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
 static inline bool IsPlayerGrounded(const zfw_s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
-    const zfw_s_rect below_collider = ZFWRectTranslated(PlayerCollider(player_pos), (zfw_s_vec_2d){0.0f, 1.0f});
+    const zfw_s_rect below_collider = ZFW_RectTranslated(PlayerCollider(player_pos), (zfw_s_vec_2d){0.0f, 1.0f});
     return TileCollisionCheck(tm_activity, below_collider);
 }
 
@@ -28,7 +28,7 @@ void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activi
 void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last) {
     assert(!world->player.killed);
 
-    const float move_axis = ZFWIsKeyDown(zfw_ek_key_code_d, input_state) - ZFWIsKeyDown(zfw_ek_key_code_a, input_state);
+    const float move_axis = ZFW_IsKeyDown(zfw_ek_key_code_d, input_state) - ZFW_IsKeyDown(zfw_ek_key_code_a, input_state);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
 
     if (world->player.vel.x < move_spd_dest) {
@@ -46,19 +46,19 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const inp
     }
 
     if (!world->player.jumping) {
-        if (grounded && ZFWIsKeyPressed(zfw_ek_key_code_space, input_state, input_state_last)) {
+        if (grounded && ZFW_IsKeyPressed(zfw_ek_key_code_space, input_state, input_state_last)) {
             world->player.vel.y = -PLAYER_JUMP_HEIGHT;
             world->player.jumping = true;
         }
     } else {
-        if (world->player.vel.y < 0.0f && !ZFWIsKeyDown(zfw_ek_key_code_space, input_state)) {
+        if (world->player.vel.y < 0.0f && !ZFW_IsKeyDown(zfw_ek_key_code_space, input_state)) {
             world->player.vel.y = 0.0f;
         }
     }
 
     ProcTileCollisions(&world->player.pos, &world->player.vel, PlayerColliderSize(), PLAYER_ORIGIN, &world->core.tilemap_core.activity);
 
-    world->player.pos = ZFWVec2DSum(world->player.pos, world->player.vel);
+    world->player.pos = ZFW_Vec2DSum(world->player.pos, world->player.vel);
 }
 
 bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
@@ -85,9 +85,9 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
 
         const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
 
-        if (ZFWDoRectsInters(player_collider, npc_collider)) {
-            const zfw_s_vec_2d dir = ZFWVec2DDir(npc->pos, world->player.pos);
-            const zfw_s_vec_2d kb = ZFWVec2DScaled(dir, npc_type->contact_kb);
+        if (ZFW_DoRectsInters(player_collider, npc_collider)) {
+            const zfw_s_vec_2d dir = ZFW_Vec2DDir(npc->pos, world->player.pos);
+            const zfw_s_vec_2d kb = ZFW_Vec2DScaled(dir, npc_type->contact_kb);
 
             if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
                 return false;
@@ -118,7 +118,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
         alpha = world->player.invinc_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
     }
 
-    RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_s_color){1.0f, 1.0f, 1.0f, alpha});
+    RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_s_vec_4d){1.0f, 1.0f, 1.0f, alpha});
 }
 
 // Returns true if successful, false otherwise.
@@ -131,7 +131,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
     world->player.jumping = false;
     world->player.invinc_time = PLAYER_INV_DUR;
 
-    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player.pos, ZFWRandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
+    s_popup_text* const dmg_popup = SpawnPopupText(world, world->player.pos, ZFW_RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 
     if (!dmg_popup) {
         return false;

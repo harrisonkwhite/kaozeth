@@ -6,7 +6,7 @@ void AddTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_i pos, const e_ti
     assert(IsTilePosInBounds(pos));
     assert(!IsTileActive(&tm_core->activity, pos));
 
-    ZFWActivateBit(ZFWIndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    ZFW_ActivateBit(ZFW_IndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
     tm_core->tile_types[pos.y][pos.x] = tile_type;
 }
 
@@ -14,13 +14,13 @@ void RemoveTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_i pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&tm_core->activity, pos));
 
-    ZFWDeactivateBit(ZFWIndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    ZFW_DeactivateBit(ZFW_IndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 zfw_s_rect_edges_i RectTilemapSpan(const zfw_s_rect rect) {
     assert(rect.width >= 0.0f && rect.height >= 0.0f);
 
-    return ZFWRectEdgesIClamped(
+    return ZFW_RectEdgesIClamped(
         (zfw_s_rect_edges_i){
             rect.x / TILE_SIZE,
             rect.y / TILE_SIZE,
@@ -50,7 +50,7 @@ bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const zfw_s
                 TILE_SIZE
             };
 
-            if (ZFWDoRectsInters(collider, tile_collider)) {
+            if (ZFW_DoRectsInters(collider, tile_collider)) {
                 return true;
             }
         }
@@ -74,7 +74,7 @@ void ProcTileCollisions(zfw_s_vec_2d* const pos, zfw_s_vec_2d* const vel, const 
 
     ProcVerTileCollisions(pos, &vel->y, collider_size, collider_origin, tm_activity);
 
-    const zfw_s_rect diag_collider = Collider(ZFWVec2DSum(*pos, *vel), collider_size, collider_origin);
+    const zfw_s_rect diag_collider = Collider(ZFW_Vec2DSum(*pos, *vel), collider_size, collider_origin);
 
     if (TileCollisionCheck(tm_activity, diag_collider)) {
         vel->x = 0.0f;
@@ -107,10 +107,10 @@ void MakeContactWithTilemapByJumpSize(zfw_s_vec_2d* const pos, const float jump_
     assert(collider_size.x > 0.0f && collider_size.y > 0.0f);
     assert(tm_activity);
 
-    const zfw_s_vec_2d jump = ZFWVec2DScaled(zfw_g_cardinal_dir_vecs[dir], jump_size);
+    const zfw_s_vec_2d jump = ZFW_Vec2DScaled(zfw_g_cardinal_dir_vecs[dir], jump_size);
 
-    while (!TileCollisionCheck(tm_activity, Collider(ZFWVec2DSum(*pos, jump), collider_size, collider_origin))) {
-        *pos = ZFWVec2DSum(*pos, jump);
+    while (!TileCollisionCheck(tm_activity, Collider(ZFW_Vec2DSum(*pos, jump), collider_size, collider_origin))) {
+        *pos = ZFW_Vec2DSum(*pos, jump);
     }
 }
 

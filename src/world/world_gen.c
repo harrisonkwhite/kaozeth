@@ -11,11 +11,11 @@ static_assert(GROUND_LEVEL_OFFS_VAR >= 0.0f && GROUND_LEVEL_OFFS_VAR <= 1.0f, "V
 static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
     assert(tm_core);
 
-    int level = GROUND_LEVEL_BASE + ZFWRandRangeI(-GROUND_LEVEL_OFFS_LIM, GROUND_LEVEL_OFFS_LIM);
+    int level = GROUND_LEVEL_BASE + ZFW_RandRangeI(-GROUND_LEVEL_OFFS_LIM, GROUND_LEVEL_OFFS_LIM);
 
     for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        const int grass_depth = ZFWRandRangeI(2, 4);
-        const int dirt_depth = ZFWRandRangeI(11, 15);
+        const int grass_depth = ZFW_RandRangeI(2, 4);
+        const int dirt_depth = ZFW_RandRangeI(11, 15);
         assert(grass_depth < dirt_depth && level + dirt_depth <= TILEMAP_HEIGHT);
 
         for (int ty = level; ty < level + grass_depth; ty++) {
@@ -30,8 +30,8 @@ static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
             AddTile(tm_core, (zfw_s_vec_2d_i){tx, ty}, ek_tile_type_stone);
         }
 
-        if (ZFWRandPerc() < GROUND_LEVEL_OFFS_VAR) {
-            if (ZFWRandPerc() < 0.5f) {
+        if (ZFW_RandPerc() < GROUND_LEVEL_OFFS_VAR) {
+            if (ZFW_RandPerc() < 0.5f) {
                 level++;
             } else {
                 level--;

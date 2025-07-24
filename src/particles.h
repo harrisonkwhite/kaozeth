@@ -1,8 +1,7 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
-#include <zfw_rendering.h>
-#include <zfw_math.h>
+#include <zfw.h>
 #include "sprites.h"
 
 #define PARTICLE_LIMIT 1024

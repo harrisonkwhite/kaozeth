@@ -1,7 +1,7 @@
 #ifndef TITLE_SCREEN_H
 #define TITLE_SCREEN_H
 
-#include <zfw_game.h>
+#include <zfw.h>
 #include "world/world.h"
 
 #define WORLD_LIMIT 3
@@ -38,7 +38,7 @@ typedef struct {
     t_world_name_buf new_world_name_buf;
 } s_title_screen;
 
-bool InitTitleScreen(s_title_screen* const ts);
+bool InitTitleScreen(s_title_screen* const ts, zfw_s_mem_arena* const temp_mem_arena);
 s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_i display_size, const zfw_s_fonts* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, zfw_s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena);
 

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "game.h"
+#include "zfw_io.h"
+#include "zfw_mem.h"
 #include "title_screen.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
@@ -12,6 +14,7 @@ typedef struct {
     s_title_screen* ts;
     t_settings* settings;
     s_title_screen_tick_result* tick_result;
+    zfw_s_mem_arena* temp_mem_arena;
 } s_page_elem_button_click_data;
 
 typedef bool (*t_page_elem_button_click_func)(const int index, void* const data);
@@ -32,88 +35,32 @@ typedef struct {
     int cnt;
 } s_page_elems;
 
-#ifdef _WIN32
-#include <windows.h>
-
-static bool LoadWorldFilenames(t_world_filenames* const filenames) {
+static bool LoadWorldFilenames(t_world_filenames* const filenames, zfw_s_mem_arena* const temp_mem_arena) {
     assert(filenames && ZFW_IS_ZERO(*filenames));
+    assert(temp_mem_arena && ZFW_IsMemArenaValid(temp_mem_arena));
 
-    char search_path[MAX_PATH];
-    snprintf(search_path, sizeof(search_path), "*%s", WORLD_FILENAME_EXT);
+    zfw_s_filenames local_filenames = {0};
 
-    WIN32_FIND_DATAA find_data;
-    const HANDLE hFind = FindFirstFileA(search_path, &find_data);
-
-    if (hFind == INVALID_HANDLE_VALUE) {
-        const DWORD err = GetLastError();
-
-        if (err == ERROR_FILE_NOT_FOUND) {
-            // No file with the extension was found.
-            return true;
-        }
-
-        fprintf(stderr, "Failed to open current directory!\n");
+    if (!ZFW_LoadDirectoryFilenames(&local_filenames, temp_mem_arena, ".")) {
         return false;
     }
 
-    int cnt = 0;
+    int next_index = 0;
 
-    do {
-        const char* name = find_data.cFileName;
+    for (int i = 0; i < local_filenames.cnt; i++) {
+        if (ZFW_DoesFilenameHaveExt(local_filenames.buf[i], WORLD_FILENAME_EXT)) {
+            // TODO: Make sure the world filename isn't too long!
+            strncpy((*filenames)[next_index], local_filenames.buf[i], sizeof((*filenames)[next_index]));
+            next_index++;
 
-        if (ZFWDoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
-            const int name_len = strlen(name);
-
-            if (name_len >= WORLD_FILENAME_BUF_SIZE) {
-                continue;
+            if (next_index == WORLD_LIMIT) {
+                break;
             }
-
-            memcpy((*filenames)[cnt], name, name_len);
-            cnt++;
-        }
-    } while (FindNextFileA(hFind, &find_data));
-
-    FindClose(hFind);
-
-    return true;
-}
-#else
-#include <dirent.h>
-
-static bool LoadWorldFilenames(t_world_filenames* const filenames) {
-    assert(filenames && ZFW_IS_ZERO(*filenames));
-
-    DIR* const dir = opendir(".");
-
-    if (!dir) {
-        fprintf(stderr, "Failed to open current directory!\n");
-        return false;
-    }
-
-    int cnt = 0;
-
-    const struct dirent* dir_entry;
-
-    while ((dir_entry = readdir(dir)) != NULL && cnt < WORLD_LIMIT) {
-        const char* const name = dir_entry->d_name;
-
-        if (ZFWDoesFilenameHaveExt(name, WORLD_FILENAME_EXT)) {
-            const int name_len = strlen(name);
-
-            if (name_len >= WORLD_FILENAME_BUF_SIZE) {
-                continue;
-            }
-
-            memcpy((*filenames)[cnt], name, name_len);
-            cnt++;
         }
     }
 
-    closedir(dir);
-
     return true;
 }
-#endif
 
 static int WorldCnt(const t_world_filenames* const filenames) {
     int cnt = 0;
@@ -198,7 +145,7 @@ static bool NewWorldPageAcceptButtonClick(const int index, void* const data_gene
     ZFW_ZERO_OUT(data->ts->new_world_name_buf);
 
     ZFW_ZERO_OUT(data->ts->world_filenames_cache);
-    return LoadWorldFilenames(&data->ts->world_filenames_cache);
+    return LoadWorldFilenames(&data->ts->world_filenames_cache, data->temp_mem_arena);
 }
 
 static bool NewWorldPageBackButtonClick(const int index, void* const data_generic) {
@@ -471,12 +418,12 @@ static const zfw_s_vec_2d* PushPageElemPositions(zfw_s_mem_arena* const mem_aren
     return positions;
 }
 
-bool InitTitleScreen(s_title_screen* const ts) {
+bool InitTitleScreen(s_title_screen* const ts, zfw_s_mem_arena* const temp_mem_arena) {
     assert(ZFW_IS_ZERO(*ts));
 
     ts->page_btn_elem_hovered_index = -1;
 
-    if (!LoadWorldFilenames(&ts->world_filenames_cache)) {
+    if (!LoadWorldFilenames(&ts->world_filenames_cache, temp_mem_arena)) {
         return false;
     }
 
@@ -497,11 +444,11 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
 
         zfw_s_rect collider = {0};
 
-        if (!ZFWLoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, temp_mem_arena)) {
+        if (!ZFW_LoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, temp_mem_arena)) {
             return false;
         }
 
-        if (ZFWIsPointInRect(cursor_ui_pos, collider)) {
+        if (ZFW_IsPointInRect(cursor_ui_pos, collider)) {
             *index = i;
             break;
         }
@@ -539,14 +486,15 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
     }
 
     if (ts->page_btn_elem_hovered_index != -1) {
-        if (ZFWIsMouseButtonPressed(zfw_ek_mouse_button_code_left, input_state, input_state_last)) {
+        if (ZFW_IsMouseButtonPressed(zfw_ek_mouse_button_code_left, input_state, input_state_last)) {
             const s_page_elem* const elem = &page_elems.buf[ts->page_btn_elem_hovered_index];
 
             if (elem->button_click_func) {
                 s_page_elem_button_click_data btn_click_data = {
                     .ts = ts,
                     .settings = settings,
-                    .tick_result = &result
+                    .tick_result = &result,
+                    .temp_mem_arena = temp_mem_arena
                 };
 
                 if (!elem->button_click_func(ts->page_btn_elem_hovered_index, &btn_click_data)) {
@@ -558,7 +506,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
                 assert(false && "Button click function not set!");
             }
 
-            if (!ZFWPlaySound(audio_sys, snd_types, ek_sound_type_button_click, SettingPerc(settings, ek_setting_volume), ZFW_PAN_DEFAULT, ZFW_PITCH_DEFAULT)) {
+            if (!ZFW_PlaySound(audio_sys, snd_types, ek_sound_type_button_click, SettingPerc(settings, ek_setting_volume), ZFW_PAN_DEFAULT, ZFW_PITCH_DEFAULT)) {
                 return (s_title_screen_tick_result){
                     ek_title_screen_tick_result_type_error
                 };
@@ -585,7 +533,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
         }
 
         if (nw_name_buf_index > 0) {
-            if (ZFWIsKeyPressed(zfw_ek_key_code_backspace, input_state, input_state_last)) {
+            if (ZFW_IsKeyPressed(zfw_ek_key_code_backspace, input_state, input_state_last)) {
                 nw_name_buf_index--;
                 ts->new_world_name_buf[nw_name_buf_index] = '\0';
             }
@@ -602,7 +550,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
         return false;
     }
 
-    const zfw_s_vec_2d* const positions = PushPageElemPositions(temp_mem_arena, &page_elems, UISize(rendering_context->display_size));
+    const zfw_s_vec_2d* const positions = PushPageElemPositions(temp_mem_arena, &page_elems, UISize(rendering_context->window_size));
 
     if (!positions) {
         return false;
@@ -611,7 +559,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
     for (int i = 0; i < page_elems.cnt; i++) {
         const s_page_elem* const elem = &page_elems.buf[i];
 
-        zfw_s_color color = ZFW_WHITE;
+        zfw_s_vec_4d color = ZFW_WHITE;
 
         if (elem->button) {
             if (elem->button_inactive) {
@@ -621,7 +569,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
             }
         }
 
-        if (!ZFWRenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, color, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, color, temp_mem_arena)) {
             return false;
         }
     }

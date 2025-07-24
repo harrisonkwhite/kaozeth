@@ -1,8 +1,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include <zfw.h>
 #include "../game.h"
-#include "../lighting.h"
 #include "../inventory.h"
 #include "../particles.h"
 #include "../tilemap.h"

@@ -11,22 +11,22 @@ void InitParticleFromTemplate(s_particle* const part, const e_particle_template 
     switch (temp) {
         case ek_particle_template_dirt:
             part->spr = ek_sprite_dirt_particle;
-            part->life = ZFWRandRangeI(20, 25);
+            part->life = ZFW_RandRangeI(20, 25);
             break;
 
         case ek_particle_template_stone:
             part->spr = ek_sprite_stone_particle;
-            part->life = ZFWRandRangeI(20, 25);
+            part->life = ZFW_RandRangeI(20, 25);
             break;
 
         case ek_particle_template_grass:
             part->spr = ek_sprite_grass_particle;
-            part->life = ZFWRandRangeI(20, 25);
+            part->life = ZFW_RandRangeI(20, 25);
             break;
 
         case ek_particle_template_gel:
             part->spr = ek_sprite_gel_particle;
-            part->life = ZFWRandRangeI(20, 25);
+            part->life = ZFW_RandRangeI(20, 25);
             break;
 
         default:
@@ -64,7 +64,7 @@ void UpdateParticles(s_particles* const particles, const float grav) {
 
         // Update position.
         part->vel.y += grav;
-        part->pos = ZFWVec2DSum(part->pos, part->vel);
+        part->pos = ZFW_Vec2DSum(part->pos, part->vel);
     }
 }
 

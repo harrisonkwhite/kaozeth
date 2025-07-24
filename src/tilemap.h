@@ -1,6 +1,7 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
+#include <zfw.h>
 #include "game.h"
 
 #define TILEMAP_WIDTH 640 // TEMP: Make dynamic!
@@ -34,17 +35,17 @@ static inline bool IsTilePosInBounds(const zfw_s_vec_2d_i pos) {
 }
 
 static inline bool IsTilemapRangeValid(const zfw_s_rect_edges_i range) {
-    return ZFWIsRangeValid(range, (zfw_s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
+    return ZFW_IsRangeValid(range, (zfw_s_vec_2d_i){TILEMAP_WIDTH, TILEMAP_HEIGHT});
 }
 
 static inline int TileDist(const zfw_s_vec_2d_i a, const zfw_s_vec_2d_i b) {
-    return ZFWDist((zfw_s_vec_2d){a.x, a.y}, (zfw_s_vec_2d){b.x, b.y});
+    return ZFW_Dist((zfw_s_vec_2d){a.x, a.y}, (zfw_s_vec_2d){b.x, b.y});
 }
 
 static bool IsTileActive(const t_tilemap_activity* const tm_activity, const zfw_s_vec_2d_i pos) {
     assert(tm_activity);
     assert(IsTilePosInBounds(pos));
-    return ZFWIsBitActive(ZFWIndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    return ZFW_IsBitActive(ZFW_IndexFrom2D(pos, TILEMAP_WIDTH), (zfw_t_byte*)tm_activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 #endif

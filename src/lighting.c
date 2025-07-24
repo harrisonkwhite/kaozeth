@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "lighting.h"
 
 #define DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS false // Having this enabled slows things down tremendously. Only have active if needing to make sure the queue never enters an invalid state.
@@ -68,7 +67,7 @@ s_lightmap GenLightmap(zfw_s_mem_arena* const mem_arena, const zfw_s_vec_2d_i si
     t_light_level* const buf = ZFW_MEM_ARENA_PUSH_TYPE_MANY(mem_arena, t_light_level, size.x * size.y);
 
     if (!buf) {
-        fprintf(stderr, "Failed to allocate memory for lightmap!\n");
+        ZFW_LogError("Failed to allocate memory for lightmap!");
         return (s_lightmap){0};
     }
 
@@ -90,7 +89,7 @@ bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const te
     };
 
     if (!light_pos_queue.buf) {
-        fprintf(stderr, "Failed to allocate memory for light position queue!\n");
+        ZFW_LogError("Failed to allocate memory for light position queue!");
         return false;
     }
 
@@ -98,7 +97,7 @@ bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const te
     for (int y = 0; y < lightmap->size.y; y++) {
         for (int x = 0; x < lightmap->size.x; x++) {
             const zfw_s_vec_2d_i pos = {x, y};
-            const int i = ZFWIndexFrom2D(pos, lightmap->size.x);
+            const int i = ZFW_IndexFrom2D(pos, lightmap->size.x);
 
             const int lvl = LightLevel(lightmap, pos);
             assert(lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT);
@@ -121,7 +120,7 @@ bool PropagateLights(const s_lightmap* const lightmap, zfw_s_mem_arena* const te
         };
 
         for (int i = 0; i < ZFW_STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
-            const zfw_s_vec_2d_i neighbour_pos = ZFWVec2DISum(pos, neighbour_pos_offsets[i]);
+            const zfw_s_vec_2d_i neighbour_pos = ZFW_Vec2DISum(pos, neighbour_pos_offsets[i]);
 
             if (!IsLightPosInBounds(neighbour_pos, lightmap->size)) {
                 continue;
@@ -163,11 +162,11 @@ void RenderLightmap(const zfw_s_rendering_context* const rendering_context, cons
                 tile_size
             };
 
-            const zfw_s_color blend = {
-                .a = 1.0f - ((float)light_lvl / LIGHT_LEVEL_LIMIT)
+            const zfw_s_vec_4d blend = {
+                .w = 1.0f - ((float)light_lvl / LIGHT_LEVEL_LIMIT)
             };
 
-            ZFWRenderRect(rendering_context, rect, blend);
+            ZFW_RenderRect(rendering_context, rect, blend);
         }
     }
 }

@@ -1,8 +1,7 @@
-#include <stdio.h>
 #include "world.h"
-#include "zfw_math.h"
-#include "zfw_random.h"
-#include "zfw_utils.h"
+
+#include <stdio.h>
+#include "../lighting.h"
 
 #define RESPAWN_TIME 120
 
@@ -15,21 +14,20 @@ static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* co
         (-cam->pos.y * cam->scale) + (window_size.y / 2.0f)
     };
 
-    ZFWInitIdenMatrix4x4(mat);
-    ZFWTranslateMatrix4x4(mat, view_pos);
-    ZFWScaleMatrix4x4(mat, cam->scale);
+    ZFW_InitIdenMatrix4x4(mat);
+    ZFW_TranslateMatrix4x4(mat, view_pos);
+    ZFW_ScaleMatrix4x4(mat, cam->scale);
 }
 
-static inline float CalcCameraScale(const zfw_s_vec_2d_i display_size) {
-    return display_size.x > 1600 || display_size.y > 900 ? 3.0f : 2.0f;
+static inline float CalcCameraScale(const zfw_s_vec_2d_i window_size) {
+    return window_size.x > 1600 || window_size.y > 900 ? 3.0f : 2.0f;
 }
 
 bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena) {
     assert(world && ZFW_IS_ZERO(*world));
     assert(filename);
 
-    if (!ZFWInitMemArena(&world->mem_arena, WORLD_MEM_ARENA_SIZE)) {
-        fprintf(stderr, "Failed to initialise world memory arena!\n");
+    if (!ZFW_InitMemArena(&world->mem_arena, WORLD_MEM_ARENA_SIZE)) {
         return false;
     }
 
@@ -50,7 +48,7 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, con
 }
 
 void CleanWorld(s_world* const world) {
-    ZFWCleanMemArena(&world->mem_arena);
+    ZFW_CleanMemArena(&world->mem_arena);
 }
 
 bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
@@ -107,7 +105,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         const zfw_s_vec_2d cam_pos_dest = world->player.pos;
 
         if (SettingToggle(settings, ek_setting_smooth_camera)) {
-            world->cam.pos = ZFWLerpVec2D(world->cam.pos, cam_pos_dest, CAMERA_LERP);
+            world->cam.pos = ZFW_LerpVec2D(world->cam.pos, cam_pos_dest, CAMERA_LERP);
 
             world->cam.pos = (zfw_s_vec_2d){
                 ZFW_CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
@@ -172,9 +170,9 @@ static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_til
 
 bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena) {
     ZFW_ZERO_OUT(rendering_context->state->view_mat);
-    InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->display_size);
+    InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->window_size);
 
-    const zfw_s_rect_edges_i tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->display_size);
+    const zfw_s_rect_edges_i tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
@@ -198,7 +196,7 @@ bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
 
     RenderLightmap(rendering_context, &world_lightmap, (zfw_s_vec_2d){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
 
-    ZFWFlush(rendering_context);
+    ZFW_SubmitBatch(rendering_context);
 
     return true;
 }
@@ -230,12 +228,12 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     FILE* const fs = fopen((const char*)filename, "wb");
 
     if (!fs) {
-        fprintf(stderr, "Failed to open \"%s\"!\n", (const char*)filename);
+        ZFW_LogError("Failed to open \"%s\"!", (const char*)filename);
         return false;
     }
 
     if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
-        fprintf(stderr, "Failed to write to world file \"%s\"!\n", (const char*)filename);
+        ZFW_LogError("Failed to write to world file \"%s\"!", (const char*)filename);
         fclose(fs);
         return false;
     }
@@ -266,15 +264,15 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
             (pos.y + 0.5f) * TILE_SIZE
         };
 
-        const int part_cnt = ZFWRandRangeI(3, 5);
+        const int part_cnt = ZFW_RandRangeI(3, 5);
 
         for (int i = 0; i < part_cnt; i++) {
             const zfw_s_vec_2d vel = {
-                ZFWRandRangeIncl(-0.5f, 0.5f),
-                ZFWRandRangeIncl(-2.5f, -1.0f)
+                ZFW_RandRangeIncl(-0.5f, 0.5f),
+                ZFW_RandRangeIncl(-2.5f, -1.0f)
             };
 
-            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, ZFWRandRot());
+            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, ZFW_RandRot());
         }
     }
 
@@ -320,7 +318,7 @@ bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_i tile_pos) {
     // Check for player.
     const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
 
-    if (ZFWDoRectsInters(tile_collider, player_collider)) {
+    if (ZFW_DoRectsInters(tile_collider, player_collider)) {
         return false;
     }
 
@@ -333,7 +331,7 @@ bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_i tile_pos) {
         const s_npc* const npc = &world->npcs.buf[i];
         const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
 
-        if (ZFWDoRectsInters(tile_collider, npc_collider)) {
+        if (ZFW_DoRectsInters(tile_collider, npc_collider)) {
             return false;
         }
     }
@@ -343,7 +341,7 @@ bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_i tile_pos) {
         const s_projectile* const proj = &world->projectiles[i];
         const zfw_s_rect proj_collider = ProjectileCollider(proj->type, proj->pos);
 
-        if (ZFWDoRectsInters(tile_collider, proj_collider)) {
+        if (ZFW_DoRectsInters(tile_collider, proj_collider)) {
             return false;
         }
     }
@@ -368,7 +366,7 @@ s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const
         return popup;
     }
 
-    fprintf(stderr, "Failed to spawn popup text due to insufficient space!\n");
+    ZFW_LogError("Failed to spawn popup text due to insufficient space!");
 
     return NULL;
 }
