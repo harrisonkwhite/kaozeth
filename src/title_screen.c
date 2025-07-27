@@ -444,7 +444,7 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
 
         zfw_s_rect collider = {0};
 
-        if (!ZFW_LoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, temp_mem_arena)) {
+        if (!ZFW_LoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], ZFW_ALIGNMENT_CENTER, temp_mem_arena)) {
             return false;
         }
 
@@ -559,6 +559,10 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
     for (int i = 0; i < page_elems.cnt; i++) {
         const s_page_elem* const elem = &page_elems.buf[i];
 
+        if (!elem->str[0]) {
+            continue;
+        }
+
         zfw_s_vec_4d color = ZFW_WHITE;
 
         if (elem->button) {
@@ -569,7 +573,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
             }
         }
 
-        if (!ZFW_RenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, color, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], ZFW_ALIGNMENT_CENTER, color, temp_mem_arena)) {
             return false;
         }
     }

@@ -191,11 +191,15 @@ static bool WriteSettingsToFile(t_settings* const settings) {
 static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    if (!ZFW_LoadTexturesFromFiles(&game->textures, func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath)) {
+    game->textures = ZFW_LoadTexturesFromFiles(func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath);
+
+    if (ZFW_IS_ZERO(game->textures)) {
         return false;
     }
 
-    if (!ZFW_LoadFontsFromFiles(&game->fonts, func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena)) {
+    game->fonts = ZFW_LoadFontsFromFiles(func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena);
+
+    if (ZFW_IS_ZERO(game->fonts)) {
         return false;
     }
 

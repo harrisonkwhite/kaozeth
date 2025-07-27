@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "world.h"
+#include "zfw_graphics.h"
 
 #define PLAYER_HP_BAR_WIDTH 240.0f
 #define PLAYER_HP_BAR_HEIGHT 16.0f
@@ -276,7 +277,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
         // Draw a backdrop.
         const zfw_s_vec_2d_i ui_size = UISize(rendering_context->window_size);
         const zfw_s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
-        //ZFWRenderRect(rendering_context, bg_rect, (zfw_s_color){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
+        ZFW_RenderRect(rendering_context, bg_rect, (zfw_s_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     } else {
         // Render current item name.
         const s_inventory_slot* const slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
@@ -290,7 +291,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
                 (ui_size.y * PLAYER_INVENTORY_POS_PERC.y) + PLAYER_INVENTORY_SLOT_SIZE + 8.0f
             };
 
-            if (!ZFW_RenderStr(rendering_context, name_buf, ek_font_eb_garamond_24, fonts, name_pos, zfw_ek_str_hor_align_left, zfw_ek_str_ver_align_top, ZFW_WHITE, temp_mem_arena)) {
+            if (!ZFW_RenderStr(rendering_context, name_buf, ek_font_eb_garamond_24, fonts, name_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
                 return false;
             }
         }
@@ -336,7 +337,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
-        if (!ZFW_RenderStr(rendering_context, popup->str, ek_font_eb_garamond_32, fonts, popup_ui_pos, zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, popup_blend, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, popup->str, ek_font_eb_garamond_32, fonts, popup_ui_pos, ZFW_ALIGNMENT_CENTER, popup_blend, temp_mem_arena)) {
             return false;
         }
     }
@@ -345,7 +346,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Death Text
     //
     if (world->player.killed) {
-        if (!ZFW_RenderStr(rendering_context, DEATH_TEXT, ek_font_eb_garamond_48, fonts, (zfw_s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, zfw_ek_str_hor_align_center, zfw_ek_str_ver_align_center, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, DEATH_TEXT, ek_font_eb_garamond_48, fonts, (zfw_s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ZFW_ALIGNMENT_CENTER, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }
@@ -376,7 +377,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
         char hp_str[8] = {0};
         snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
-        if (!ZFW_RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_str_pos, zfw_ek_str_hor_align_right, zfw_ek_str_ver_align_center, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_str_pos, ZFW_ALIGNMENT_CENTER_RIGHT, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }
@@ -389,7 +390,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Mouse Hover String
     //
     if (world->mouse_hover_str[0]) {
-        if (!ZFW_RenderStr(rendering_context, world->mouse_hover_str, ek_font_eb_garamond_24, fonts, mouse_ui_pos, zfw_ek_str_hor_align_left, zfw_ek_str_ver_align_top, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, world->mouse_hover_str, ek_font_eb_garamond_24, fonts, mouse_ui_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }
