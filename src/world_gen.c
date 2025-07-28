@@ -1,4 +1,4 @@
-#include "world.h"
+#include "game.h"
 
 #define GROUND_LEVEL_BASE (TILEMAP_HEIGHT / 3)
 #define GROUND_LEVEL_OFFS_LIM 8

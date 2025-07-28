@@ -1,6 +1,29 @@
-#include "tilemap.h"
+#include "game.h"
 
 #define TILEMAP_CONTACT_PRECISE_JUMP_SIZE 0.1f
+
+const s_tile_type g_tile_types[] = {
+    [ek_tile_type_dirt] = {
+        .spr = ek_sprite_dirt_tile,
+        .drop_item = ek_item_type_dirt_block,
+        .life = 5,
+        .particle_template = ek_particle_template_dirt
+    },
+    [ek_tile_type_stone] = {
+        .spr = ek_sprite_stone_tile,
+        .drop_item = ek_item_type_stone_block,
+        .life = 8,
+        .particle_template = ek_particle_template_stone
+    },
+    [ek_tile_type_grass] = {
+        .spr = ek_sprite_grass_tile,
+        .drop_item = ek_item_type_grass_block,
+        .life = 3,
+        .particle_template = ek_particle_template_grass
+    }
+};
+
+STATIC_ARRAY_LEN_CHECK(g_tile_types, eks_tile_type_cnt);
 
 void AddTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_s32 pos, const e_tile_type tile_type) {
     assert(IsTilePosInBounds(pos));

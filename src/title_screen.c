@@ -1,7 +1,6 @@
-#include "title_screen.h"
+#include "game.h"
 
 #include <stdio.h>
-#include "game.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
 #define PAGE_ELEM_GAP 48.0f

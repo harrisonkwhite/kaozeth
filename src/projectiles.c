@@ -1,6 +1,15 @@
-#include "world.h"
+#include "game.h"
 
 #include <stdio.h>
+
+const s_projectile_type g_projectile_types[] = {
+    [ek_projectile_type_wooden_arrow] = {
+        .spr = ek_sprite_projectile,
+        .flags = ek_projectile_type_flags_rot_is_dir
+    }
+};
+
+STATIC_ARRAY_LEN_CHECK(g_projectile_types, eks_projectile_type_cnt);
 
 static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const zfw_s_vec_2d pos_before, const zfw_s_vec_2d pos_after) {
     const zfw_s_rect colliders[2] = {

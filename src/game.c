@@ -1,120 +1,16 @@
 #include "game.h"
 
 #include <stdio.h>
-#include "title_screen.h"
-#include "world/world.h"
+
+#define BG_COLOR (zfw_u_vec_4d){0.2, 0.3, 0.4, 1.0}
 
 float g_ui_scale = 1.0f;
-
-typedef struct {
-    zfw_s_textures textures;
-    zfw_s_fonts fonts;
-    zfw_s_sound_types snd_types;
-
-    t_settings settings;
-
-    s_title_screen title_screen;
-
-    bool in_world;
-    s_world world;
-} s_game;
-
-const s_projectile_type g_projectile_types[] = {
-    [ek_projectile_type_wooden_arrow] = {
-        .spr = ek_sprite_projectile,
-        .flags = ek_projectile_type_flags_rot_is_dir
-    }
-};
-
-STATIC_ARRAY_LEN_CHECK(g_projectile_types, eks_projectile_type_cnt);
-
-const s_tile_type g_tile_types[] = {
-    [ek_tile_type_dirt] = {
-        .spr = ek_sprite_dirt_tile,
-        .drop_item = ek_item_type_dirt_block,
-        .life = 5,
-        .particle_template = ek_particle_template_dirt
-    },
-    [ek_tile_type_stone] = {
-        .spr = ek_sprite_stone_tile,
-        .drop_item = ek_item_type_stone_block,
-        .life = 8,
-        .particle_template = ek_particle_template_stone
-    },
-    [ek_tile_type_grass] = {
-        .spr = ek_sprite_grass_tile,
-        .drop_item = ek_item_type_grass_block,
-        .life = 3,
-        .particle_template = ek_particle_template_grass
-    }
-};
-
-#define TILE_PLACE_DEFAULT_USE_BREAK 2
-
-STATIC_ARRAY_LEN_CHECK(g_tile_types, eks_tile_type_cnt);
-
-const s_item_type g_item_types[] = {
-    [ek_item_type_dirt_block] = {
-        .name = "Dirt Block",
-        .icon_spr = ek_sprite_dirt_block_item_icon,
-        .use_type = ek_item_use_type_tile_place,
-        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
-        .consume_on_use = true,
-        .tile_place_type = ek_tile_type_dirt
-    },
-
-    [ek_item_type_stone_block] = {
-        .name = "Stone Block",
-        .icon_spr = ek_sprite_stone_block_item_icon,
-        .use_type = ek_item_use_type_tile_place,
-        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
-        .consume_on_use = true,
-        .tile_place_type = ek_tile_type_stone
-    },
-
-    [ek_item_type_grass_block] = {
-        .name = "Grass Block",
-        .icon_spr = ek_sprite_grass_block_item_icon,
-        .use_type = ek_item_use_type_tile_place,
-        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
-        .consume_on_use = true,
-        .tile_place_type = ek_tile_type_grass
-    },
-
-    [ek_item_type_copper_pickaxe] = {
-        .name = "Copper Pickaxe",
-        .icon_spr = ek_sprite_copper_pickaxe_item_icon,
-        .use_type = ek_item_use_type_tile_hurt,
-        .use_break = 10,
-        .tile_hurt_dist = 4
-    },
-
-    [ek_item_type_wooden_sword] = {
-        .name = "Wooden Sword",
-        .icon_spr = ek_sprite_item_icon_template,
-        .use_type = ek_item_use_type_tile_place,
-        .use_break = 10
-    },
-
-    [ek_item_type_wooden_bow] = {
-        .name = "Wooden Bow",
-        .icon_spr = ek_sprite_item_icon_template,
-        .use_type = ek_item_use_type_shoot,
-        .use_break = 10,
-        .shoot_proj_type = ek_projectile_type_wooden_arrow,
-        .shoot_proj_spd = 7.0f,
-        .shoot_proj_dmg = 3
-    }
-};
-
-STATIC_ARRAY_LEN_CHECK(g_item_types, eks_item_type_cnt);
 
 const s_setting g_settings[] = {
     [ek_setting_smooth_camera] = {
         .type = ek_setting_type_toggle,
         .name = "Smooth Camera"
     },
-
     [ek_setting_volume] = {
         .type = ek_setting_type_perc,
         .name = "Volume"
@@ -127,17 +23,6 @@ static const t_settings g_settings_default = {
     [ek_setting_smooth_camera] = 1,
     [ek_setting_volume] = 100
 };
-
-static const char* SoundTypeIndexToFilePath(const int index) {
-    switch ((e_sound_type)index) {
-        case ek_sound_type_button_click: return "assets/audio/button_click.wav";
-        case ek_sound_type_item_drop_collect: return "assets/audio/item_drop_collect.wav";
-
-        default:
-            assert(false && "Audio case not handled!");
-            return NULL;
-    }
-}
 
 static bool LoadSettingsFromFile(t_settings* const settings) {
     assert(IS_ZERO(*settings));
@@ -187,7 +72,7 @@ static bool WriteSettingsToFile(t_settings* const settings) {
     return true;
 }
 
-static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
+bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     game->textures = ZFW_LoadTexturesFromFiles(func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath);
@@ -227,7 +112,7 @@ static inline float CalcUIScale(const zfw_s_vec_2d_s32 window_size) {
     return 1.0f;
 }
 
-static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func_data) {
+zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
     g_ui_scale = CalcUIScale(func_data->window_state.size);
@@ -271,10 +156,10 @@ static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
     ZFW_ScaleMatrix4x4(mat, g_ui_scale);
 }
 
-static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
+bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    ZFW_RenderClear((zfw_u_vec_4d){0.2, 0.3, 0.4, 1.0});
+    ZFW_RenderClear(BG_COLOR);
 
     if (game->in_world) {
         if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena)) {
@@ -305,7 +190,7 @@ static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     return true;
 }
 
-static void CleanGame(void* const user_mem) {
+void CleanGame(void* const user_mem) {
     s_game* const game = user_mem;
 
     if (game->in_world) {
@@ -316,22 +201,4 @@ static void CleanGame(void* const user_mem) {
 
     ZFW_UnloadFonts(&game->fonts);
     ZFW_UnloadTextures(&game->textures);
-}
-
-int main() {
-    const zfw_s_game_info game_info = {
-        .user_mem_size = sizeof(s_game),
-        .user_mem_alignment = ALIGN_OF(s_game),
-
-        .window_init_size = {1280, 720},
-        .window_title = GAME_TITLE,
-        .window_flags = zfw_ek_window_flags_hide_cursor | zfw_ek_window_flags_resizable,
-
-        .init_func = InitGame,
-        .tick_func = GameTick,
-        .render_func = RenderGame,
-        .clean_func = CleanGame,
-    };
-
-    return ZFW_RunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

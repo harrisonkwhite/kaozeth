@@ -6,32 +6,26 @@ set(CMAKE_C_STANDARD 11)
 add_subdirectory(zeta_framework)
 
 add_executable(terraria_clone
-    src/game.c
-    src/game.h
+    src/entry.c
 
+    src/game.c
+    src/title_screen.c
+    src/world.c
+    src/world_ui.c
+    src/world_gen.c
+    src/player.c
+    src/npcs.c
+    src/projectiles.c
+    src/items.c
     src/inventory.c
-    src/inventory.h
+    src/tilemap.c
+    src/game.h
 
     src/lighting.c
     src/lighting.h
 
-    src/tilemap.c
-    src/tilemap.h
-
     src/particles.c
     src/particles.h
-
-    src/title_screen.c
-    src/title_screen.h
-
-    src/world/world.c
-    src/world/world_ui.c
-    src/world/world_gen.c
-    src/world/player.c
-    src/world/npcs.c
-    src/world/projectiles.c
-    src/world/items.c
-    src/world/world.h
 )
 
 target_include_directories(terraria_clone PRIVATE zeta_framework/include)

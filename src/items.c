@@ -1,4 +1,57 @@
-#include "world.h"
+#include "game.h"
+
+#define TILE_PLACE_DEFAULT_USE_BREAK 2
+
+const s_item_type g_item_types[] = {
+    [ek_item_type_dirt_block] = {
+        .name = "Dirt Block",
+        .icon_spr = ek_sprite_dirt_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_dirt
+    },
+    [ek_item_type_stone_block] = {
+        .name = "Stone Block",
+        .icon_spr = ek_sprite_stone_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_stone
+    },
+    [ek_item_type_grass_block] = {
+        .name = "Grass Block",
+        .icon_spr = ek_sprite_grass_block_item_icon,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = TILE_PLACE_DEFAULT_USE_BREAK,
+        .consume_on_use = true,
+        .tile_place_type = ek_tile_type_grass
+    },
+    [ek_item_type_copper_pickaxe] = {
+        .name = "Copper Pickaxe",
+        .icon_spr = ek_sprite_copper_pickaxe_item_icon,
+        .use_type = ek_item_use_type_tile_hurt,
+        .use_break = 10,
+        .tile_hurt_dist = 4
+    },
+    [ek_item_type_wooden_sword] = {
+        .name = "Wooden Sword",
+        .icon_spr = ek_sprite_item_icon_template,
+        .use_type = ek_item_use_type_tile_place,
+        .use_break = 10
+    },
+    [ek_item_type_wooden_bow] = {
+        .name = "Wooden Bow",
+        .icon_spr = ek_sprite_item_icon_template,
+        .use_type = ek_item_use_type_shoot,
+        .use_break = 10,
+        .shoot_proj_type = ek_projectile_type_wooden_arrow,
+        .shoot_proj_spd = 7.0f,
+        .shoot_proj_dmg = 3
+    }
+};
+
+STATIC_ARRAY_LEN_CHECK(g_item_types, eks_item_type_cnt);
 
 bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_s32 mouse_tile_pos) {
     const zfw_s_vec_2d_s32 player_tile_pos = CameraToTilePos(world->player.pos);

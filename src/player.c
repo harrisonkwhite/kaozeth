@@ -1,5 +1,6 @@
+#include "game.h"
+
 #include <stdio.h>
-#include "world.h"
 
 #define PLAYER_MOVE_SPD 1.5f
 #define PLAYER_MOVE_SPD_ACC 0.2f

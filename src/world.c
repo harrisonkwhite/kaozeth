@@ -1,8 +1,7 @@
-#include "world.h"
+#include "game.h"
 
 #include <stdio.h>
-#include "../lighting.h"
-#include "zfw_math.h"
+#include "lighting.h"
 
 #define RESPAWN_TIME 120
 

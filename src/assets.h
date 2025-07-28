@@ -96,4 +96,15 @@ typedef enum {
     eks_sound_type_cnt
 } e_sound_type;
 
+static const char* SoundTypeIndexToFilePath(const int index) {
+    switch ((e_sound_type)index) {
+        case ek_sound_type_button_click: return "assets/audio/button_click.wav";
+        case ek_sound_type_item_drop_collect: return "assets/audio/item_drop_collect.wav";
+
+        default:
+            assert(false && "Audio case not handled!");
+            return NULL;
+    }
+}
+
 #endif

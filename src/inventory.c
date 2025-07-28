@@ -1,4 +1,4 @@
-#include "inventory.h"
+#include "game.h"
 
 int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity) {
     assert(slots);
