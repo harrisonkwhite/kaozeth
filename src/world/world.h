@@ -77,7 +77,7 @@ typedef struct {
 //
 #define NPC_LIMIT 256
 
-typedef zfw_t_byte t_npc_activity[ZFW_BITS_TO_BYTES(NPC_LIMIT)];
+typedef t_u8 t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
 
 typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
 typedef void (*t_npc_postspawn_func)(s_world* const world, const int npc_index);
@@ -172,7 +172,7 @@ typedef struct {
 } s_world_core;
 
 typedef struct world {
-    zfw_s_mem_arena mem_arena;
+    s_mem_arena mem_arena;
 
     s_world_core core;
 
@@ -205,27 +205,27 @@ typedef struct world {
     s_particles particles;
 } s_world;
 
-static inline zfw_s_vec_2d_i CameraToTilePos(const zfw_s_vec_2d pos) {
-    return (zfw_s_vec_2d_i){
+static inline zfw_s_vec_2d_s32 CameraToTilePos(const zfw_s_vec_2d pos) {
+    return (zfw_s_vec_2d_s32){
         floorf(pos.x / TILE_SIZE),
         floorf(pos.y / TILE_SIZE)
     };
 }
 
-static inline zfw_s_vec_2d CameraSize(const float cam_scale, const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d CameraSize(const float cam_scale, const zfw_s_vec_2d_s32 window_size) {
     assert(cam_scale > 0.0f);
     assert(window_size.x > 0 && window_size.y > 0);
     return (zfw_s_vec_2d){window_size.x / cam_scale, window_size.y / cam_scale};
 }
 
-static inline zfw_s_vec_2d CameraTopLeft(const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d CameraTopLeft(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d size = CameraSize(cam->scale, window_size);
     return (zfw_s_vec_2d){cam->pos.x - (size.x / 2.0f), cam->pos.y - (size.y / 2.0f)};
 }
 
-static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
@@ -235,7 +235,7 @@ static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_ca
     };
 }
 
-static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
@@ -245,7 +245,7 @@ static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_ca
     };
 }
 
-static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
     return DisplayToUIPos(CameraToDisplayPos(pos, cam, window_size));
 }
@@ -253,23 +253,23 @@ static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera*
 //
 // world.c
 //
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena);
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_s32 window_size, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
-bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena);
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
+bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, const e_tile_type type);
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos);
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_i pos);
-bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_i tile_pos);
+bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos, const e_tile_type type);
+bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos);
+bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos);
+bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_s32 tile_pos);
 s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const float vel_y);
 
 //
 // world_ui.c
 //
-void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size);
-bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena);
+void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size);
+bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world_gen.c
@@ -284,7 +284,7 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const inp
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);
 void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures);
-bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb);
+bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb); // Returns true if successful, false otherwise.
 
 #define PLAYER_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
 
@@ -335,8 +335,8 @@ static inline zfw_s_rect ProjectileCollider(const e_projectile_type proj_type, c
 //
 // items.c
 //
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_i mouse_tile_pos);
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i window_size);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_s32 mouse_tile_pos);
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_s32 window_size);
 bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, const t_settings* const settings);
 void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_textures* const textures);

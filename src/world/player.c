@@ -15,7 +15,7 @@ static inline bool IsPlayerGrounded(const zfw_s_vec_2d player_pos, const t_tilem
 }
 
 void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activity* const tm_activity) {
-    assert(player && ZFW_IS_ZERO(*player));
+    assert(player && IS_ZERO(*player));
     assert(hp_max >= 0);
     assert(tm_activity);
 
@@ -87,7 +87,7 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
 
         if (ZFW_DoRectsInters(player_collider, npc_collider)) {
             const zfw_s_vec_2d dir = ZFW_Vec2DDir(npc->pos, world->player.pos);
-            const zfw_s_vec_2d kb = ZFW_Vec2DScaled(dir, npc_type->contact_kb);
+            const zfw_s_vec_2d kb = {dir.x * npc_type->contact_kb, dir.y * npc_type->contact_kb};
 
             if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
                 return false;
@@ -118,10 +118,9 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
         alpha = world->player.invinc_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
     }
 
-    RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_s_vec_4d){1.0f, 1.0f, 1.0f, alpha});
+    RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, alpha});
 }
 
-// Returns true if successful, false otherwise.
 bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
     assert(dmg > 0);
     assert(world->player.invinc_time == 0);

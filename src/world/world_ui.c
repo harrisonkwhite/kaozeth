@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include "world.h"
-#include "zfw_graphics.h"
+
+#include <stdio.h>
 
 #define PLAYER_HP_BAR_WIDTH 240.0f
 #define PLAYER_HP_BAR_HEIGHT 16.0f
@@ -12,7 +12,7 @@
 #define PLAYER_INVENTORY_SLOT_SIZE 48.0f
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.4f
 
-static zfw_s_vec_2d PlayerInventorySlotPos(const int r, const int c, const zfw_s_vec_2d_i ui_size) {
+static zfw_s_vec_2d PlayerInventorySlotPos(const int r, const int c, const zfw_s_vec_2d_s32 ui_size) {
     assert(r >= 0 && r < PLAYER_INVENTORY_ROW_CNT);
     assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
@@ -50,10 +50,10 @@ static void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selec
     assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 }
 
-static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size) {
+static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size) {
     assert(world->player_inv_open);
 
-    const zfw_s_vec_2d_i ui_size = UISize(window_size);
+    const zfw_s_vec_2d_s32 ui_size = UISize(window_size);
     const zfw_s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
     for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
@@ -120,7 +120,7 @@ static void WriteItemNameStr(char* const str_buf, const int str_buf_size, const 
     }
 }
 
-static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_i window_size) {
+static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, window_size);
@@ -128,7 +128,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
 
     // TODO: The sequencing of the below should really correspond to draw layering. Maybe add some layer depth variable?
 
-    assert(hover_str_buf && ZFW_IS_ZERO(*hover_str_buf));
+    assert(hover_str_buf && IS_ZERO(*hover_str_buf));
 
     if (world->player_inv_open) {
         for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
@@ -188,7 +188,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
     }
 }
 
-void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size) {
+void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size) {
     if (!world->player.killed) {
         UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_state, input_state_last);
 
@@ -203,14 +203,13 @@ void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_st
         ProcPlayerInventoryOpenState(world, input_state, input_state_last, window_size);
     }
 
-    ZFW_ZERO_OUT(world->mouse_hover_str);
+    ZERO_OUT(world->mouse_hover_str);
     LoadMouseHoverStr(&world->mouse_hover_str, input_state->mouse_pos, world, window_size);
 
     // Update popup text.
     for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
         s_popup_text* const popup = &world->popup_texts[i];
 
-        assert(ZFW_IsNullTerminated(popup->str, POPUP_TEXT_STR_BUF_SIZE));
         assert(popup->alpha >= 0.0f && popup->alpha <= 1.0f);
 
         if (popup->alpha <= POPUP_TEXT_INACTIVITY_ALPHA_THRESH) {
@@ -232,7 +231,7 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
 
     if (!world->player_inv_open && active_slot->quantity > 0) {
         const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, rendering_context->window_size);
-        const zfw_s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+        const zfw_s_vec_2d_s32 mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
 
@@ -247,19 +246,19 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
                 .width = highlight_size,
                 .height = highlight_size
             };
-            ZFW_RenderRect(rendering_context, highlight_rect, (zfw_s_vec_4d){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
+            ZFW_RenderRect(rendering_context, highlight_rect, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
         }
     }
 }
 
-static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const zfw_s_vec_2d pos, const zfw_s_vec_4d outline_color, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
+static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const zfw_s_vec_2d pos, const zfw_u_vec_4d outline_color, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const zfw_s_rect slot_rect = {
         pos.x, pos.y,
         PLAYER_INVENTORY_SLOT_SIZE, PLAYER_INVENTORY_SLOT_SIZE
     };
 
     // Render the slot box.
-    ZFW_RenderRect(rendering_context, slot_rect, (zfw_s_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
+    ZFW_RenderRect(rendering_context, slot_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
     ZFW_RenderRectOutline(rendering_context, slot_rect, outline_color, 1.0f);
 
     // Render the item icon.
@@ -270,14 +269,14 @@ static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_c
     return true;
 }
 
-static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
-    const zfw_s_vec_2d_i ui_size = UISize(rendering_context->window_size);
+static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
 
     if (world->player_inv_open) {
         // Draw a backdrop.
-        const zfw_s_vec_2d_i ui_size = UISize(rendering_context->window_size);
+        const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
         const zfw_s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
-        ZFW_RenderRect(rendering_context, bg_rect, (zfw_s_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
+        ZFW_RenderRect(rendering_context, bg_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     } else {
         // Render current item name.
         const s_inventory_slot* const slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
@@ -304,7 +303,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
         for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
             const s_inventory_slot* const slot = &world->player_inv_slots[r][c];
             const zfw_s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, ui_size);
-            const zfw_s_vec_4d slot_color = r == 0 && c == world->player_inv_hotbar_slot_selected ? ZFW_YELLOW : ZFW_WHITE;
+            const zfw_u_vec_4d slot_color = r == 0 && c == world->player_inv_hotbar_slot_selected ? ZFW_YELLOW : ZFW_WHITE;
 
             if (!RenderInventorySlot(rendering_context, *slot, slot_pos, slot_color, textures, fonts, temp_mem_arena)) {
                 return false;
@@ -315,8 +314,8 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
     return true;
 }
 
-bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
-    const zfw_s_vec_2d_i ui_size = UISize(rendering_context->window_size);
+bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+    const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
     const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
 
     RenderTileHighlight(rendering_context, world, mouse_pos);
@@ -333,7 +332,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
 
         const zfw_s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, &world->cam, rendering_context->window_size);
         const zfw_s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos);
-        const zfw_s_vec_4d popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
+        const zfw_u_vec_4d popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
@@ -367,7 +366,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
             PLAYER_HP_BAR_HEIGHT
         };
 
-        ZFW_RenderBarHor(rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, (zfw_s_vec_3d){1.0f, 1.0f, 1.0f}, (zfw_s_vec_3d){0});
+        ZFW_RenderBarHor(rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, (zfw_u_vec_3d){1.0f, 1.0f, 1.0f}, (zfw_u_vec_3d){0});
 
         const zfw_s_vec_2d hp_str_pos = {
             hp_pos.x - hp_bar_rect.width - 10.0f,

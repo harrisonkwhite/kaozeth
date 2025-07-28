@@ -2,11 +2,12 @@
 
 #include <stdio.h>
 #include "../lighting.h"
+#include "zfw_math.h"
 
 #define RESPAWN_TIME 120
 
-static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
-    assert(mat && ZFW_IS_ZERO(*mat));
+static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+    assert(mat && IS_ZERO(*mat));
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d view_pos = {
@@ -19,15 +20,15 @@ static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* co
     ZFW_ScaleMatrix4x4(mat, cam->scale);
 }
 
-static inline float CalcCameraScale(const zfw_s_vec_2d_i window_size) {
+static inline float CalcCameraScale(const zfw_s_vec_2d_s32 window_size) {
     return window_size.x > 1600 || window_size.y > 900 ? 3.0f : 2.0f;
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_i window_size, zfw_s_mem_arena* const temp_mem_arena) {
-    assert(world && ZFW_IS_ZERO(*world));
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_s32 window_size, s_mem_arena* const temp_mem_arena) {
+    assert(world && IS_ZERO(*world));
     assert(filename);
 
-    if (!ZFW_InitMemArena(&world->mem_arena, WORLD_MEM_ARENA_SIZE)) {
+    if (!InitMemArena(&world->mem_arena, WORLD_MEM_ARENA_SIZE)) {
         return false;
     }
 
@@ -48,10 +49,10 @@ bool InitWorld(s_world* const world, const t_world_filename* const filename, con
 }
 
 void CleanWorld(s_world* const world) {
-    ZFW_CleanMemArena(&world->mem_arena);
+    CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_i window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
     assert(window_size.x > 0 && window_size.y > 0); 
 
     world->cam.scale = CalcCameraScale(window_size);
@@ -74,7 +75,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         } else {
             world->respawn_time = 0;
 
-            ZFW_ZERO_OUT(world->player);
+            ZERO_OUT(world->player);
             InitPlayer(&world->player, world->core.player_hp_max, &world->core.tilemap_core.activity);
         }
     }
@@ -105,7 +106,8 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         const zfw_s_vec_2d cam_pos_dest = world->player.pos;
 
         if (SettingToggle(settings, ek_setting_smooth_camera)) {
-            world->cam.pos = ZFW_LerpVec2D(world->cam.pos, cam_pos_dest, CAMERA_LERP);
+            world->cam.pos.x = ZFW_Lerp(world->cam.pos.x, cam_pos_dest.x, CAMERA_LERP);
+            world->cam.pos.y = ZFW_Lerp(world->cam.pos.y, cam_pos_dest.y, CAMERA_LERP);
 
             world->cam.pos = (zfw_s_vec_2d){
                 ZFW_CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
@@ -121,13 +123,13 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     return true;
 }
 
-static zfw_s_rect_edges_i TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_i window_size) {
+static zfw_s_rect_edges_s32 TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
     const zfw_s_vec_2d cam_size = CameraSize(cam->scale, window_size);
 
-    zfw_s_rect_edges_i render_range = {
+    zfw_s_rect_edges_s32 render_range = {
         .left = floorf(cam_tl.x / TILE_SIZE),
         .top = floorf(cam_tl.y / TILE_SIZE),
         .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
@@ -143,8 +145,8 @@ static zfw_s_rect_edges_i TilemapRenderRange(const s_camera* const cam, const zf
     return render_range;
 }
 
-static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_i tm_render_range, zfw_s_mem_arena* const temp_mem_arena) {
-    const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_i){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
+static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_s32 tm_render_range, s_mem_arena* const temp_mem_arena) {
+    const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_s32){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
 
     if (!IsLightmapInitted(&lightmap)) {
         return (s_lightmap){0};
@@ -152,11 +154,11 @@ static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_til
 
     for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
         for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
-            if (IsTileActive(tm_activity, (zfw_s_vec_2d_i){tx, ty})) {
+            if (IsTileActive(tm_activity, (zfw_s_vec_2d_s32){tx, ty})) {
                 continue;
             }
 
-            const zfw_s_vec_2d_i lp = {tx - tm_render_range.left, ty - tm_render_range.top};
+            const zfw_s_vec_2d_s32 lp = {tx - tm_render_range.left, ty - tm_render_range.top};
             SetLightLevel(&lightmap, lp, LIGHT_LEVEL_LIMIT);
         }
     }
@@ -168,11 +170,11 @@ static s_lightmap GenWorldLightmap(zfw_s_mem_arena* const mem_arena, const t_til
     return lightmap;
 }
 
-bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, zfw_s_mem_arena* const temp_mem_arena) {
-    ZFW_ZERO_OUT(rendering_context->state->view_mat);
+bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, s_mem_arena* const temp_mem_arena) {
+    ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->window_size);
 
-    const zfw_s_rect_edges_i tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
+    const zfw_s_rect_edges_s32 tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
@@ -202,7 +204,7 @@ bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
 }
 
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename) {
-    assert(world_core && ZFW_IS_ZERO(*world_core));
+    assert(world_core && IS_ZERO(*world_core));
     assert(filename);
 
     FILE* const fs = fopen((const char*)filename, "rb");
@@ -228,12 +230,12 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     FILE* const fs = fopen((const char*)filename, "wb");
 
     if (!fs) {
-        ZFW_LogError("Failed to open \"%s\"!", (const char*)filename);
+        LogError("Failed to open \"%s\"!", (const char*)filename);
         return false;
     }
 
     if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
-        ZFW_LogError("Failed to write to world file \"%s\"!", (const char*)filename);
+        LogError("Failed to write to world file \"%s\"!", (const char*)filename);
         fclose(fs);
         return false;
     }
@@ -243,13 +245,13 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_i pos, const e_tile_type type) {
+bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos, const e_tile_type type) {
     AddTile(&world->core.tilemap_core, pos, type);
     world->tilemap_tile_lifes[pos.y][pos.x] = 0;
     return true;
 }
 
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
+bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
@@ -272,7 +274,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
                 ZFW_RandRangeIncl(-2.5f, -1.0f)
             };
 
-            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, ZFW_RandRot());
+            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, ZFW_TAU * ZFW_RandPerc());
         }
     }
 
@@ -285,7 +287,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
     return true;
 }
 
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_i pos) {
+bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
@@ -303,7 +305,7 @@ assert(world);
     return true;
 }
 
-bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_i tile_pos) {
+bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_s32 tile_pos) {
     assert(world);
     assert(IsTilePosInBounds(tile_pos));
     assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
@@ -357,7 +359,7 @@ s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const
             continue;
         }
 
-        ZFW_ZERO_OUT(*popup);
+        ZERO_OUT(*popup);
 
         popup->pos = pos;
         popup->alpha = 1.0f;
@@ -366,7 +368,7 @@ s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const
         return popup;
     }
 
-    ZFW_LogError("Failed to spawn popup text due to insufficient space!");
+    LogError("Failed to spawn popup text due to insufficient space!");
 
     return NULL;
 }

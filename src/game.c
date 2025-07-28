@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "title_screen.h"
 #include "world/world.h"
-#include "zfw_graphics.h"
 
 float g_ui_scale = 1.0f;
 
@@ -27,7 +26,7 @@ const s_projectile_type g_projectile_types[] = {
     }
 };
 
-static_assert(ZFW_STATIC_ARRAY_LEN(g_projectile_types) == eks_projectile_type_cnt, "Invalid array length!");
+STATIC_ARRAY_LEN_CHECK(g_projectile_types, eks_projectile_type_cnt);
 
 const s_tile_type g_tile_types[] = {
     [ek_tile_type_dirt] = {
@@ -52,7 +51,7 @@ const s_tile_type g_tile_types[] = {
 
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
 
-static_assert(ZFW_STATIC_ARRAY_LEN(g_tile_types) == eks_tile_type_cnt, "Invalid array length!");
+STATIC_ARRAY_LEN_CHECK(g_tile_types, eks_tile_type_cnt);
 
 const s_item_type g_item_types[] = {
     [ek_item_type_dirt_block] = {
@@ -108,7 +107,7 @@ const s_item_type g_item_types[] = {
     }
 };
 
-static_assert(ZFW_STATIC_ARRAY_LEN(g_item_types) == eks_item_type_cnt, "Invalid array length!");
+STATIC_ARRAY_LEN_CHECK(g_item_types, eks_item_type_cnt);
 
 const s_setting g_settings[] = {
     [ek_setting_smooth_camera] = {
@@ -122,7 +121,7 @@ const s_setting g_settings[] = {
     }
 };
 
-static_assert(ZFW_STATIC_ARRAY_LEN(g_settings) == eks_setting_cnt, "Invalid array length!");
+STATIC_ARRAY_LEN_CHECK(g_settings, eks_setting_cnt);
 
 static const t_settings g_settings_default = {
     [ek_setting_smooth_camera] = 1,
@@ -141,7 +140,7 @@ static const char* SoundTypeIndexToFilePath(const int index) {
 }
 
 static bool LoadSettingsFromFile(t_settings* const settings) {
-    assert(ZFW_IS_ZERO(*settings));
+    assert(IS_ZERO(*settings));
 
     FILE* const fs = fopen(SETTINGS_FILENAME, "rb");
 
@@ -154,7 +153,7 @@ static bool LoadSettingsFromFile(t_settings* const settings) {
     fclose(fs);
 
     if (read < sizeof(*settings)) {
-        ZFW_ZERO_OUT(*settings);
+        ZERO_OUT(*settings);
         return false;
     }
 
@@ -162,7 +161,7 @@ static bool LoadSettingsFromFile(t_settings* const settings) {
 }
 
 static void LoadSettings(t_settings* const settings) {
-    assert(ZFW_IS_ZERO(*settings));
+    assert(IS_ZERO(*settings));
 
     if (!LoadSettingsFromFile(settings)) {
         // Failed to load settings file, so load defaults.
@@ -193,13 +192,13 @@ static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
 
     game->textures = ZFW_LoadTexturesFromFiles(func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath);
 
-    if (ZFW_IS_ZERO(game->textures)) {
+    if (IS_ZERO(game->textures)) {
         return false;
     }
 
     game->fonts = ZFW_LoadFontsFromFiles(func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena);
 
-    if (ZFW_IS_ZERO(game->fonts)) {
+    if (IS_ZERO(game->fonts)) {
         return false;
     }
 
@@ -216,7 +215,7 @@ static bool InitGame(const zfw_s_game_init_func_data* const func_data) {
     return true;
 }
 
-static inline float CalcUIScale(const zfw_s_vec_2d_i window_size) {
+static inline float CalcUIScale(const zfw_s_vec_2d_s32 window_size) {
     if (window_size.x > 1920 && window_size.y > 1080) {
         return 2.0f;
     }
@@ -245,7 +244,7 @@ static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* con
                 return ek_game_tick_func_result_error;
 
             case ek_title_screen_tick_result_type_load_world:
-                ZFW_ZERO_OUT(game->title_screen);
+                ZERO_OUT(game->title_screen);
 
                 if (!InitWorld(&game->world, &tick_res.world_filename, func_data->window_state.size, func_data->temp_mem_arena)) {
                     return ek_game_tick_func_result_error;
@@ -266,7 +265,7 @@ static zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* con
 }
 
 static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
-    assert(mat && ZFW_IS_ZERO(*mat));
+    assert(mat && IS_ZERO(*mat));
 
     ZFW_InitIdenMatrix4x4(mat);
     ZFW_ScaleMatrix4x4(mat, g_ui_scale);
@@ -275,21 +274,21 @@ static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
 static bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     s_game* const game = func_data->user_mem;
 
-    ZFW_RenderClear((zfw_s_vec_4d){0.2, 0.3, 0.4, 1.0});
+    ZFW_RenderClear((zfw_u_vec_4d){0.2, 0.3, 0.4, 1.0});
 
     if (game->in_world) {
         if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena)) {
             return false;
         }
 
-        ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
+        ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
         if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
             return false;
         }
     } else {
-        ZFW_ZERO_OUT(func_data->rendering_context.state->view_mat);
+        ZERO_OUT(func_data->rendering_context.state->view_mat);
         InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
 
         if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
@@ -322,7 +321,7 @@ static void CleanGame(void* const user_mem) {
 int main() {
     const zfw_s_game_info game_info = {
         .user_mem_size = sizeof(s_game),
-        .user_mem_alignment = ZFW_ALIGN_OF(s_game),
+        .user_mem_alignment = ALIGN_OF(s_game),
 
         .window_init_size = {1280, 720},
         .window_title = GAME_TITLE,

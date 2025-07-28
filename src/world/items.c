@@ -1,7 +1,7 @@
 #include "world.h"
 
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_i mouse_tile_pos) {
-    const zfw_s_vec_2d_i player_tile_pos = CameraToTilePos(world->player.pos);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_s32 mouse_tile_pos) {
+    const zfw_s_vec_2d_s32 player_tile_pos = CameraToTilePos(world->player.pos);
     const int player_to_mouse_tile_dist = TileDist(player_tile_pos, mouse_tile_pos);
 
     switch (g_item_types[item_type].use_type) {
@@ -30,7 +30,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_i display_size) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_s32 display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -48,7 +48,7 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_st
     }
 
     const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, &world->cam, display_size);
-    const zfw_s_vec_2d_i mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+    const zfw_s_vec_2d_s32 mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
     if (!ZFW_IsMouseButtonDown(zfw_ek_mouse_button_code_left, input_state)
         || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
@@ -100,7 +100,7 @@ bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_ty
     }
 
     s_item_drop* const drop = &world->item_drops[world->item_drop_active_cnt];
-    assert(ZFW_IS_ZERO(*drop));
+    assert(IS_ZERO(*drop));
     drop->item_type = item_type;
     drop->quantity = item_quantity;
     drop->pos = pos;
@@ -142,7 +142,7 @@ bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, con
                 // Remove this item drop.
                 world->item_drop_active_cnt--;
                 world->item_drops[i] = world->item_drops[world->item_drop_active_cnt];
-                ZFW_ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
+                ZERO_OUT(world->item_drops[world->item_drop_active_cnt]);
 
                 i--;
             }

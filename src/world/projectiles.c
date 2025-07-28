@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include "world.h"
+
+#include <stdio.h>
 
 static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const zfw_s_vec_2d pos_before, const zfw_s_vec_2d pos_after) {
     const zfw_s_rect colliders[2] = {
@@ -20,7 +21,7 @@ s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type
     }
 
     s_projectile* const proj = &world->projectiles[world->proj_cnt];
-    assert(ZFW_IS_ZERO(*proj));
+    assert(IS_ZERO(*proj));
     proj->type = type;
     proj->friendly = friendly;
     proj->dmg = dmg;
@@ -108,7 +109,7 @@ bool UpdateProjectiles(s_world* const world) {
             // Replace the current projectile with the one at the end.
             world->proj_cnt--;
             world->projectiles[i] = world->projectiles[world->proj_cnt];
-            ZFW_ZERO_OUT(world->projectiles[world->proj_cnt]);
+            ZERO_OUT(world->projectiles[world->proj_cnt]);
             i--; // Make sure to still update the one at the end we just moved.
         }
     }

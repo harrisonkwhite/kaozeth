@@ -1,8 +1,9 @@
 #include "particles.h"
+
 #include "sprites.h"
 
 void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel, const float rot) {
-    assert(ZFW_IS_ZERO(*part));
+    assert(IS_ZERO(*part));
 
     part->pos = pos;
     part->vel = vel;

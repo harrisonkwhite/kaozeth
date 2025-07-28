@@ -27,10 +27,10 @@ typedef enum {
 typedef struct {
     e_setting_type type;
     const char* name;
-    zfw_t_byte preset;
+    t_u8 preset;
 } s_setting;
 
-typedef zfw_t_byte t_settings[eks_setting_cnt];
+typedef t_u8 t_settings[eks_setting_cnt];
 
 extern const s_setting g_settings[];
 
@@ -44,13 +44,13 @@ static inline float SettingPerc(const t_settings* const settings, const e_settin
     return (float)(*settings)[setting] / 100.0f;
 }
 
-static inline zfw_s_vec_2d_i UISize(const zfw_s_vec_2d_i window_size) {
+static inline zfw_s_vec_2d_s32 UISize(const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
-    return ZFW_Vec2DIScaled(window_size, 1.0f / g_ui_scale);
+    return (zfw_s_vec_2d_s32){window_size.x / g_ui_scale, window_size.y / g_ui_scale};
 }
 
 static inline zfw_s_vec_2d DisplayToUIPos(const zfw_s_vec_2d pos) {
-    return ZFW_Vec2DScaled(pos, 1.0f / g_ui_scale);
+    return (zfw_s_vec_2d){pos.x / g_ui_scale, pos.y / g_ui_scale};
 }
 
 static inline zfw_s_rect Collider(const zfw_s_vec_2d pos, const zfw_s_vec_2d size, const zfw_s_vec_2d origin) {

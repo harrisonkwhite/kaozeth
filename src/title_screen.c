@@ -1,8 +1,7 @@
+#include "title_screen.h"
+
 #include <stdio.h>
 #include "game.h"
-#include "zfw_io.h"
-#include "zfw_mem.h"
-#include "title_screen.h"
 
 #define PAGE_ELEM_COMMON_FONT ek_font_eb_garamond_32
 #define PAGE_ELEM_GAP 48.0f
@@ -14,7 +13,7 @@ typedef struct {
     s_title_screen* ts;
     t_settings* settings;
     s_title_screen_tick_result* tick_result;
-    zfw_s_mem_arena* temp_mem_arena;
+    s_mem_arena* temp_mem_arena;
 } s_page_elem_button_click_data;
 
 typedef bool (*t_page_elem_button_click_func)(const int index, void* const data);
@@ -35,20 +34,20 @@ typedef struct {
     int cnt;
 } s_page_elems;
 
-static bool LoadWorldFilenames(t_world_filenames* const filenames, zfw_s_mem_arena* const temp_mem_arena) {
-    assert(filenames && ZFW_IS_ZERO(*filenames));
-    assert(temp_mem_arena && ZFW_IsMemArenaValid(temp_mem_arena));
+static bool LoadWorldFilenames(t_world_filenames* const filenames, s_mem_arena* const temp_mem_arena) {
+    assert(filenames && IS_ZERO(*filenames));
+    assert(temp_mem_arena && IsMemArenaValid(temp_mem_arena));
 
-    zfw_s_filenames local_filenames = {0};
+    s_filenames local_filenames = {0};
 
-    if (!ZFW_LoadDirectoryFilenames(&local_filenames, temp_mem_arena, ".")) {
+    if (!LoadDirectoryFilenames(&local_filenames, temp_mem_arena, ".")) {
         return false;
     }
 
     int next_index = 0;
 
     for (int i = 0; i < local_filenames.cnt; i++) {
-        if (ZFW_DoesFilenameHaveExt(local_filenames.buf[i], WORLD_FILENAME_EXT)) {
+        if (DoesFilenameHaveExt(local_filenames.buf[i], WORLD_FILENAME_EXT)) {
             // TODO: Make sure the world filename isn't too long!
             strncpy((*filenames)[next_index], local_filenames.buf[i], sizeof((*filenames)[next_index]));
             next_index++;
@@ -115,7 +114,7 @@ static bool WorldsPageWorldButtonClick(const int index, void* const data_generic
 static bool WorldsPageCreateButtonClick(const int index, void* const data_generic) {
     const s_page_elem_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_new_world;
-    assert(ZFW_IS_ZERO(data->ts->new_world_name_buf));
+    assert(IS_ZERO(data->ts->new_world_name_buf));
     return true;
 }
 
@@ -142,16 +141,16 @@ static bool NewWorldPageAcceptButtonClick(const int index, void* const data_gene
         }
     }
 
-    ZFW_ZERO_OUT(data->ts->new_world_name_buf);
+    ZERO_OUT(data->ts->new_world_name_buf);
 
-    ZFW_ZERO_OUT(data->ts->world_filenames_cache);
+    ZERO_OUT(data->ts->world_filenames_cache);
     return LoadWorldFilenames(&data->ts->world_filenames_cache, data->temp_mem_arena);
 }
 
 static bool NewWorldPageBackButtonClick(const int index, void* const data_generic) {
     const s_page_elem_button_click_data* const data = data_generic;
     data->ts->page = ek_title_screen_page_worlds;
-    ZFW_ZERO_OUT(data->ts->new_world_name_buf);
+    ZERO_OUT(data->ts->new_world_name_buf);
     return true;
 }
 
@@ -189,7 +188,7 @@ static bool SettingsPageBackButtonClick(const int index, void* const data_generi
     return true;
 }
 
-static s_page_elems PushPageElems(zfw_s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
+static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
     int elem_cnt;
 
     switch (page) {
@@ -203,7 +202,7 @@ static s_page_elems PushPageElems(zfw_s_mem_arena* const mem_arena, const e_titl
             break;
     }
 
-    s_page_elem* const elems = ZFW_MEM_ARENA_PUSH_TYPE_MANY(mem_arena, s_page_elem, elem_cnt);
+    s_page_elem* const elems = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, s_page_elem, elem_cnt);
 
     if (!elems) {
         return (s_page_elems){0};
@@ -386,8 +385,8 @@ static s_page_elems PushPageElems(zfw_s_mem_arena* const mem_arena, const e_titl
     };
 }
 
-static const zfw_s_vec_2d* PushPageElemPositions(zfw_s_mem_arena* const mem_arena, const s_page_elems* const elems, const zfw_s_vec_2d_i ui_size) {
-    zfw_s_vec_2d* const positions = ZFW_MEM_ARENA_PUSH_TYPE_MANY(mem_arena, zfw_s_vec_2d, elems->cnt);
+static const zfw_s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const s_page_elems* const elems, const zfw_s_vec_2d_s32 ui_size) {
+    zfw_s_vec_2d* const positions = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d, elems->cnt);
 
     if (positions) {
         float span_y = 0.0f;
@@ -418,8 +417,8 @@ static const zfw_s_vec_2d* PushPageElemPositions(zfw_s_mem_arena* const mem_aren
     return positions;
 }
 
-bool InitTitleScreen(s_title_screen* const ts, zfw_s_mem_arena* const temp_mem_arena) {
-    assert(ZFW_IS_ZERO(*ts));
+bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const temp_mem_arena) {
+    assert(IS_ZERO(*ts));
 
     ts->page_btn_elem_hovered_index = -1;
 
@@ -430,7 +429,7 @@ bool InitTitleScreen(s_title_screen* const ts, zfw_s_mem_arena* const temp_mem_a
     return true;
 }
 
-static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const zfw_s_vec_2d* const elem_positions, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
+static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const zfw_s_vec_2d* const elem_positions, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     assert(index);
 
     *index = -1;
@@ -457,21 +456,21 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_i display_size, const zfw_s_fonts* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, zfw_s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_s32 display_size, const zfw_s_fonts* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
-    if (ZFW_IS_ZERO(page_elems)) {
+    if (IS_ZERO(page_elems)) {
         return (s_title_screen_tick_result){
             ek_title_screen_tick_result_type_error
         };
     }
 
-    const zfw_s_vec_2d_i ui_size = UISize(display_size);
+    const zfw_s_vec_2d_s32 ui_size = UISize(display_size);
     const zfw_s_vec_2d* const elem_positions = PushPageElemPositions(temp_mem_arena, &page_elems, ui_size);
 
-    if (ZFW_IS_ZERO(page_elems)) {
+    if (IS_ZERO(page_elems)) {
         return (s_title_screen_tick_result){
             ek_title_screen_tick_result_type_error
         };
@@ -543,10 +542,10 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
     return result;
 }
 
-bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, zfw_s_mem_arena* const temp_mem_arena) {
+bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
-    if (ZFW_IS_ZERO(page_elems)) {
+    if (IS_ZERO(page_elems)) {
         return false;
     }
 
@@ -563,7 +562,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
             continue;
         }
 
-        zfw_s_vec_4d color = ZFW_WHITE;
+        zfw_u_vec_4d color = ZFW_WHITE;
 
         if (elem->button) {
             if (elem->button_inactive) {

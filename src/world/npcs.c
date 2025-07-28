@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include "world.h"
+
+#include <stdio.h>
 
 #define SLIME_VEL_X_LERP 0.2f
 #define SLIME_JUMP_HEIGHT_MIN 3.0f
@@ -82,13 +83,13 @@ static bool IsNPCValid(const s_npc* const npc) {
 }
 
 int SpawnNPC(s_world* const world, const zfw_s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity) {
-    const int index = ZFW_FirstInactiveBitIndex(world->npcs.activity, NPC_LIMIT);
+    const int index = FirstInactiveBitIndex(world->npcs.activity, NPC_LIMIT);
 
     if (index != -1) {
-        ZFW_ActivateBit(index, world->npcs.activity, NPC_LIMIT);
+        ActivateBit(index, world->npcs.activity, NPC_LIMIT);
 
         s_npc* const npc = &world->npcs.buf[index];
-        assert(ZFW_IS_ZERO(*npc)); // Should have been cleared when the NPC slot was deactivated.
+        assert(IS_ZERO(*npc)); // Should have been cleared when the NPC slot was deactivated.
 
         npc->pos = pos;
         npc->hp = g_npc_types[type].hp_max;
@@ -133,8 +134,8 @@ void ProcNPCDeaths(s_world* const world) {
         assert(IsNPCValid(npc));
 
         if (npc->hp == 0) {
-            ZFW_DeactivateBit(i, world->npcs.activity, NPC_LIMIT);
-            ZFW_ZERO_OUT(*npc);
+            DeactivateBit(i, world->npcs.activity, NPC_LIMIT);
+            ZERO_OUT(*npc);
         }
     }
 }
@@ -177,7 +178,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw
 bool IsNPCActive(const t_npc_activity* const activity, const int index) {
     assert(activity);
     assert(index >= 0 && index < NPC_LIMIT);
-    return ZFW_IsBitActive(index, (zfw_t_byte*)activity, NPC_LIMIT);
+    return IsBitActive(index, (t_u8*)activity, NPC_LIMIT);
 }
 
 static int NPCCnt(const t_npc_activity* const activity) {
