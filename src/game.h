@@ -4,6 +4,7 @@
 #include <zfw.h>
 #include "sprites.h"
 #include "particles.h"
+#include "zfw_graphics.h"
 
 #define GAME_TITLE "Terraria"
 
@@ -25,6 +26,7 @@
 
 #define PLAYER_INIT_HP_MAX 100
 #define PLAYER_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
+#define PLAYER_HURT_FLASH_TIME 10
 
 #define POPUP_TEXT_LIMIT 1024
 #define POPUP_TEXT_STR_BUF_SIZE 32
@@ -48,6 +50,7 @@ static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slo
 
 #define NPC_LIMIT 256
 #define NPC_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
+#define NPC_HURT_FLASH_TIME 10
 
 #define PROJECTILE_LIMIT 1024
 #define ITEM_DROP_LIMIT 1024
@@ -63,6 +66,14 @@ typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
 
 #define SETTINGS_FILENAME "settings.dat"
 #define ITEM_QUANTITY_LIMIT 99 // TEMP
+
+typedef enum {
+    ek_surface_main,
+
+    eks_surface_cnt
+} e_surface;
+
+static_assert(eks_surface_cnt <= ZFW_SURFACE_LIMIT, "Surface count must be less than the ZFW limit!");
 
 typedef enum {
     ek_tile_type_dirt,
@@ -195,6 +206,7 @@ typedef struct {
     zfw_s_vec_2d pos;
     zfw_s_vec_2d vel;
     int hp;
+    int flash_time;
     e_npc_type type;
     u_npc_type_data type_data;
 } s_npc;
@@ -473,7 +485,7 @@ extern const s_npc_type g_npc_types[];
 int SpawnNPC(s_world* const world, const zfw_s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity); // Returns the index of the spawned NPC, or -1 if no NPC could be spawned.
 void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
-void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_npcs* const npcs, const zfw_s_textures* const textures);
+void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_npcs* const npcs, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs);
 bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw_s_vec_2d kb);
 bool IsNPCActive(const t_npc_activity* const activity, const int index);
 bool ProcEnemySpawning(s_world* const world, const float cam_width);

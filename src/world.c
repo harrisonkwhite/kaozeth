@@ -186,7 +186,7 @@ bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
         RenderPlayer(rendering_context, &world->player, textures, shader_progs);
     }
 
-    RenderNPCs(rendering_context, &world->npcs, textures);
+    RenderNPCs(rendering_context, &world->npcs, textures, shader_progs);
 
     RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
 

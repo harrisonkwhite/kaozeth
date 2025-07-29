@@ -1,4 +1,6 @@
+#include "assets.h"
 #include "game.h"
+#include "zfw_graphics.h"
 
 #include <stdio.h>
 
@@ -140,7 +142,7 @@ void ProcNPCDeaths(s_world* const world) {
     }
 }
 
-void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_npcs* const npcs, const zfw_s_textures* const textures) {
+void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_npcs* const npcs, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs) {
     for (int i = 0; i < NPC_LIMIT; i++) {
         if (!IsNPCActive(&npcs->activity, i)) {
             continue;
@@ -149,7 +151,26 @@ void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_
         const s_npc* const npc = &npcs->buf[i];
         const e_sprite spr = g_npc_types[npc->type].spr;
 
+        if (npc->flash_time > 0) {
+            ZFW_SetSurface(rendering_context, ek_surface_main);
+        }
+
         RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+
+        if (npc->flash_time > 0) {
+            ZFW_SubmitBatch(rendering_context);
+            ZFW_UnsetSurface(rendering_context);
+
+            ZFW_SetSurfaceShaderProg(rendering_context, ek_shader_prog_blend, shader_progs);
+
+            const zfw_s_shader_prog_uniform_value col_uni_val = {
+                .type = zfw_ek_shader_prog_uniform_value_type_v3,
+                .as_v3 = {1.0f, 1.0f, 1.0f}
+            };
+
+            ZFW_SetSurfaceShaderProgUniform(rendering_context, "u_col", col_uni_val);
+            ZFW_RenderSurface(rendering_context, ek_surface_main);
+        }
     }
 }
 
@@ -163,6 +184,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw
     s_npc* const npc = &world->npcs.buf[npc_index];
     npc->hp = ZFW_MAX(npc->hp - dmg, 0);
     npc->vel = kb;
+    npc->flash_time = NPC_HURT_FLASH_TIME;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, npc->pos, ZFW_RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 

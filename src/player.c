@@ -12,8 +12,6 @@
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
-#define PLAYER_FLASH_TIME_ON_HURT 10
-
 static inline bool IsPlayerGrounded(const zfw_s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
     const zfw_s_rect below_collider = ZFW_RectTranslated(PlayerCollider(player_pos), (zfw_s_vec_2d){0.0f, 1.0f});
     return TileCollisionCheck(tm_activity, below_collider);
@@ -125,7 +123,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
 
     if (player->flash_time > 0) {
         ZFW_SubmitBatch(rendering_context);
-        ZFW_SetSurface(rendering_context, 0);
+        ZFW_SetSurface(rendering_context, ek_surface_main);
         ZFW_RenderClear((zfw_u_vec_4d){0});
     }
 
@@ -143,7 +141,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
         };
 
         ZFW_SetSurfaceShaderProgUniform(rendering_context, "u_col", col_uni_val);
-        ZFW_RenderSurface(rendering_context, 0);
+        ZFW_RenderSurface(rendering_context, ek_surface_main);
     }
 }
 
@@ -155,7 +153,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
     world->player.vel = kb;
     world->player.jumping = false;
     world->player.invinc_time = PLAYER_INV_DUR;
-    world->player.flash_time = PLAYER_FLASH_TIME_ON_HURT;
+    world->player.flash_time = PLAYER_HURT_FLASH_TIME;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, world->player.pos, ZFW_RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 

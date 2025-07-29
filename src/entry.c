@@ -14,7 +14,7 @@ int main() {
         .render_func = RenderGame,
         .clean_func = CleanGame,
 
-        .surf_cnt = 1
+        .surf_cnt = eks_surface_cnt
     };
 
     return ZFW_RunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
