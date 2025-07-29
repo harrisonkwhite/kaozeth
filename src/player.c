@@ -1,4 +1,6 @@
+#include "assets.h"
 #include "game.h"
+#include "zfw_graphics.h"
 
 #include <stdio.h>
 
@@ -9,6 +11,8 @@
 #define PLAYER_INV_DUR 30
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
+
+#define PLAYER_FLASH_TIME_ON_HURT 10
 
 static inline bool IsPlayerGrounded(const zfw_s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
     const zfw_s_rect below_collider = ZFW_RectTranslated(PlayerCollider(player_pos), (zfw_s_vec_2d){0.0f, 1.0f});
@@ -110,16 +114,37 @@ void ProcPlayerDeath(s_world* const world) {
     }
 }
 
-void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures) {
-    assert(!world->player.killed);
+void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_player* const player, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs) {
+    assert(!player->killed);
 
     float alpha = 1.0f;
 
-    if (world->player.invinc_time > 0) {
-        alpha = world->player.invinc_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
+    if (player->invinc_time > 0) {
+        alpha = player->invinc_time % 2 == 0 ? PLAYER_INV_ALPHA_LOW : PLAYER_INV_ALPHA_HIGH;
     }
 
-    RenderSprite(rendering_context, ek_sprite_player, textures, world->player.pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, alpha});
+    if (player->flash_time > 0) {
+        ZFW_SubmitBatch(rendering_context);
+        ZFW_SetSurface(rendering_context, 0);
+        ZFW_RenderClear((zfw_u_vec_4d){0});
+    }
+
+    RenderSprite(rendering_context, ek_sprite_player, textures, player->pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, alpha});
+
+    if (player->flash_time > 0) {
+        ZFW_SubmitBatch(rendering_context);
+        ZFW_UnsetSurface(rendering_context);
+
+        ZFW_SetSurfaceShaderProg(rendering_context, ek_shader_prog_blend, shader_progs);
+
+        const zfw_s_shader_prog_uniform_value col_uni_val = {
+            .type = zfw_ek_shader_prog_uniform_value_type_v3,
+            .as_v3 = {1.0f, 1.0f, 1.0f}
+        };
+
+        ZFW_SetSurfaceShaderProgUniform(rendering_context, "u_col", col_uni_val);
+        ZFW_RenderSurface(rendering_context, 0);
+    }
 }
 
 bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
@@ -130,6 +155,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
     world->player.vel = kb;
     world->player.jumping = false;
     world->player.invinc_time = PLAYER_INV_DUR;
+    world->player.flash_time = PLAYER_FLASH_TIME_ON_HURT;
 
     s_popup_text* const dmg_popup = SpawnPopupText(world, world->player.pos, ZFW_RandRange(DMG_POPUP_TEXT_VEL_Y_MIN, DMG_POPUP_TEXT_VEL_Y_MAX));
 

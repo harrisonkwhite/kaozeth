@@ -6,10 +6,9 @@
 #include "particles.h"
 
 #define GAME_TITLE "Terraria"
+
 #define DEATH_TEXT "You were slain..."
 
-#define PLAYER_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
-#define NPC_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
 #define ITEM_DROP_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
 
 #define TILE_SIZE 8
@@ -23,6 +22,9 @@
 
 #define TILE_PLACE_DIST 4
 #define TILE_HIGHLIGHT_ALPHA 0.4f
+
+#define PLAYER_INIT_HP_MAX 100
+#define PLAYER_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
 
 #define POPUP_TEXT_LIMIT 1024
 #define POPUP_TEXT_STR_BUF_SIZE 32
@@ -44,9 +46,9 @@ typedef char t_mouse_hover_str_buf[MOUSE_HOVER_STR_BUF_SIZE];
 static_assert(PLAYER_INVENTORY_COLUMN_CNT <= 9, "Too large since each hotbar slot needs an associated digit key.");
 #define TILE_PLACE_DEFAULT_USE_BREAK 2
 
-#define PLAYER_INIT_HP_MAX 100
-
 #define NPC_LIMIT 256
+#define NPC_ORIGIN (zfw_s_vec_2d){0.5f, 0.5f}
+
 #define PROJECTILE_LIMIT 1024
 #define ITEM_DROP_LIMIT 1024
 #define WORLD_MEM_ARENA_SIZE ((1 << 20) * 2)
@@ -175,6 +177,7 @@ typedef struct {
     int hp;
     int invinc_time;
     int item_use_break;
+    int flash_time;
 } s_player;
 
 typedef t_u8 t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
@@ -314,10 +317,13 @@ typedef struct {
 typedef struct {
     zfw_s_textures textures;
     zfw_s_fonts fonts;
+    zfw_s_shader_progs shader_progs;
     zfw_s_sound_types snd_types;
+
     t_settings settings;
-    s_title_screen title_screen;
+
     bool in_world;
+    s_title_screen title_screen;
     s_world world;
 } s_game;
 
@@ -420,7 +426,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
 bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_s32 window_size, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
 bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
-bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, s_mem_arena* const temp_mem_arena);
+bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
 bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos, const e_tile_type type);
@@ -447,7 +453,7 @@ void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activi
 void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last);
 bool ProcPlayerCollisionsWithNPCs(s_world* const world);
 void ProcPlayerDeath(s_world* const world);
-void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures);
+void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_player* const player, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs);
 bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb); // Returns true if successful, false otherwise.
 
 static inline zfw_s_vec_2d PlayerColliderSize() {

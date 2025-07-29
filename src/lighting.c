@@ -67,7 +67,7 @@ s_lightmap GenLightmap(s_mem_arena* const mem_arena, const zfw_s_vec_2d_s32 size
     t_light_level* const buf = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, t_light_level, size.x * size.y);
 
     if (!buf) {
-        LogError("Failed to allocate memory for lightmap!");
+        LOG_ERROR("Failed to allocate memory for lightmap!");
         return (s_lightmap){0};
     }
 
@@ -89,7 +89,7 @@ bool PropagateLights(const s_lightmap* const lightmap, s_mem_arena* const temp_m
     };
 
     if (!light_pos_queue.buf) {
-        LogError("Failed to allocate memory for light position queue!");
+        LOG_ERROR("Failed to allocate memory for light position queue!");
         return false;
     }
 

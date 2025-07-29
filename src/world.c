@@ -61,8 +61,13 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         ProcPlayerMovement(world, input_state, input_state_last);
         ProcPlayerCollisionsWithNPCs(world);
 
+        // TODO: I hate how this is decentralised from the player source file. Move there.
         if (world->player.invinc_time > 0) {
             world->player.invinc_time--;
+        }
+
+        if (world->player.flash_time > 0) {
+            world->player.flash_time--;
         }
 
         ProcPlayerDeath(world);
@@ -169,7 +174,7 @@ static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap
     return lightmap;
 }
 
-bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, s_mem_arena* const temp_mem_arena) {
+bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs, s_mem_arena* const temp_mem_arena) {
     ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->window_size);
 
@@ -178,7 +183,7 @@ bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
-        RenderPlayer(rendering_context, world, textures);
+        RenderPlayer(rendering_context, &world->player, textures, shader_progs);
     }
 
     RenderNPCs(rendering_context, &world->npcs, textures);
@@ -229,12 +234,12 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     FILE* const fs = fopen((const char*)filename, "wb");
 
     if (!fs) {
-        LogError("Failed to open \"%s\"!", (const char*)filename);
+        LOG_ERROR("Failed to open \"%s\"!", (const char*)filename);
         return false;
     }
 
     if (fwrite(world_core, sizeof(*world_core), 1, fs) == 0) {
-        LogError("Failed to write to world file \"%s\"!", (const char*)filename);
+        LOG_ERROR("Failed to write to world file \"%s\"!", (const char*)filename);
         fclose(fs);
         return false;
     }
@@ -367,7 +372,7 @@ s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const
         return popup;
     }
 
-    LogError("Failed to spawn popup text due to insufficient space!");
+    LOG_ERROR("Failed to spawn popup text due to insufficient space!");
 
     return NULL;
 }

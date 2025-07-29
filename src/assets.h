@@ -90,6 +90,26 @@ static zfw_s_font_load_info FontIndexToLoadInfo(const int index) {
 }
 
 typedef enum {
+    ek_shader_prog_blend,
+
+    eks_shader_prog_cnt
+} e_shader_prog;
+
+static zfw_s_shader_prog_file_paths ShaderProgIndexToFilePaths(const int index) {
+    switch ((e_shader_prog)index) {
+        case ek_shader_prog_blend:
+            return (zfw_s_shader_prog_file_paths){
+                .vs_fp = "assets/shaders/blend.vert",
+                .fs_fp = "assets/shaders/blend.frag"
+            };
+
+        default:
+            assert(false && "Shader program case not handled!");
+            return (zfw_s_shader_prog_file_paths){0};
+    }
+}
+
+typedef enum {
     ek_sound_type_button_click,
     ek_sound_type_item_drop_collect,
 

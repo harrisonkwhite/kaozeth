@@ -13,6 +13,8 @@ int main() {
         .tick_func = GameTick,
         .render_func = RenderGame,
         .clean_func = CleanGame,
+
+        .surf_cnt = 1
     };
 
     return ZFW_RunGame(&game_info) ? EXIT_SUCCESS : EXIT_FAILURE;

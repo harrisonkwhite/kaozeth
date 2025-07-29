@@ -1,4 +1,7 @@
 #include "game.h"
+#include "assets.h"
+#include "zfw_graphics.h"
+#include "zfw_math.h"
 
 #include <stdio.h>
 
@@ -87,6 +90,12 @@ bool InitGame(const zfw_s_game_init_func_data* const func_data) {
         return false;
     }
 
+    game->shader_progs = ZFW_CreateShaderProgsFromFiles(func_data->perm_mem_arena, eks_shader_prog_cnt, ShaderProgIndexToFilePaths, func_data->temp_mem_arena);
+
+    if (IS_ZERO(game->shader_progs)) {
+        return false;
+    }
+
     if (!ZFW_LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
         return false;
     }
@@ -162,7 +171,7 @@ bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
     ZFW_RenderClear(BG_COLOR);
 
     if (game->in_world) {
-        if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, func_data->temp_mem_arena)) {
+        if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, &game->shader_progs, func_data->temp_mem_arena)) {
             return false;
         }
 
