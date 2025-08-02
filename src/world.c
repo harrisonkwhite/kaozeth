@@ -110,12 +110,12 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         const zfw_s_vec_2d cam_pos_dest = world->player.pos;
 
         if (SettingToggle(settings, ek_setting_smooth_camera)) {
-            world->cam.pos.x = ZFW_Lerp(world->cam.pos.x, cam_pos_dest.x, CAMERA_LERP);
-            world->cam.pos.y = ZFW_Lerp(world->cam.pos.y, cam_pos_dest.y, CAMERA_LERP);
+            world->cam.pos.x = Lerp(world->cam.pos.x, cam_pos_dest.x, CAMERA_LERP);
+            world->cam.pos.y = Lerp(world->cam.pos.y, cam_pos_dest.y, CAMERA_LERP);
 
             world->cam.pos = (zfw_s_vec_2d){
-                ZFW_CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
-                ZFW_CLAMP(world->cam.pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
+                CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
+                CLAMP(world->cam.pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
             };
         } else {
             world->cam.pos = cam_pos_dest;
@@ -141,10 +141,10 @@ static zfw_s_rect_edges_s32 TilemapRenderRange(const s_camera* const cam, const 
     };
 
     // Clamp the tilemap render range within tilemap bounds.
-    render_range.left = ZFW_CLAMP(render_range.left, 0, TILEMAP_WIDTH - 1);
-    render_range.top = ZFW_CLAMP(render_range.top, 0, TILEMAP_HEIGHT - 1);
-    render_range.right = ZFW_CLAMP(render_range.right, 0, TILEMAP_WIDTH);
-    render_range.bottom = ZFW_CLAMP(render_range.bottom, 0, TILEMAP_HEIGHT);
+    render_range.left = CLAMP(render_range.left, 0, TILEMAP_WIDTH - 1);
+    render_range.top = CLAMP(render_range.top, 0, TILEMAP_HEIGHT - 1);
+    render_range.right = CLAMP(render_range.right, 0, TILEMAP_WIDTH);
+    render_range.bottom = CLAMP(render_range.bottom, 0, TILEMAP_HEIGHT);
 
     return render_range;
 }
@@ -174,7 +174,7 @@ static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap
     return lightmap;
 }
 
-bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs, s_mem_arena* const temp_mem_arena) {
+bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, zfw_s_surface_group* const surfs, s_mem_arena* const temp_mem_arena) {
     ZERO_OUT(rendering_context->state->view_mat);
     InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->window_size);
 
@@ -183,10 +183,10 @@ bool RenderWorld(const zfw_s_rendering_context* const rendering_context, const s
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
-        RenderPlayer(rendering_context, &world->player, textures, shader_progs);
+        RenderPlayer(rendering_context, &world->player, textures, shader_progs, surfs);
     }
 
-    RenderNPCs(rendering_context, &world->npcs, textures, shader_progs);
+    RenderNPCs(&world->npcs, rendering_context, textures, shader_progs, surfs);
 
     RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
 
@@ -278,7 +278,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
                 ZFW_RandRangeIncl(-2.5f, -1.0f)
             };
 
-            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, ZFW_TAU * ZFW_RandPerc());
+            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, TAU * ZFW_RandPerc());
         }
     }
 

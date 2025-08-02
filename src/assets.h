@@ -1,7 +1,6 @@
 #ifndef ASSETS_H
 #define ASSETS_H
 
-#include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <zfw.h>
@@ -18,19 +17,32 @@ typedef enum {
     eks_texture_cnt
 } e_texture;
 
-static const char* TextureIndexToFilePath(const int index) {
-    switch ((e_texture)index) {
-        case ek_texture_player: return "assets/textures/player.png";
-        case ek_texture_npcs: return "assets/textures/npcs.png";
-        case ek_texture_tiles: return "assets/textures/tiles.png";
-        case ek_texture_item_icons: return "assets/textures/item_icons.png";
-        case ek_texture_projectiles: return "assets/textures/projectiles.png";
-        case ek_texture_particles: return "assets/textures/particles.png";
-        case ek_texture_misc: return "assets/textures/misc.png";
+static inline zfw_s_texture_info GenTextureInfo(const int tex_index, s_mem_arena* const mem_arena) {
+    switch ((e_texture)tex_index) {
+        case ek_texture_player:
+            return ZFW_GenTextureInfoFromFile("assets/textures/player.png", mem_arena);
+
+        case ek_texture_npcs:
+            return ZFW_GenTextureInfoFromFile("assets/textures/npcs.png", mem_arena);
+
+        case ek_texture_tiles:
+            return ZFW_GenTextureInfoFromFile("assets/textures/tiles.png", mem_arena);
+
+        case ek_texture_item_icons:
+            return ZFW_GenTextureInfoFromFile("assets/textures/item_icons.png", mem_arena);
+
+        case ek_texture_projectiles:
+            return ZFW_GenTextureInfoFromFile("assets/textures/projectiles.png", mem_arena);
+
+        case ek_texture_particles:
+            return ZFW_GenTextureInfoFromFile("assets/textures/particles.png", mem_arena);
+
+        case ek_texture_misc:
+            return ZFW_GenTextureInfoFromFile("assets/textures/misc.png", mem_arena);
 
         default:
             assert(false && "Texture case not handled!");
-            return NULL;
+            return (zfw_s_texture_info){0};
     }
 }
 
@@ -45,67 +57,47 @@ typedef enum {
     eks_font_cnt
 } e_font;
 
-static zfw_s_font_load_info FontIndexToLoadInfo(const int index) {
-    switch ((e_font)index) {
-        case ek_font_eb_garamond_20:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 20
-            };
+const static zfw_s_font_load_info g_font_load_infos[] = {
+    [ek_font_eb_garamond_20] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 20},
+    [ek_font_eb_garamond_24] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 24},
+    [ek_font_eb_garamond_28] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 28},
+    [ek_font_eb_garamond_32] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 32},
+    [ek_font_eb_garamond_48] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 48},
+    [ek_font_eb_garamond_80] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 80}
+};
 
-        case ek_font_eb_garamond_24:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 24
-            };
-
-        case ek_font_eb_garamond_28:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 28
-            };
-
-        case ek_font_eb_garamond_32:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 32
-            };
-
-        case ek_font_eb_garamond_48:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 48
-            };
-
-        case ek_font_eb_garamond_80:
-            return (zfw_s_font_load_info){
-                .file_path = "assets/fonts/eb_garamond.ttf",
-                .height = 80
-            };
-
-        default:
-            assert(false && "Font case not handled!");
-            return (zfw_s_font_load_info){0};
-    }
-}
+STATIC_ARRAY_LEN_CHECK(g_font_load_infos, eks_font_cnt);
 
 typedef enum {
     ek_shader_prog_blend,
-
     eks_shader_prog_cnt
 } e_shader_prog;
 
-static zfw_s_shader_prog_file_paths ShaderProgIndexToFilePaths(const int index) {
-    switch ((e_shader_prog)index) {
+static inline zfw_s_shader_prog_info GenShaderProgInfo(const int prog_index, s_mem_arena* const mem_arena) {
+    switch ((e_shader_prog)prog_index) {
         case ek_shader_prog_blend:
-            return (zfw_s_shader_prog_file_paths){
-                .vs_fp = "assets/shaders/blend.vert",
-                .fs_fp = "assets/shaders/blend.frag"
-            };
+            {
+                const char* const vs_src = (const char*)PushEntireFileContents("assets/shaders/blend.vert", mem_arena, true);
+
+                if (!vs_src) {
+                    return (zfw_s_shader_prog_info){0};
+                }
+
+                const char* const fs_src = (const char*)PushEntireFileContents("assets/shaders/blend.frag", mem_arena, true);
+
+                if (!fs_src) {
+                    return (zfw_s_shader_prog_info){0};
+                }
+
+                return (zfw_s_shader_prog_info){
+                    .vs_src = vs_src,
+                    .fs_src = fs_src
+                };
+            }
 
         default:
             assert(false && "Shader program case not handled!");
-            return (zfw_s_shader_prog_file_paths){0};
+            return (zfw_s_shader_prog_info){0};
     }
 }
 
@@ -116,15 +108,11 @@ typedef enum {
     eks_sound_type_cnt
 } e_sound_type;
 
-static const char* SoundTypeIndexToFilePath(const int index) {
-    switch ((e_sound_type)index) {
-        case ek_sound_type_button_click: return "assets/audio/button_click.wav";
-        case ek_sound_type_item_drop_collect: return "assets/audio/item_drop_collect.wav";
+static const char* const g_snd_type_file_paths[] = {
+    [ek_sound_type_button_click] = "assets/audio/button_click.wav",
+    [ek_sound_type_item_drop_collect] = "assets/audio/item_drop_collect.wav"
+};
 
-        default:
-            assert(false && "Audio case not handled!");
-            return NULL;
-    }
-}
+STATIC_ARRAY_LEN_CHECK(g_snd_type_file_paths, eks_sound_type_cnt);
 
 #endif

@@ -428,7 +428,7 @@ bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const temp_mem_arena
     return true;
 }
 
-static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const zfw_s_vec_2d* const elem_positions, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_vec_2d cursor_ui_pos, const s_page_elems* const elems, const zfw_s_vec_2d* const elem_positions, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     assert(index);
 
     *index = -1;
@@ -442,7 +442,7 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
 
         zfw_s_rect collider = {0};
 
-        if (!ZFW_LoadStrCollider(&collider, elem->str, elem->font, fonts, elem_positions[i], ZFW_ALIGNMENT_CENTER, temp_mem_arena)) {
+        if (!ZFW_LoadStrCollider(&collider, elem->str, fonts, elem->font, elem_positions[i], ZFW_ALIGNMENT_CENTER, temp_mem_arena)) {
             return false;
         }
 
@@ -455,7 +455,7 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_s32 display_size, const zfw_s_fonts* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_s32 display_size, const zfw_s_font_group* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
@@ -541,7 +541,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
     return result;
 }
 
-bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
 
     if (IS_ZERO(page_elems)) {
@@ -571,7 +571,7 @@ bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, c
             }
         }
 
-        if (!ZFW_RenderStr(rendering_context, elem->str, elem->font, fonts, positions[i], ZFW_ALIGNMENT_CENTER, color, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, elem->str, fonts, elem->font, positions[i], ZFW_ALIGNMENT_CENTER, color, temp_mem_arena)) {
             return false;
         }
     }

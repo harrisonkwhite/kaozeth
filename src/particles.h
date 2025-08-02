@@ -34,7 +34,7 @@ typedef enum {
 void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel, const float rot);
 int AddParticle(s_particles* const particles, const s_particle* const part);
 void UpdateParticles(s_particles* const particles, const float grav);
-void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_textures* const textures);
+void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_texture_group* const textures);
 
 static inline int SpawnParticleFromTemplate(s_particles* const particles, const e_particle_template temp, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel, const float rot) {
     s_particle part = {0};

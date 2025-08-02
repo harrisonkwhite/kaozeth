@@ -126,7 +126,7 @@ bool UpdateProjectiles(s_world* const world) {
     return true;
 }
 
-void RenderProjectiles(const zfw_s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const zfw_s_textures* const textures) {
+void RenderProjectiles(const zfw_s_rendering_context* const rendering_context, const s_projectile* const projectiles, const int proj_cnt, const zfw_s_texture_group* const textures) {
     assert(rendering_context);
     assert(projectiles);
     assert(proj_cnt >= 0);

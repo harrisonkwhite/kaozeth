@@ -29,7 +29,7 @@ void AddTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_s32 pos, const e_
     assert(IsTilePosInBounds(pos));
     assert(!IsTileActive(&tm_core->activity, pos));
 
-    ActivateBit(IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), (t_u8*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    ActivateBit((t_u8*)tm_core->activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), TILEMAP_WIDTH * TILEMAP_HEIGHT);
     tm_core->tile_types[pos.y][pos.x] = tile_type;
 }
 
@@ -37,7 +37,7 @@ void RemoveTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_s32 pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&tm_core->activity, pos));
 
-    DeactivateBit(IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), (t_u8*)tm_core->activity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    DeactivateBit((t_u8*)tm_core->activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 zfw_s_rect_edges_s32 RectTilemapSpan(const zfw_s_rect rect) {
@@ -138,7 +138,7 @@ void MakeContactWithTilemapByJumpSize(zfw_s_vec_2d* const pos, const float jump_
     }
 }
 
-void RenderTilemap(const zfw_s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_s32 range, const zfw_s_textures* const textures) {
+void RenderTilemap(const zfw_s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_s32 range, const zfw_s_texture_group* const textures) {
     assert(IsTilemapRangeValid(range));
 
     for (int ty = range.top; ty < range.bottom; ty++) {

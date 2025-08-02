@@ -1,6 +1,5 @@
 #include "assets.h"
 #include "game.h"
-#include "zfw_graphics.h"
 
 #include <stdio.h>
 
@@ -40,13 +39,13 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
         } else {
             npc->vel.y = -ZFW_RandRange(SLIME_JUMP_HEIGHT_MIN, SLIME_JUMP_HEIGHT_MAX);
             slime->jump_time = ZFW_RandRangeI(SLIME_JUMP_TIME_MIN, SLIME_JUMP_TIME_MAX);
-            slime->jump_hor_spd = ZFW_RandRange(SLIME_JUMP_HOR_SPD_MIN, SLIME_JUMP_HOR_SPD_MAX) * ZFW_SIGN(world->player.pos.x - npc->pos.x);
+            slime->jump_hor_spd = ZFW_RandRange(SLIME_JUMP_HOR_SPD_MIN, SLIME_JUMP_HOR_SPD_MAX) * SIGN(world->player.pos.x - npc->pos.x);
         }
     } else {
         vel_x_dest = slime->jump_hor_spd;
     }
 
-    npc->vel.x = ZFW_Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
+    npc->vel.x = Lerp(npc->vel.x, vel_x_dest, SLIME_VEL_X_LERP);
 
     ProcTileCollisions(&npc->pos, &npc->vel, NPCColliderSize(npc->type), NPC_ORIGIN, &world->core.tilemap_core.activity);
 
@@ -88,7 +87,7 @@ int SpawnNPC(s_world* const world, const zfw_s_vec_2d pos, const e_npc_type type
     const int index = FirstInactiveBitIndex(world->npcs.activity, NPC_LIMIT);
 
     if (index != -1) {
-        ActivateBit(index, world->npcs.activity, NPC_LIMIT);
+        ActivateBit(world->npcs.activity, index, NPC_LIMIT);
 
         s_npc* const npc = &world->npcs.buf[index];
         assert(IS_ZERO(*npc)); // Should have been cleared when the NPC slot was deactivated.
@@ -136,13 +135,13 @@ void ProcNPCDeaths(s_world* const world) {
         assert(IsNPCValid(npc));
 
         if (npc->hp == 0) {
-            DeactivateBit(i, world->npcs.activity, NPC_LIMIT);
+            DeactivateBit(world->npcs.activity, i, NPC_LIMIT);
             ZERO_OUT(*npc);
         }
     }
 }
 
-void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_npcs* const npcs, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs) {
+void RenderNPCs(const s_npcs* const npcs, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs) {
     for (int i = 0; i < NPC_LIMIT; i++) {
         if (!IsNPCActive(&npcs->activity, i)) {
             continue;
@@ -152,7 +151,7 @@ void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_
         const e_sprite spr = g_npc_types[npc->type].spr;
 
         if (npc->flash_time > 0) {
-            ZFW_SetSurface(rendering_context, ek_surface_main);
+            ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
         }
 
         RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
@@ -161,7 +160,7 @@ void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_
             ZFW_SubmitBatch(rendering_context);
             ZFW_UnsetSurface(rendering_context);
 
-            ZFW_SetSurfaceShaderProg(rendering_context, ek_shader_prog_blend, shader_progs);
+            ZFW_SetSurfaceShaderProg(rendering_context, shader_progs, ek_shader_prog_blend);
 
             const zfw_s_shader_prog_uniform_value col_uni_val = {
                 .type = zfw_ek_shader_prog_uniform_value_type_v3,
@@ -169,7 +168,7 @@ void RenderNPCs(const zfw_s_rendering_context* const rendering_context, const s_
             };
 
             ZFW_SetSurfaceShaderProgUniform(rendering_context, "u_col", col_uni_val);
-            ZFW_RenderSurface(rendering_context, ek_surface_main);
+            ZFW_RenderSurface(rendering_context, surfs, ek_surface_temp);
         }
     }
 }
@@ -182,7 +181,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw
     assert(dmg > 0);
 
     s_npc* const npc = &world->npcs.buf[npc_index];
-    npc->hp = ZFW_MAX(npc->hp - dmg, 0);
+    npc->hp = MAX(npc->hp - dmg, 0);
     npc->vel = kb;
     npc->flash_time = NPC_HURT_FLASH_TIME;
 
@@ -200,7 +199,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw
 bool IsNPCActive(const t_npc_activity* const activity, const int index) {
     assert(activity);
     assert(index >= 0 && index < NPC_LIMIT);
-    return IsBitActive(index, (t_u8*)activity, NPC_LIMIT);
+    return IsBitActive((const t_u8*)activity, index, NPC_LIMIT);
 }
 
 static int NPCCnt(const t_npc_activity* const activity) {
@@ -231,7 +230,7 @@ static float GenEnemySpawnX(const float cam_x, const float cam_width, const floa
         x = ZFW_RandRange(left, right);
     } while (x >= cam_left + max_innerness && x < cam_right - max_innerness);
 
-    return ZFW_CLAMP(x, 0.0f, WORLD_WIDTH - 1.0f);
+    return CLAMP(x, 0.0f, WORLD_WIDTH - 1.0f);
 }
 
 bool ProcEnemySpawning(s_world* const world, const float cam_width) {

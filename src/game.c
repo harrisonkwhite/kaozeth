@@ -1,13 +1,33 @@
 #include "game.h"
 #include "assets.h"
-#include "zfw_graphics.h"
-#include "zfw_math.h"
 
 #include <stdio.h>
 
 #define BG_COLOR (zfw_u_vec_4d){0.2, 0.3, 0.4, 1.0}
 
 float g_ui_scale = 1.0f;
+
+// NOTE: This could be a temporary approach?
+static const zfw_s_vec_2d_s32* PushSurfaceSizes(s_mem_arena* const mem_arena, const zfw_s_vec_2d_s32 window_size) {
+    assert(mem_arena && IsMemArenaValid(mem_arena));
+    assert(window_size.x > 0 && window_size.y > 0);
+
+    zfw_s_vec_2d_s32* const sizes = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d_s32, eks_surface_cnt);
+
+    for (int i = 0; i < eks_surface_cnt; i++) {
+        switch ((e_surface)i) {
+            case ek_surface_temp:
+                sizes[i] = window_size;
+                break;
+
+            default:
+                assert(false && "Surface case not handled!");
+                break;
+        }
+    }
+
+    return sizes;
+}
 
 const s_setting g_settings[] = {
     [ek_setting_smooth_camera] = {
@@ -75,34 +95,50 @@ static bool WriteSettingsToFile(t_settings* const settings) {
     return true;
 }
 
-bool InitGame(const zfw_s_game_init_func_data* const func_data) {
-    s_game* const game = func_data->user_mem;
+bool InitGame(const zfw_s_game_init_context* const zfw_context) {
+    s_game* const game = zfw_context->dev_mem;
 
-    game->textures = ZFW_LoadTexturesFromFiles(func_data->perm_mem_arena, eks_texture_cnt, TextureIndexToFilePath);
+    game->textures = ZFW_GenTextures(eks_texture_cnt, GenTextureInfo, zfw_context->gl_res_arena, zfw_context->perm_mem_arena, zfw_context->temp_mem_arena);
 
     if (IS_ZERO(game->textures)) {
         return false;
     }
 
-    game->fonts = ZFW_LoadFontsFromFiles(func_data->perm_mem_arena, eks_font_cnt, FontIndexToLoadInfo, func_data->temp_mem_arena);
+    game->fonts = ZFW_GenFonts(eks_font_cnt, g_font_load_infos, zfw_context->gl_res_arena, zfw_context->perm_mem_arena, zfw_context->temp_mem_arena);
 
     if (IS_ZERO(game->fonts)) {
         return false;
     }
 
-    game->shader_progs = ZFW_CreateShaderProgsFromFiles(func_data->perm_mem_arena, eks_shader_prog_cnt, ShaderProgIndexToFilePaths, func_data->temp_mem_arena);
+    game->shader_progs = ZFW_GenShaderProgs(eks_shader_prog_cnt, GenShaderProgInfo, zfw_context->gl_res_arena, zfw_context->temp_mem_arena);
 
     if (IS_ZERO(game->shader_progs)) {
         return false;
     }
 
-    if (!ZFW_LoadSoundTypesFromFiles(&game->snd_types, func_data->perm_mem_arena, eks_sound_type_cnt, SoundTypeIndexToFilePath)) {
+    {
+        const zfw_s_vec_2d_s32* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+
+        if (!surf_sizes) {
+            return false;
+        }
+
+        game->surfs = ZFW_GenSurfaces(eks_surface_cnt, surf_sizes, zfw_context->gl_res_arena, zfw_context->perm_mem_arena);
+
+        if (IS_ZERO(game->surfs)) {
+            return false;
+        }
+    }
+
+    game->snd_types = ZFW_LoadSoundTypesFromFiles(zfw_context->perm_mem_arena, eks_sound_type_cnt, g_snd_type_file_paths);
+
+    if (IS_ZERO(game->snd_types)) {
         return false;
     }
 
     LoadSettings(&game->settings);
 
-    if (!InitTitleScreen(&game->title_screen, func_data->temp_mem_arena)) {
+    if (!InitTitleScreen(&game->title_screen, zfw_context->temp_mem_arena)) {
         return false;
     }
 
@@ -121,27 +157,41 @@ static inline float CalcUIScale(const zfw_s_vec_2d_s32 window_size) {
     return 1.0f;
 }
 
-zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func_data) {
-    s_game* const game = func_data->user_mem;
+zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context) {
+    s_game* const game = zfw_context->dev_mem;
 
-    g_ui_scale = CalcUIScale(func_data->window_state.size);
+    g_ui_scale = CalcUIScale(zfw_context->window_state.size);
+
+    {
+        const zfw_s_vec_2d_s32* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+
+        if (!surf_sizes) {
+            return zfw_ek_game_tick_result_error;
+        }
+
+        for (int i = 0; i < eks_surface_cnt; i++) {
+            if (game->surfs.sizes[i].x != surf_sizes[i].x || game->surfs.sizes[i].y != surf_sizes[i].y) {
+                ZFW_ResizeSurface(&game->surfs, i, surf_sizes[i]);
+            }
+        }
+    }
 
     if (game->in_world) {
-        if (!WorldTick(&game->world, &game->settings, func_data->input_state, func_data->input_state_last, func_data->window_state.size, func_data->audio_sys, &game->snd_types)) {
-            return ek_game_tick_func_result_error;
+        if (!WorldTick(&game->world, &game->settings, zfw_context->input_state, zfw_context->input_state_last, zfw_context->window_state.size, zfw_context->audio_sys, &game->snd_types)) {
+            return zfw_ek_game_tick_result_error;
         }
     } else {
-        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, &game->settings, func_data->input_state, func_data->input_state_last, func_data->unicode_buf, func_data->window_state.size, &game->fonts, func_data->audio_sys, &game->snd_types, func_data->temp_mem_arena);
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, &game->settings, zfw_context->input_state, zfw_context->input_state_last, zfw_context->unicode_buf, zfw_context->window_state.size, &game->fonts, zfw_context->audio_sys, &game->snd_types, zfw_context->temp_mem_arena);
 
         switch (tick_res.type) {
             case ek_title_screen_tick_result_type_error:
-                return ek_game_tick_func_result_error;
+                return zfw_ek_game_tick_result_error;
 
             case ek_title_screen_tick_result_type_load_world:
                 ZERO_OUT(game->title_screen);
 
-                if (!InitWorld(&game->world, &tick_res.world_filename, func_data->window_state.size, func_data->temp_mem_arena)) {
-                    return ek_game_tick_func_result_error;
+                if (!InitWorld(&game->world, &tick_res.world_filename, zfw_context->window_state.size, zfw_context->temp_mem_arena)) {
+                    return zfw_ek_game_tick_result_error;
                 }
 
                 game->in_world = true;
@@ -149,13 +199,13 @@ zfw_e_game_tick_func_result GameTick(const zfw_s_game_tick_func_data* const func
                 break;
 
             case ek_title_screen_tick_result_type_exit:
-                return ek_game_tick_func_result_exit;
+                return zfw_ek_game_tick_result_exit;
 
             default: break;
         }
     }
 
-    return ek_game_tick_func_result_default;
+    return zfw_ek_game_tick_result_normal;
 }
 
 static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
@@ -165,49 +215,46 @@ static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
     ZFW_ScaleMatrix4x4(mat, g_ui_scale);
 }
 
-bool RenderGame(const zfw_s_game_render_func_data* const func_data) {
-    s_game* const game = func_data->user_mem;
+bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
+    s_game* const game = zfw_context->dev_mem;
 
     ZFW_RenderClear(BG_COLOR);
 
     if (game->in_world) {
-        if (!RenderWorld(&func_data->rendering_context, &game->world, &game->textures, &game->shader_progs, func_data->temp_mem_arena)) {
+        if (!RenderWorld(&game->world, &zfw_context->rendering_context, &game->textures, &game->shader_progs, &game->surfs, zfw_context->temp_mem_arena)) {
             return false;
         }
 
-        ZERO_OUT(func_data->rendering_context.state->view_mat);
-        InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
+        ZERO_OUT(zfw_context->rendering_context.state->view_mat);
+        InitUIViewMatrix(&zfw_context->rendering_context.state->view_mat);
 
-        if (!RenderWorldUI(&func_data->rendering_context, &game->world, func_data->mouse_pos, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        if (!RenderWorldUI(&zfw_context->rendering_context, &game->world, zfw_context->mouse_pos, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
         }
     } else {
-        ZERO_OUT(func_data->rendering_context.state->view_mat);
-        InitUIViewMatrix(&func_data->rendering_context.state->view_mat);
+        ZERO_OUT(zfw_context->rendering_context.state->view_mat);
+        InitUIViewMatrix(&zfw_context->rendering_context.state->view_mat);
 
-        if (!RenderTitleScreen(&func_data->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, func_data->temp_mem_arena)) {
+        if (!RenderTitleScreen(&zfw_context->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
         }
     }
 
     // Render the mouse.
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(func_data->mouse_pos);
-    RenderSprite(&func_data->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos);
+    RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
-    ZFW_SubmitBatch(&func_data->rendering_context);
+    ZFW_SubmitBatch(&zfw_context->rendering_context);
 
     return true;
 }
 
-void CleanGame(void* const user_mem) {
-    s_game* const game = user_mem;
+void CleanGame(void* const dev_mem) {
+    s_game* const game = dev_mem;
 
     if (game->in_world) {
         CleanWorld(&game->world);
     }
 
     WriteSettingsToFile(&game->settings);
-
-    ZFW_UnloadFonts(&game->fonts);
-    ZFW_UnloadTextures(&game->textures);
 }

@@ -144,8 +144,8 @@ static const s_sprite g_sprites[] = {
 
 STATIC_ARRAY_LEN_CHECK(g_sprites, eks_sprite_cnt);
 
-static inline void RenderSprite(const zfw_s_rendering_context* const context, const e_sprite spr, const zfw_s_textures* const textures, const zfw_s_vec_2d pos, const zfw_s_vec_2d origin, const zfw_s_vec_2d scale, const float rot, const zfw_u_vec_4d blend) {
-    ZFW_RenderTexture(context, g_sprites[spr].tex, textures, g_sprites[spr].src_rect, pos, origin, scale, rot, blend);
+static inline void RenderSprite(const zfw_s_rendering_context* const context, const e_sprite spr, const zfw_s_texture_group* const textures, const zfw_s_vec_2d pos, const zfw_s_vec_2d origin, const zfw_s_vec_2d scale, const float rot, const zfw_u_vec_4d blend) {
+    ZFW_RenderTexture(context, textures, g_sprites[spr].tex, g_sprites[spr].src_rect, pos, origin, scale, rot, blend);
 }
 
 #endif

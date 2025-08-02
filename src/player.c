@@ -1,6 +1,5 @@
 #include "assets.h"
 #include "game.h"
-#include "zfw_graphics.h"
 
 #include <stdio.h>
 
@@ -35,9 +34,9 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const inp
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
 
     if (world->player.vel.x < move_spd_dest) {
-        world->player.vel.x += ZFW_MIN(move_spd_dest - world->player.vel.x, PLAYER_MOVE_SPD_ACC);
+        world->player.vel.x += MIN(move_spd_dest - world->player.vel.x, PLAYER_MOVE_SPD_ACC);
     } else if (world->player.vel.x > move_spd_dest) {
-        world->player.vel.x -= ZFW_MIN(world->player.vel.x - move_spd_dest, PLAYER_MOVE_SPD_ACC);
+        world->player.vel.x -= MIN(world->player.vel.x - move_spd_dest, PLAYER_MOVE_SPD_ACC);
     }
 
     world->player.vel.y += GRAVITY;
@@ -112,7 +111,7 @@ void ProcPlayerDeath(s_world* const world) {
     }
 }
 
-void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_player* const player, const zfw_s_textures* const textures, const zfw_s_shader_progs* const shader_progs) {
+void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_player* const player, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs) {
     assert(!player->killed);
 
     float alpha = 1.0f;
@@ -123,7 +122,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
 
     if (player->flash_time > 0) {
         ZFW_SubmitBatch(rendering_context);
-        ZFW_SetSurface(rendering_context, ek_surface_main);
+        ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
         ZFW_RenderClear((zfw_u_vec_4d){0});
     }
 
@@ -133,7 +132,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
         ZFW_SubmitBatch(rendering_context);
         ZFW_UnsetSurface(rendering_context);
 
-        ZFW_SetSurfaceShaderProg(rendering_context, ek_shader_prog_blend, shader_progs);
+        ZFW_SetSurfaceShaderProg(rendering_context, shader_progs, ek_shader_prog_blend);
 
         const zfw_s_shader_prog_uniform_value col_uni_val = {
             .type = zfw_ek_shader_prog_uniform_value_type_v3,
@@ -141,7 +140,7 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
         };
 
         ZFW_SetSurfaceShaderProgUniform(rendering_context, "u_col", col_uni_val);
-        ZFW_RenderSurface(rendering_context, ek_surface_main);
+        ZFW_RenderSurface(rendering_context, surfs, ek_surface_temp);
     }
 }
 
@@ -149,7 +148,7 @@ bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
     assert(dmg > 0);
     assert(world->player.invinc_time == 0);
 
-    world->player.hp = ZFW_MAX(world->player.hp - dmg, 0);
+    world->player.hp = MAX(world->player.hp - dmg, 0);
     world->player.vel = kb;
     world->player.jumping = false;
     world->player.invinc_time = PLAYER_INV_DUR;

@@ -75,7 +75,7 @@ static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input
 
                 if (clicked) {
                     if (slot->quantity > 0 && world->mouse_item_held_quantity > 0 && slot->item_type == world->mouse_item_held_type) {
-                        const int to_add = ZFW_MIN(world->mouse_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
+                        const int to_add = MIN(world->mouse_item_held_quantity, ITEM_QUANTITY_LIMIT - slot->quantity);
 
                         if (to_add == 0) {
                             const e_item_type item_type_temp = slot->item_type;
@@ -251,15 +251,14 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
     }
 }
 
-static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const zfw_s_vec_2d pos, const zfw_u_vec_4d outline_color, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const zfw_s_vec_2d pos, const zfw_u_vec_4d outline_color, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     const zfw_s_rect slot_rect = {
         pos.x, pos.y,
         PLAYER_INVENTORY_SLOT_SIZE, PLAYER_INVENTORY_SLOT_SIZE
     };
 
     // Render the slot box.
-    ZFW_RenderRect(rendering_context, slot_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA});
-    ZFW_RenderRectOutline(rendering_context, slot_rect, outline_color, 1.0f);
+    ZFW_RenderRectWithOutline(rendering_context, slot_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA}, outline_color, 1.0f);
 
     // Render the item icon.
     if (slot.quantity > 0) {
@@ -269,7 +268,7 @@ static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_c
     return true;
 }
 
-static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
 
     if (world->player_inv_open) {
@@ -290,7 +289,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
                 (ui_size.y * PLAYER_INVENTORY_POS_PERC.y) + PLAYER_INVENTORY_SLOT_SIZE + 8.0f
             };
 
-            if (!ZFW_RenderStr(rendering_context, name_buf, ek_font_eb_garamond_24, fonts, name_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
+            if (!ZFW_RenderStr(rendering_context, name_buf, fonts, ek_font_eb_garamond_24, name_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
                 return false;
             }
         }
@@ -314,7 +313,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
     return true;
 }
 
-bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_textures* const textures, const zfw_s_fonts* const fonts, s_mem_arena* const temp_mem_arena) {
+bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
     const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
 
@@ -336,7 +335,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
-        if (!ZFW_RenderStr(rendering_context, popup->str, ek_font_eb_garamond_32, fonts, popup_ui_pos, ZFW_ALIGNMENT_CENTER, popup_blend, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, popup->str, fonts, ek_font_eb_garamond_32, popup_ui_pos, ZFW_ALIGNMENT_CENTER, popup_blend, temp_mem_arena)) {
             return false;
         }
     }
@@ -345,7 +344,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Death Text
     //
     if (world->player.killed) {
-        if (!ZFW_RenderStr(rendering_context, DEATH_TEXT, ek_font_eb_garamond_48, fonts, (zfw_s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ZFW_ALIGNMENT_CENTER, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, DEATH_TEXT, fonts, ek_font_eb_garamond_48, (zfw_s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ZFW_ALIGNMENT_CENTER, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }
@@ -366,7 +365,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
             PLAYER_HP_BAR_HEIGHT
         };
 
-        ZFW_RenderBarHor(rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, (zfw_u_vec_3d){1.0f, 1.0f, 1.0f}, (zfw_u_vec_3d){0});
+        ZFW_RenderBarHor(rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, ZFW_WHITE, ZFW_BLACK);
 
         const zfw_s_vec_2d hp_str_pos = {
             hp_pos.x - hp_bar_rect.width - 10.0f,
@@ -376,7 +375,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
         char hp_str[8] = {0};
         snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
-        if (!ZFW_RenderStr(rendering_context, hp_str, ek_font_eb_garamond_28, fonts, hp_str_pos, ZFW_ALIGNMENT_CENTER_RIGHT, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, hp_str, fonts, ek_font_eb_garamond_28, hp_str_pos, ZFW_ALIGNMENT_CENTER_RIGHT, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }
@@ -389,7 +388,7 @@ bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const
     // Mouse Hover String
     //
     if (world->mouse_hover_str[0]) {
-        if (!ZFW_RenderStr(rendering_context, world->mouse_hover_str, ek_font_eb_garamond_24, fonts, mouse_ui_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
+        if (!ZFW_RenderStr(rendering_context, world->mouse_hover_str, fonts, ek_font_eb_garamond_24, mouse_ui_pos, ZFW_ALIGNMENT_TOP_LEFT, ZFW_WHITE, temp_mem_arena)) {
             return false;
         }
     }

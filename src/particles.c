@@ -67,7 +67,7 @@ void UpdateParticles(s_particles* const particles, const float grav) {
     }
 }
 
-void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_textures* const textures) {
+void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_texture_group* const textures) {
     for (int i = 0; i < particles->cnt; i++) {
         const s_particle* const part = &particles->buf[i];
         RenderSprite(rendering_context, part->spr, textures, part->pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, part->rot, ZFW_WHITE);

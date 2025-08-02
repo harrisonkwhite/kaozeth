@@ -212,7 +212,7 @@ bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, con
     return true;
 }
 
-void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_textures* const textures) {
+void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_texture_group* const textures) {
     assert(rendering_context);
     assert(drops);
     assert(drop_cnt >= 0);

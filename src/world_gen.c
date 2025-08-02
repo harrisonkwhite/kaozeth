@@ -37,7 +37,7 @@ static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
                 level--;
             }
 
-            level = ZFW_CLAMP(level, GROUND_LEVEL_TOP, GROUND_LEVEL_BOTTOM - 1);
+            level = CLAMP(level, GROUND_LEVEL_TOP, GROUND_LEVEL_BOTTOM - 1);
         }
     }
 }
