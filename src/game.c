@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define BG_COLOR (zfw_u_vec_4d){0.2, 0.3, 0.4, 1.0}
+#define BG_COLOR (zfw_u_vec_4d){0.353f, 0.569f, 0.839f, 1.0f}
 
 float g_ui_scale = 1.0f;
 
