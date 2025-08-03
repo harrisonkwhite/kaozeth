@@ -53,8 +53,8 @@ const s_item_type g_item_types[] = {
 
 STATIC_ARRAY_LEN_CHECK(g_item_types, eks_item_type_cnt);
 
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_s32 mouse_tile_pos) {
-    const zfw_s_vec_2d_s32 player_tile_pos = CameraToTilePos(world->player.pos);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_int mouse_tile_pos) {
+    const zfw_s_vec_2d_int player_tile_pos = CameraToTilePos(world->player.pos);
     const int player_to_mouse_tile_dist = TileDist(player_tile_pos, mouse_tile_pos);
 
     switch (g_item_types[item_type].use_type) {
@@ -83,7 +83,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_s32 display_size) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_int display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -101,7 +101,7 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_st
     }
 
     const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, &world->cam, display_size);
-    const zfw_s_vec_2d_s32 mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+    const zfw_s_vec_2d_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
     if (!ZFW_IsMouseButtonDown(zfw_ek_mouse_button_code_left, input_state)
         || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {

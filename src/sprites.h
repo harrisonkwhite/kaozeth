@@ -37,7 +37,7 @@ typedef enum {
 
 typedef struct {
     e_texture tex;
-    zfw_s_rect_s32 src_rect;
+    zfw_s_rect_int src_rect;
 } s_sprite;
 
 static const s_sprite g_sprites[] = {

@@ -384,7 +384,7 @@ static s_page_elems PushPageElems(s_mem_arena* const mem_arena, const e_title_sc
     };
 }
 
-static const zfw_s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const s_page_elems* const elems, const zfw_s_vec_2d_s32 ui_size) {
+static const zfw_s_vec_2d* PushPageElemPositions(s_mem_arena* const mem_arena, const s_page_elems* const elems, const zfw_s_vec_2d_int ui_size) {
     zfw_s_vec_2d* const positions = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d, elems->cnt);
 
     if (positions) {
@@ -455,7 +455,7 @@ static bool LoadIndexOfFirstHoveredButtonPageElem(int* const index, const zfw_s_
     return true;
 }
 
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_s32 display_size, const zfw_s_font_group* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_int display_size, const zfw_s_font_group* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena) {
     s_title_screen_tick_result result = {0};
 
     const s_page_elems page_elems = PushPageElems(temp_mem_arena, ts->page, &ts->world_filenames_cache, &ts->new_world_name_buf, settings);
@@ -466,7 +466,7 @@ s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings*
         };
     }
 
-    const zfw_s_vec_2d_s32 ui_size = UISize(display_size);
+    const zfw_s_vec_2d_int ui_size = UISize(display_size);
     const zfw_s_vec_2d* const elem_positions = PushPageElemPositions(temp_mem_arena, &page_elems, ui_size);
 
     if (IS_ZERO(page_elems)) {

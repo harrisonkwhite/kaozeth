@@ -8,11 +8,11 @@
 float g_ui_scale = 1.0f;
 
 // NOTE: This could be a temporary approach?
-static const zfw_s_vec_2d_s32* PushSurfaceSizes(s_mem_arena* const mem_arena, const zfw_s_vec_2d_s32 window_size) {
+static const zfw_s_vec_2d_int* PushSurfaceSizes(s_mem_arena* const mem_arena, const zfw_s_vec_2d_int window_size) {
     assert(mem_arena && IsMemArenaValid(mem_arena));
     assert(window_size.x > 0 && window_size.y > 0);
 
-    zfw_s_vec_2d_s32* const sizes = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d_s32, eks_surface_cnt);
+    zfw_s_vec_2d_int* const sizes = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d_int, eks_surface_cnt);
 
     for (int i = 0; i < eks_surface_cnt; i++) {
         switch ((e_surface)i) {
@@ -117,7 +117,7 @@ bool InitGame(const zfw_s_game_init_context* const zfw_context) {
     }
 
     {
-        const zfw_s_vec_2d_s32* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+        const zfw_s_vec_2d_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
 
         if (!surf_sizes) {
             return false;
@@ -145,7 +145,7 @@ bool InitGame(const zfw_s_game_init_context* const zfw_context) {
     return true;
 }
 
-static inline float CalcUIScale(const zfw_s_vec_2d_s32 window_size) {
+static inline float CalcUIScale(const zfw_s_vec_2d_int window_size) {
     if (window_size.x > 1920 && window_size.y > 1080) {
         return 2.0f;
     }
@@ -163,7 +163,7 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
     g_ui_scale = CalcUIScale(zfw_context->window_state.size);
 
     {
-        const zfw_s_vec_2d_s32* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+        const zfw_s_vec_2d_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
 
         if (!surf_sizes) {
             return zfw_ek_game_tick_result_error;

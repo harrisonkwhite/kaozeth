@@ -187,7 +187,7 @@ typedef struct {
     int flash_time;
 } s_player;
 
-typedef t_u8 t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
+typedef t_byte t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
 
 typedef struct {
     int jump_time;
@@ -240,7 +240,7 @@ typedef struct {
     float scale;
 } s_camera;
 
-typedef t_u8 t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
+typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
 
 typedef struct {
     t_tilemap_activity activity;
@@ -304,10 +304,10 @@ typedef struct {
 typedef struct {
     e_setting_type type;
     const char* name;
-    t_u8 preset;
+    t_byte preset;
 } s_setting;
 
-typedef t_u8 t_settings[eks_setting_cnt];
+typedef t_byte t_settings[eks_setting_cnt];
 extern const s_setting g_settings[];
 
 typedef struct {
@@ -351,9 +351,9 @@ static inline float SettingPerc(const t_settings* const settings, const e_settin
     return (float)(*settings)[setting] / 100.0f;
 }
 
-static inline zfw_s_vec_2d_s32 UISize(const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d_int UISize(const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
-    return (zfw_s_vec_2d_s32){window_size.x / g_ui_scale, window_size.y / g_ui_scale};
+    return (zfw_s_vec_2d_int){window_size.x / g_ui_scale, window_size.y / g_ui_scale};
 }
 
 static inline zfw_s_vec_2d DisplayToUIPos(const zfw_s_vec_2d pos) {
@@ -369,27 +369,27 @@ static inline zfw_s_rect ColliderFromSprite(const e_sprite spr, const zfw_s_vec_
     return Collider(pos, (zfw_s_vec_2d){g_sprites[spr].src_rect.width, g_sprites[spr].src_rect.height}, origin);
 }
 
-static inline zfw_s_vec_2d_s32 CameraToTilePos(const zfw_s_vec_2d pos) {
-    return (zfw_s_vec_2d_s32){
+static inline zfw_s_vec_2d_int CameraToTilePos(const zfw_s_vec_2d pos) {
+    return (zfw_s_vec_2d_int){
         floorf(pos.x / TILE_SIZE),
         floorf(pos.y / TILE_SIZE)
     };
 }
 
-static inline zfw_s_vec_2d CameraSize(const float cam_scale, const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d CameraSize(const float cam_scale, const zfw_s_vec_2d_int window_size) {
     assert(cam_scale > 0.0f);
     assert(window_size.x > 0 && window_size.y > 0);
     return (zfw_s_vec_2d){window_size.x / cam_scale, window_size.y / cam_scale};
 }
 
-static inline zfw_s_vec_2d CameraTopLeft(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d CameraTopLeft(const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d size = CameraSize(cam->scale, window_size);
     return (zfw_s_vec_2d){cam->pos.x - (size.x / 2.0f), cam->pos.y - (size.y / 2.0f)};
 }
 
-static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
@@ -399,7 +399,7 @@ static inline zfw_s_vec_2d CameraToDisplayPos(const zfw_s_vec_2d pos, const s_ca
     };
 }
 
-static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
@@ -409,7 +409,7 @@ static inline zfw_s_vec_2d DisplayToCameraPos(const zfw_s_vec_2d pos, const s_ca
     };
 }
 
-static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static inline zfw_s_vec_2d CameraToUIPos(const zfw_s_vec_2d pos, const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
     return DisplayToUIPos(CameraToDisplayPos(pos, cam, window_size));
 }
@@ -426,28 +426,28 @@ void CleanGame(void* const dev_mem);
 // title_screen.c
 //
 bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const temp_mem_arena);
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_s32 display_size, const zfw_s_font_group* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_t_unicode_buf* const unicode_buf, const zfw_s_vec_2d_int display_size, const zfw_s_font_group* const fonts, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, s_mem_arena* const temp_mem_arena);
 bool RenderTitleScreen(const zfw_s_rendering_context* const rendering_context, const s_title_screen* const ts, const t_settings* const settings, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world.c
 //
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_s32 window_size, s_mem_arena* const temp_mem_arena);
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_int window_size, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types);
 bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, zfw_s_surface_group* const surfs, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos, const e_tile_type type);
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos);
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos);
-bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_s32 tile_pos);
+bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_int pos, const e_tile_type type);
+bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos);
+bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_int pos);
+bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_int tile_pos);
 s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const float vel_y);
 
 //
 // world_ui.c
 //
-void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size);
+void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size);
 bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
@@ -510,8 +510,8 @@ static inline zfw_s_rect ProjectileCollider(const e_projectile_type proj_type, c
 //
 // items.c
 //
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_s32 mouse_tile_pos);
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_s32 window_size);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_int mouse_tile_pos);
+bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_int window_size);
 bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_type item_type, const int item_quantity);
 bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, const t_settings* const settings);
 void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_texture_group* const textures);
@@ -528,32 +528,32 @@ static inline zfw_s_rect ItemDropCollider(const zfw_s_vec_2d pos, const e_item_t
 //
 // tilemap.c
 //
-void AddTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_s32 pos, const e_tile_type tile_type);
-void RemoveTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_s32 pos);
-zfw_s_rect_edges_s32 RectTilemapSpan(const zfw_s_rect rect);
+void AddTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_int pos, const e_tile_type tile_type);
+void RemoveTile(s_tilemap_core* const tm_core, const zfw_s_vec_2d_int pos);
+zfw_s_rect_edges_int RectTilemapSpan(const zfw_s_rect rect);
 bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const zfw_s_rect collider);
 void ProcTileCollisions(zfw_s_vec_2d* const pos, zfw_s_vec_2d* const vel, const zfw_s_vec_2d collider_size, const zfw_s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void ProcVerTileCollisions(zfw_s_vec_2d* const pos, float* const vel_y, const zfw_s_vec_2d collider_size, const zfw_s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemap(zfw_s_vec_2d* const pos, const zfw_e_cardinal_dir dir, const zfw_s_vec_2d collider_size, const zfw_s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
 void MakeContactWithTilemapByJumpSize(zfw_s_vec_2d* const pos, const float jump_size, const zfw_e_cardinal_dir dir, const zfw_s_vec_2d collider_size, const zfw_s_vec_2d collider_origin, const t_tilemap_activity* const tm_activity);
-void RenderTilemap(const zfw_s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_s32 range, const zfw_s_texture_group* const textures);
+void RenderTilemap(const zfw_s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_int range, const zfw_s_texture_group* const textures);
 
-static inline bool IsTilePosInBounds(const zfw_s_vec_2d_s32 pos) {
+static inline bool IsTilePosInBounds(const zfw_s_vec_2d_int pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
 }
 
-static inline bool IsTilemapRangeValid(const zfw_s_rect_edges_s32 range) {
-    return ZFW_IsRangeS32Valid(range, (zfw_s_vec_2d_s32){TILEMAP_WIDTH, TILEMAP_HEIGHT});
+static inline bool IsTilemapRangeValid(const zfw_s_rect_edges_int range) {
+    return ZFW_IsRangeS32Valid(range, (zfw_s_vec_2d_int){TILEMAP_WIDTH, TILEMAP_HEIGHT});
 }
 
-static inline int TileDist(const zfw_s_vec_2d_s32 a, const zfw_s_vec_2d_s32 b) {
+static inline int TileDist(const zfw_s_vec_2d_int a, const zfw_s_vec_2d_int b) {
     return ZFW_Dist((zfw_s_vec_2d){a.x, a.y}, (zfw_s_vec_2d){b.x, b.y});
 }
 
-static bool IsTileActive(const t_tilemap_activity* const tm_activity, const zfw_s_vec_2d_s32 pos) {
+static bool IsTileActive(const t_tilemap_activity* const tm_activity, const zfw_s_vec_2d_int pos) {
     assert(tm_activity);
     assert(IsTilePosInBounds(pos));
-    return IsBitActive((const t_u8*)tm_activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    return IsBitActive((const t_byte*)tm_activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), TILEMAP_WIDTH * TILEMAP_HEIGHT);
 }
 
 //

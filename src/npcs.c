@@ -199,7 +199,7 @@ bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw
 bool IsNPCActive(const t_npc_activity* const activity, const int index) {
     assert(activity);
     assert(index >= 0 && index < NPC_LIMIT);
-    return IsBitActive((const t_u8*)activity, index, NPC_LIMIT);
+    return IsBitActive((const t_byte*)activity, index, NPC_LIMIT);
 }
 
 static int NPCCnt(const t_npc_activity* const activity) {

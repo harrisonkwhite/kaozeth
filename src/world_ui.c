@@ -12,7 +12,7 @@
 #define PLAYER_INVENTORY_SLOT_SIZE 48.0f
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.4f
 
-static zfw_s_vec_2d PlayerInventorySlotPos(const int r, const int c, const zfw_s_vec_2d_s32 ui_size) {
+static zfw_s_vec_2d PlayerInventorySlotPos(const int r, const int c, const zfw_s_vec_2d_int ui_size) {
     assert(r >= 0 && r < PLAYER_INVENTORY_ROW_CNT);
     assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
@@ -50,10 +50,10 @@ static void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selec
     assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 }
 
-static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size) {
+static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size) {
     assert(world->player_inv_open);
 
-    const zfw_s_vec_2d_s32 ui_size = UISize(window_size);
+    const zfw_s_vec_2d_int ui_size = UISize(window_size);
     const zfw_s_vec_2d cursor_ui_pos = DisplayToUIPos(input_state->mouse_pos);
 
     for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
@@ -120,7 +120,7 @@ static void WriteItemNameStr(char* const str_buf, const int str_buf_size, const 
     }
 }
 
-static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_s32 window_size) {
+static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, window_size);
@@ -188,7 +188,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
     }
 }
 
-void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size) {
+void UpdateWorldUI(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size) {
     if (!world->player.killed) {
         UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_state, input_state_last);
 
@@ -231,7 +231,7 @@ static void RenderTileHighlight(const zfw_s_rendering_context* const rendering_c
 
     if (!world->player_inv_open && active_slot->quantity > 0) {
         const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, rendering_context->window_size);
-        const zfw_s_vec_2d_s32 mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+        const zfw_s_vec_2d_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
 
@@ -269,11 +269,11 @@ static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_c
 }
 
 static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
-    const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
+    const zfw_s_vec_2d_int ui_size = UISize(rendering_context->window_size);
 
     if (world->player_inv_open) {
         // Draw a backdrop.
-        const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
+        const zfw_s_vec_2d_int ui_size = UISize(rendering_context->window_size);
         const zfw_s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
         ZFW_RenderRect(rendering_context, bg_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     } else {
@@ -314,7 +314,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
 }
 
 bool RenderWorldUI(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_vec_2d mouse_pos, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
-    const zfw_s_vec_2d_s32 ui_size = UISize(rendering_context->window_size);
+    const zfw_s_vec_2d_int ui_size = UISize(rendering_context->window_size);
     const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos);
 
     RenderTileHighlight(rendering_context, world, mouse_pos);

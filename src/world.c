@@ -5,7 +5,7 @@
 
 #define RESPAWN_TIME 120
 
-static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d view_pos = {
@@ -19,11 +19,11 @@ static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_
     return mat;
 }
 
-static inline float CalcCameraScale(const zfw_s_vec_2d_s32 window_size) {
+static inline float CalcCameraScale(const zfw_s_vec_2d_int window_size) {
     return window_size.x > 1600 || window_size.y > 900 ? 3.0f : 2.0f;
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_s32 window_size, s_mem_arena* const temp_mem_arena) {
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_int window_size, s_mem_arena* const temp_mem_arena) {
     assert(world && IS_ZERO(*world));
     assert(filename);
 
@@ -51,7 +51,7 @@ void CleanWorld(s_world* const world) {
     CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_s32 window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
     assert(window_size.x > 0 && window_size.y > 0); 
 
     world->cam.scale = CalcCameraScale(window_size);
@@ -127,13 +127,13 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     return true;
 }
 
-static zfw_s_rect_edges_s32 TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
+static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
     const zfw_s_vec_2d cam_size = CameraSize(cam->scale, window_size);
 
-    zfw_s_rect_edges_s32 render_range = {
+    zfw_s_rect_edges_int render_range = {
         .left = floorf(cam_tl.x / TILE_SIZE),
         .top = floorf(cam_tl.y / TILE_SIZE),
         .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
@@ -149,8 +149,8 @@ static zfw_s_rect_edges_s32 TilemapRenderRange(const s_camera* const cam, const 
     return render_range;
 }
 
-static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_s32 tm_render_range, s_mem_arena* const temp_mem_arena) {
-    const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_s32){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
+static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_int tm_render_range, s_mem_arena* const temp_mem_arena) {
+    const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_int){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
 
     if (!IsLightmapInitted(&lightmap)) {
         return (s_lightmap){0};
@@ -158,11 +158,11 @@ static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap
 
     for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
         for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
-            if (IsTileActive(tm_activity, (zfw_s_vec_2d_s32){tx, ty})) {
+            if (IsTileActive(tm_activity, (zfw_s_vec_2d_int){tx, ty})) {
                 continue;
             }
 
-            const zfw_s_vec_2d_s32 lp = {tx - tm_render_range.left, ty - tm_render_range.top};
+            const zfw_s_vec_2d_int lp = {tx - tm_render_range.left, ty - tm_render_range.top};
             SetLightLevel(&lightmap, lp, LIGHT_LEVEL_LIMIT);
         }
     }
@@ -178,7 +178,7 @@ bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* cons
     const zfw_s_matrix_4x4 cam_view_mat = CameraViewMatrix(&world->cam, rendering_context->window_size);
     ZFW_SetViewMatrix(rendering_context, &cam_view_mat);
 
-    const zfw_s_rect_edges_s32 tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
+    const zfw_s_rect_edges_int tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
     RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
@@ -249,13 +249,13 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos, const e_tile_type type) {
+bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_int pos, const e_tile_type type) {
     AddTile(&world->core.tilemap_core, pos, type);
     world->tilemap_tile_lifes[pos.y][pos.x] = 0;
     return true;
 }
 
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
+bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
@@ -291,7 +291,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
     return true;
 }
 
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_s32 pos) {
+bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
@@ -309,7 +309,7 @@ assert(world);
     return true;
 }
 
-bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_s32 tile_pos) {
+bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_int tile_pos) {
     assert(world);
     assert(IsTilePosInBounds(tile_pos));
     assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
