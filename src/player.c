@@ -121,15 +121,13 @@ void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const 
     }
 
     if (player->flash_time > 0) {
-        ZFW_SubmitBatch(rendering_context);
         ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
-        ZFW_RenderClear((zfw_u_vec_4d){0});
+        ZFW_Clear(rendering_context, (zfw_u_vec_4d){0});
     }
 
     RenderSprite(rendering_context, ek_sprite_player, textures, player->pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, alpha});
 
     if (player->flash_time > 0) {
-        ZFW_SubmitBatch(rendering_context);
         ZFW_UnsetSurface(rendering_context);
 
         ZFW_SetSurfaceShaderProg(rendering_context, shader_progs, ek_shader_prog_blend);

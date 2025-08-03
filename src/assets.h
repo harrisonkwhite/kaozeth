@@ -70,6 +70,8 @@ STATIC_ARRAY_LEN_CHECK(g_font_load_infos, eks_font_cnt);
 
 typedef enum {
     ek_shader_prog_blend,
+    ek_shader_prog_outline,
+
     eks_shader_prog_cnt
 } e_shader_prog;
 
@@ -84,6 +86,26 @@ static inline zfw_s_shader_prog_info GenShaderProgInfo(const int prog_index, s_m
                 }
 
                 const char* const fs_src = (const char*)PushEntireFileContents("assets/shaders/blend.frag", mem_arena, true);
+
+                if (!fs_src) {
+                    return (zfw_s_shader_prog_info){0};
+                }
+
+                return (zfw_s_shader_prog_info){
+                    .vs_src = vs_src,
+                    .fs_src = fs_src
+                };
+            }
+
+        case ek_shader_prog_outline:
+            {
+                const char* const vs_src = (const char*)PushEntireFileContents("assets/shaders/outline.vert", mem_arena, true);
+
+                if (!vs_src) {
+                    return (zfw_s_shader_prog_info){0};
+                }
+
+                const char* const fs_src = (const char*)PushEntireFileContents("assets/shaders/outline.frag", mem_arena, true);
 
                 if (!fs_src) {
                     return (zfw_s_shader_prog_info){0};

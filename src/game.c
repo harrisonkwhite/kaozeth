@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define BG_COLOR (zfw_u_vec_4d){0.353f, 0.569f, 0.839f, 1.0f}
+#define BG_COLOR (zfw_u_vec_4d){0.251f, 0.416f, 0.608f, 1.0f}
 
 float g_ui_scale = 1.0f;
 
@@ -208,32 +208,31 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
     return zfw_ek_game_tick_result_normal;
 }
 
-static void InitUIViewMatrix(zfw_t_matrix_4x4* const mat) {
-    assert(mat && IS_ZERO(*mat));
-
-    ZFW_InitIdenMatrix4x4(mat);
-    ZFW_ScaleMatrix4x4(mat, g_ui_scale);
+static inline zfw_s_matrix_4x4 UIViewMatrix() {
+    zfw_s_matrix_4x4 mat = ZFW_IdentityMatrix4x4();
+    ZFW_ScaleMatrix4x4(&mat, g_ui_scale);
+    return mat;
 }
 
 bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
 
-    ZFW_RenderClear(BG_COLOR);
+    const zfw_s_matrix_4x4 ui_view_matrix = UIViewMatrix();
+
+    ZFW_Clear(&zfw_context->rendering_context, BG_COLOR);
 
     if (game->in_world) {
         if (!RenderWorld(&game->world, &zfw_context->rendering_context, &game->textures, &game->shader_progs, &game->surfs, zfw_context->temp_mem_arena)) {
             return false;
         }
 
-        ZERO_OUT(zfw_context->rendering_context.state->view_mat);
-        InitUIViewMatrix(&zfw_context->rendering_context.state->view_mat);
+        ZFW_SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
 
         if (!RenderWorldUI(&zfw_context->rendering_context, &game->world, zfw_context->mouse_pos, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
         }
     } else {
-        ZERO_OUT(zfw_context->rendering_context.state->view_mat);
-        InitUIViewMatrix(&zfw_context->rendering_context.state->view_mat);
+        ZFW_SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
 
         if (!RenderTitleScreen(&zfw_context->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
@@ -243,8 +242,6 @@ bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
     // Render the mouse.
     const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos);
     RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
-
-    ZFW_SubmitBatch(&zfw_context->rendering_context);
 
     return true;
 }

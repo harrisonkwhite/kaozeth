@@ -152,12 +152,12 @@ void RenderNPCs(const s_npcs* const npcs, const zfw_s_rendering_context* const r
 
         if (npc->flash_time > 0) {
             ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
+            ZFW_Clear(rendering_context, (zfw_u_vec_4d){0});
         }
 
         RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
         if (npc->flash_time > 0) {
-            ZFW_SubmitBatch(rendering_context);
             ZFW_UnsetSurface(rendering_context);
 
             ZFW_SetSurfaceShaderProg(rendering_context, shader_progs, ek_shader_prog_blend);

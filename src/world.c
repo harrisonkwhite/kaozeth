@@ -5,8 +5,7 @@
 
 #define RESPAWN_TIME 120
 
-static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
-    assert(mat && IS_ZERO(*mat));
+static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_vec_2d_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const zfw_s_vec_2d view_pos = {
@@ -14,9 +13,10 @@ static void InitCameraViewMatrix(zfw_t_matrix_4x4* const mat, const s_camera* co
         (-cam->pos.y * cam->scale) + (window_size.y / 2.0f)
     };
 
-    ZFW_InitIdenMatrix4x4(mat);
-    ZFW_TranslateMatrix4x4(mat, view_pos);
-    ZFW_ScaleMatrix4x4(mat, cam->scale);
+    zfw_s_matrix_4x4 mat = ZFW_IdentityMatrix4x4();
+    ZFW_TranslateMatrix4x4(&mat, view_pos);
+    ZFW_ScaleMatrix4x4(&mat, cam->scale);
+    return mat;
 }
 
 static inline float CalcCameraScale(const zfw_s_vec_2d_s32 window_size) {
@@ -175,8 +175,8 @@ static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap
 }
 
 bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, zfw_s_surface_group* const surfs, s_mem_arena* const temp_mem_arena) {
-    ZERO_OUT(rendering_context->state->view_mat);
-    InitCameraViewMatrix(&rendering_context->state->view_mat, &world->cam, rendering_context->window_size);
+    const zfw_s_matrix_4x4 cam_view_mat = CameraViewMatrix(&world->cam, rendering_context->window_size);
+    ZFW_SetViewMatrix(rendering_context, &cam_view_mat);
 
     const zfw_s_rect_edges_s32 tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
