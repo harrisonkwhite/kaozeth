@@ -83,7 +83,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_vec_2d_int display_size) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_context, const zfw_s_vec_2d_int display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -100,11 +100,10 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_state* const input_st
         return true;
     }
 
-    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_state->mouse_pos, &world->cam, display_size);
+    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_context->state->mouse_pos, &world->cam, display_size);
     const zfw_s_vec_2d_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
-    if (!ZFW_IsMouseButtonDown(zfw_ek_mouse_button_code_left, input_state)
-        || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
+    if (!ZFW_IsMouseButtonDown(input_context, zfw_ek_mouse_button_code_left) || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
         return true;
     }
 
@@ -212,8 +211,7 @@ bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, con
     return true;
 }
 
-void RenderItemDrops(const zfw_s_rendering_context* const rendering_context, const s_item_drop* const drops, const int drop_cnt, const zfw_s_texture_group* const textures) {
-    assert(rendering_context);
+void RenderItemDrops(const s_item_drop* const drops, const int drop_cnt, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures) {
     assert(drops);
     assert(drop_cnt >= 0);
 

@@ -51,14 +51,12 @@ void CleanWorld(s_world* const world) {
     CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last, const zfw_s_vec_2d_int window_size, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types) {
-    assert(window_size.x > 0 && window_size.y > 0); 
-
-    world->cam.scale = CalcCameraScale(window_size);
-    const zfw_s_vec_2d cam_size = CameraSize(world->cam.scale, window_size);
+bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_game_tick_context* const zfw_context, const zfw_s_sound_types* const snd_types) {
+    world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
+    const zfw_s_vec_2d cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
     if (!world->player.killed) {
-        ProcPlayerMovement(world, input_state, input_state_last);
+        ProcPlayerMovement(world, &zfw_context->input_context);
         ProcPlayerCollisionsWithNPCs(world);
 
         // TODO: I hate how this is decentralised from the player source file. Move there.
@@ -91,11 +89,11 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     UpdateNPCs(world);
     ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
-    if (!UpdateItemDrops(world, audio_sys, snd_types, settings)) {
+    if (!UpdateItemDrops(world, zfw_context->audio_sys, snd_types, settings)) {
         return false;
     }
 
-    if (!ProcItemUsage(world, input_state, window_size)) {
+    if (!ProcItemUsage(world, &zfw_context->input_context, zfw_context->window_state.size)) {
         return false;
     }
 
@@ -103,7 +101,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
         return false;
     }
 
-    UpdateWorldUI(world, input_state, input_state_last, window_size);
+    UpdateWorldUI(world, &zfw_context->input_context, zfw_context->window_state.size);
 
     // Update the camera.
     {
@@ -180,17 +178,17 @@ bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* cons
 
     const zfw_s_rect_edges_int tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
-    RenderTilemap(rendering_context, &world->core.tilemap_core, &world->tilemap_tile_lifes, tilemap_render_range, textures);
+    RenderTilemap(&world->core.tilemap_core, rendering_context, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
-        RenderPlayer(rendering_context, &world->player, textures, shader_progs, surfs);
+        RenderPlayer(&world->player, rendering_context, textures, shader_progs, surfs);
     }
 
     RenderNPCs(&world->npcs, rendering_context, textures, shader_progs, surfs);
 
-    RenderItemDrops(rendering_context, world->item_drops, world->item_drop_active_cnt, textures);
+    RenderItemDrops(world->item_drops, world->item_drop_active_cnt, rendering_context, textures);
 
-    RenderProjectiles(rendering_context, world->projectiles, world->proj_cnt, textures);
+    RenderProjectiles(world->projectiles, world->proj_cnt, rendering_context, textures);
 
     RenderParticles(rendering_context, &world->particles, textures);
 

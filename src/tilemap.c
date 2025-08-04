@@ -138,7 +138,7 @@ void MakeContactWithTilemapByJumpSize(zfw_s_vec_2d* const pos, const float jump_
     }
 }
 
-void RenderTilemap(const zfw_s_rendering_context* const rendering_context, const s_tilemap_core* const tilemap_core, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_int range, const zfw_s_texture_group* const textures) {
+void RenderTilemap(const s_tilemap_core* const tilemap_core, const zfw_s_rendering_context* const rendering_context, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_int range, const zfw_s_texture_group* const textures) {
     assert(IsTilemapRangeValid(range));
 
     for (int ty = range.top; ty < range.bottom; ty++) {

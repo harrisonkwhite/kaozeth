@@ -27,10 +27,10 @@ void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activi
     player->hp = hp_max;
 }
 
-void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const input_state, const zfw_s_input_state* const input_state_last) {
+void ProcPlayerMovement(s_world* const world, const zfw_s_input_context* const input_context) {
     assert(!world->player.killed);
 
-    const float move_axis = ZFW_IsKeyDown(zfw_ek_key_code_d, input_state) - ZFW_IsKeyDown(zfw_ek_key_code_a, input_state);
+    const float move_axis = ZFW_IsKeyDown(input_context, zfw_ek_key_code_d) - ZFW_IsKeyDown(input_context, zfw_ek_key_code_a);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
 
     if (world->player.vel.x < move_spd_dest) {
@@ -48,12 +48,12 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_state* const inp
     }
 
     if (!world->player.jumping) {
-        if (grounded && ZFW_IsKeyPressed(zfw_ek_key_code_space, input_state, input_state_last)) {
+        if (grounded && ZFW_IsKeyPressed(input_context, zfw_ek_key_code_space)) {
             world->player.vel.y = -PLAYER_JUMP_HEIGHT;
             world->player.jumping = true;
         }
     } else {
-        if (world->player.vel.y < 0.0f && !ZFW_IsKeyDown(zfw_ek_key_code_space, input_state)) {
+        if (world->player.vel.y < 0.0f && !ZFW_IsKeyDown(input_context, zfw_ek_key_code_space)) {
             world->player.vel.y = 0.0f;
         }
     }
@@ -111,7 +111,7 @@ void ProcPlayerDeath(s_world* const world) {
     }
 }
 
-void RenderPlayer(const zfw_s_rendering_context* const rendering_context, const s_player* const player, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs) {
+void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs) {
     assert(!player->killed);
 
     float alpha = 1.0f;

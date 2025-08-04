@@ -57,7 +57,7 @@ typedef enum {
     eks_font_cnt
 } e_font;
 
-const static zfw_s_font_load_info g_font_load_infos[] = {
+const static zfw_s_font_info g_font_load_infos[] = {
     [ek_font_eb_garamond_20] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 20},
     [ek_font_eb_garamond_24] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 24},
     [ek_font_eb_garamond_28] = {.file_path = "assets/fonts/eb_garamond.ttf", .height = 28},
@@ -75,53 +75,18 @@ typedef enum {
     eks_shader_prog_cnt
 } e_shader_prog;
 
-static inline zfw_s_shader_prog_info GenShaderProgInfo(const int prog_index, s_mem_arena* const mem_arena) {
-    switch ((e_shader_prog)prog_index) {
-        case ek_shader_prog_blend:
-            {
-                const char* const vs_src = (const char*)PushEntireFileContents("assets/shaders/blend.vert", mem_arena, true);
-
-                if (!vs_src) {
-                    return (zfw_s_shader_prog_info){0};
-                }
-
-                const char* const fs_src = (const char*)PushEntireFileContents("assets/shaders/blend.frag", mem_arena, true);
-
-                if (!fs_src) {
-                    return (zfw_s_shader_prog_info){0};
-                }
-
-                return (zfw_s_shader_prog_info){
-                    .vs_src = vs_src,
-                    .fs_src = fs_src
-                };
-            }
-
-        case ek_shader_prog_outline:
-            {
-                const char* const vs_src = (const char*)PushEntireFileContents("assets/shaders/outline.vert", mem_arena, true);
-
-                if (!vs_src) {
-                    return (zfw_s_shader_prog_info){0};
-                }
-
-                const char* const fs_src = (const char*)PushEntireFileContents("assets/shaders/outline.frag", mem_arena, true);
-
-                if (!fs_src) {
-                    return (zfw_s_shader_prog_info){0};
-                }
-
-                return (zfw_s_shader_prog_info){
-                    .vs_src = vs_src,
-                    .fs_src = fs_src
-                };
-            }
-
-        default:
-            assert(false && "Shader program case not handled!");
-            return (zfw_s_shader_prog_info){0};
+const static zfw_s_shader_prog_gen_info g_shader_prog_gen_infos[] = {
+    [ek_shader_prog_blend] = {
+        .vs_file_path = "assets/shaders/blend.vert",
+        .fs_file_path = "assets/shaders/blend.frag"
+    },
+    [ek_shader_prog_outline] = {
+        .vs_file_path = "assets/shaders/outline.vert",
+        .fs_file_path = "assets/shaders/outline.frag"
     }
-}
+};
+
+STATIC_ARRAY_LEN_CHECK(g_shader_prog_gen_infos, eks_shader_prog_cnt);
 
 typedef enum {
     ek_sound_type_button_click,

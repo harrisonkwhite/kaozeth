@@ -3,11 +3,24 @@
 
 #include <stdio.h>
 
-#define BG_COLOR (zfw_u_vec_4d){0.251f, 0.416f, 0.608f, 1.0f}
+const s_setting g_settings[] = {
+    [ek_setting_smooth_camera] = {
+        .type = ek_setting_type_toggle,
+        .name = "Smooth Camera"
+    },
+    [ek_setting_volume] = {
+        .type = ek_setting_type_perc,
+        .name = "Volume"
+    }
+};
 
-float g_ui_scale = 1.0f;
+STATIC_ARRAY_LEN_CHECK(g_settings, eks_setting_cnt);
 
-// NOTE: This could be a temporary approach?
+static const t_settings g_settings_default = {
+    [ek_setting_smooth_camera] = 1,
+    [ek_setting_volume] = 100
+};
+
 static const zfw_s_vec_2d_int* PushSurfaceSizes(s_mem_arena* const mem_arena, const zfw_s_vec_2d_int window_size) {
     assert(mem_arena && IsMemArenaValid(mem_arena));
     assert(window_size.x > 0 && window_size.y > 0);
@@ -28,24 +41,6 @@ static const zfw_s_vec_2d_int* PushSurfaceSizes(s_mem_arena* const mem_arena, co
 
     return sizes;
 }
-
-const s_setting g_settings[] = {
-    [ek_setting_smooth_camera] = {
-        .type = ek_setting_type_toggle,
-        .name = "Smooth Camera"
-    },
-    [ek_setting_volume] = {
-        .type = ek_setting_type_perc,
-        .name = "Volume"
-    }
-};
-
-STATIC_ARRAY_LEN_CHECK(g_settings, eks_setting_cnt);
-
-static const t_settings g_settings_default = {
-    [ek_setting_smooth_camera] = 1,
-    [ek_setting_volume] = 100
-};
 
 static bool LoadSettingsFromFile(t_settings* const settings) {
     assert(IS_ZERO(*settings));
@@ -110,7 +105,7 @@ bool InitGame(const zfw_s_game_init_context* const zfw_context) {
         return false;
     }
 
-    game->shader_progs = ZFW_GenShaderProgs(eks_shader_prog_cnt, GenShaderProgInfo, zfw_context->gl_res_arena, zfw_context->temp_mem_arena);
+    game->shader_progs = ZFW_GenShaderProgs(eks_shader_prog_cnt, g_shader_prog_gen_infos, zfw_context->gl_res_arena, zfw_context->temp_mem_arena);
 
     if (IS_ZERO(game->shader_progs)) {
         return false;
@@ -145,22 +140,8 @@ bool InitGame(const zfw_s_game_init_context* const zfw_context) {
     return true;
 }
 
-static inline float CalcUIScale(const zfw_s_vec_2d_int window_size) {
-    if (window_size.x > 1920 && window_size.y > 1080) {
-        return 2.0f;
-    }
-
-    if (window_size.x > 1600 && window_size.y > 900) {
-        return 1.5f;
-    }
-
-    return 1.0f;
-}
-
 zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
-
-    g_ui_scale = CalcUIScale(zfw_context->window_state.size);
 
     {
         const zfw_s_vec_2d_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
@@ -177,13 +158,16 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
     }
 
     if (game->in_world) {
-        if (!WorldTick(&game->world, &game->settings, zfw_context->input_state, zfw_context->input_state_last, zfw_context->window_state.size, zfw_context->audio_sys, &game->snd_types)) {
+        if (!WorldTick(&game->world, &game->settings, zfw_context, &game->snd_types)) {
             return zfw_ek_game_tick_result_error;
         }
     } else {
-        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, &game->settings, zfw_context->input_state, zfw_context->input_state_last, zfw_context->unicode_buf, zfw_context->window_state.size, &game->fonts, zfw_context->audio_sys, &game->snd_types, zfw_context->temp_mem_arena);
+        const s_title_screen_tick_result tick_res = TitleScreenTick(&game->title_screen, &game->settings, zfw_context, &game->fonts, &game->snd_types);
 
         switch (tick_res.type) {
+            case ek_title_screen_tick_result_type_normal:
+                break;
+
             case ek_title_screen_tick_result_type_error:
                 return zfw_ek_game_tick_result_error;
 
@@ -200,24 +184,22 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
 
             case ek_title_screen_tick_result_type_exit:
                 return zfw_ek_game_tick_result_exit;
-
-            default: break;
         }
     }
 
     return zfw_ek_game_tick_result_normal;
 }
 
-static inline zfw_s_matrix_4x4 UIViewMatrix() {
+static inline zfw_s_matrix_4x4 UIViewMatrix(const zfw_s_vec_2d_int window_size) {
     zfw_s_matrix_4x4 mat = ZFW_IdentityMatrix4x4();
-    ZFW_ScaleMatrix4x4(&mat, g_ui_scale);
+    ZFW_ScaleMatrix4x4(&mat, UIScale(window_size));
     return mat;
 }
 
 bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
 
-    const zfw_s_matrix_4x4 ui_view_matrix = UIViewMatrix();
+    const zfw_s_matrix_4x4 ui_view_matrix = UIViewMatrix(zfw_context->rendering_context.window_size);
 
     ZFW_Clear(&zfw_context->rendering_context, BG_COLOR);
 
@@ -228,19 +210,19 @@ bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
 
         ZFW_SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
 
-        if (!RenderWorldUI(&zfw_context->rendering_context, &game->world, zfw_context->mouse_pos, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
+        if (!RenderWorldUI(&game->world, zfw_context, &game->textures, &game->fonts)) {
             return false;
         }
     } else {
         ZFW_SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
 
-        if (!RenderTitleScreen(&zfw_context->rendering_context, &game->title_screen, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
+        if (!RenderTitleScreen(&game->title_screen, &zfw_context->rendering_context, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
         }
     }
 
     // Render the mouse.
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos);
+    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
     RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
     return true;
