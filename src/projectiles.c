@@ -11,7 +11,7 @@ const s_projectile_type g_projectile_types[] = {
 
 STATIC_ARRAY_LEN_CHECK(g_projectile_types, eks_projectile_type_cnt);
 
-static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const zfw_s_vec_2d pos_before, const zfw_s_vec_2d pos_after) {
+static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_v2 pos_before, const s_v2 pos_after) {
     const zfw_s_rect colliders[2] = {
         ProjectileCollider(proj_type, pos_before),
         ProjectileCollider(proj_type, pos_after)
@@ -20,7 +20,7 @@ static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type p
     return ZFW_GenSpanningRect(colliders, 2);
 }
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel) {
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_v2 pos, const s_v2 vel) {
     assert(world);
     assert(dmg > 0);
 
@@ -72,12 +72,12 @@ bool UpdateProjectiles(s_world* const world) {
             proj->vel.y += GRAVITY;
         }
 
-        const zfw_s_vec_2d pos_before_trans = proj->pos;
-        proj->pos = ZFW_Vec2DSum(proj->pos, proj->vel);
+        const s_v2 pos_before_trans = proj->pos;
+        proj->pos = V2Sum(proj->pos, proj->vel);
 
         // Update rotation in accordance with direction if flag is set.
         if (proj_type->flags & ek_projectile_type_flags_rot_is_dir) {
-            proj->rot = ZFW_Dir(proj->vel);
+            proj->rot = Dir(proj->vel);
         }
 
         // Perform collision detection.
@@ -135,6 +135,6 @@ void RenderProjectiles(const s_projectile* const projectiles, const int proj_cnt
         const s_projectile* const proj = &projectiles[i];
         const s_projectile_type* const proj_type = &g_projectile_types[proj->type];
 
-        RenderSprite(rendering_context, proj_type->spr, textures, proj->pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, proj->rot, ZFW_WHITE);
+        RenderSprite(rendering_context, proj_type->spr, textures, proj->pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, proj->rot, ZFW_WHITE);
     }
 }

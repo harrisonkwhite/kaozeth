@@ -53,8 +53,8 @@ const s_item_type g_item_types[] = {
 
 STATIC_ARRAY_LEN_CHECK(g_item_types, eks_item_type_cnt);
 
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const zfw_s_vec_2d_int mouse_tile_pos) {
-    const zfw_s_vec_2d_int player_tile_pos = CameraToTilePos(world->player.pos);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_v2_int mouse_tile_pos) {
+    const s_v2_int player_tile_pos = CameraToTilePos(world->player.pos);
     const int player_to_mouse_tile_dist = TileDist(player_tile_pos, mouse_tile_pos);
 
     switch (g_item_types[item_type].use_type) {
@@ -83,7 +83,7 @@ bool IsItemUsable(const e_item_type item_type, const s_world* const world, const
    }
 }
 
-bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_context, const zfw_s_vec_2d_int display_size) {
+bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_context, const s_v2_int display_size) {
     if (world->player.item_use_break > 0) {
         world->player.item_use_break--;
         return true;
@@ -100,8 +100,8 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_
         return true;
     }
 
-    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(input_context->state->mouse_pos, &world->cam, display_size);
-    const zfw_s_vec_2d_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+    const s_v2 mouse_cam_pos = DisplayToCameraPos(input_context->state->mouse_pos, &world->cam, display_size);
+    const s_v2_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
     if (!ZFW_IsMouseButtonDown(input_context, zfw_ek_mouse_button_code_left) || !IsItemUsable(slot->item_type, world, mouse_tile_pos)) {
         return true;
@@ -123,8 +123,8 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_
 
         case ek_item_use_type_shoot:
             {
-                const zfw_s_vec_2d dir = ZFW_Vec2DDir(world->player.pos, mouse_cam_pos);
-                const zfw_s_vec_2d vel = ZFW_Vec2DScaled(dir, item_type->shoot_proj_spd);
+                const s_v2 dir = V2Dir(world->player.pos, mouse_cam_pos);
+                const s_v2 vel = V2Scaled(dir, item_type->shoot_proj_spd);
 
                 if (!SpawnProjectile(world, item_type->shoot_proj_type, true, item_type->shoot_proj_dmg, world->player.pos, vel)) {
                     return false;
@@ -143,7 +143,7 @@ bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_
     return true;
 }
 
-bool SpawnItemDrop(s_world* const world, const zfw_s_vec_2d pos, const e_item_type item_type, const int item_quantity) {
+bool SpawnItemDrop(s_world* const world, const s_v2 pos, const e_item_type item_type, const int item_quantity) {
     assert(world);
     assert(item_quantity > 0);
 
@@ -177,7 +177,7 @@ bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, con
 
         ProcVerTileCollisions(&drop->pos, &drop->vel.y, ItemDropColliderSize(drop->item_type), ITEM_DROP_ORIGIN, &world->core.tilemap_core.activity);
 
-        drop->pos = ZFW_Vec2DSum(drop->pos, drop->vel);
+        drop->pos = V2Sum(drop->pos, drop->vel);
 
         // Process collection.
         const bool collectable = DoesInventoryHaveRoomFor((s_inventory_slot*)world->player_inv_slots, PLAYER_INVENTORY_LEN, drop->item_type, drop->quantity);
@@ -218,6 +218,6 @@ void RenderItemDrops(const s_item_drop* const drops, const int drop_cnt, const z
     for (int i = 0; i < drop_cnt; i++) {
         const s_item_drop* const drop = &drops[i];
         const e_sprite spr = g_item_types[drop->item_type].icon_spr;
-        RenderSprite(rendering_context, spr, textures, drop->pos, ITEM_DROP_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, spr, textures, drop->pos, ITEM_DROP_ORIGIN, (s_v2){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
     }
 }

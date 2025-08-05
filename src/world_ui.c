@@ -4,22 +4,22 @@
 
 #define PLAYER_HP_BAR_WIDTH 240.0f
 #define PLAYER_HP_BAR_HEIGHT 16.0f
-#define PLAYER_HP_POS_PERC (zfw_s_vec_2d){0.95f, 0.075f}
+#define PLAYER_HP_POS_PERC (s_v2){0.95f, 0.075f}
 
-#define PLAYER_INVENTORY_POS_PERC (zfw_s_vec_2d){0.05f, 0.075f}
+#define PLAYER_INVENTORY_POS_PERC (s_v2){0.05f, 0.075f}
 #define PLAYER_INVENTORY_BG_ALPHA 0.6f
 #define PLAYER_INVENTORY_SLOT_GAP 64.0f
 #define PLAYER_INVENTORY_SLOT_SIZE 48.0f
 #define PLAYER_INVENTORY_SLOT_BG_ALPHA 0.4f
 
-static zfw_s_vec_2d PlayerInventorySlotPos(const int r, const int c, const zfw_s_vec_2d_int ui_size) {
+static s_v2 PlayerInventorySlotPos(const int r, const int c, const s_v2_int ui_size) {
     assert(r >= 0 && r < PLAYER_INVENTORY_ROW_CNT);
     assert(c >= 0 && c < PLAYER_INVENTORY_COLUMN_CNT);
     assert(ui_size.x > 0 && ui_size.y > 0);
 
-    const zfw_s_vec_2d top_left = {ui_size.x * PLAYER_INVENTORY_POS_PERC.x, ui_size.y * PLAYER_INVENTORY_POS_PERC.y};
+    const s_v2 top_left = {ui_size.x * PLAYER_INVENTORY_POS_PERC.x, ui_size.y * PLAYER_INVENTORY_POS_PERC.y};
 
-    return (zfw_s_vec_2d){
+    return (s_v2){
         top_left.x + (PLAYER_INVENTORY_SLOT_GAP * c),
         top_left.y + (PLAYER_INVENTORY_SLOT_GAP * r)
     };
@@ -50,17 +50,17 @@ static void UpdatePlayerInventoryHotbarSlotSelected(int* const hotbar_slot_selec
     assert(*hotbar_slot_selected >= 0 && *hotbar_slot_selected < PLAYER_INVENTORY_COLUMN_CNT);
 }
 
-static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_context* const input_context, const zfw_s_vec_2d_int window_size) {
+static void ProcPlayerInventoryOpenState(s_world* const world, const zfw_s_input_context* const input_context, const s_v2_int window_size) {
     assert(world->player_inv_open);
 
-    const zfw_s_vec_2d_int ui_size = UISize(window_size);
-    const zfw_s_vec_2d cursor_ui_pos = DisplayToUIPos(input_context->state->mouse_pos, window_size);
+    const s_v2_int ui_size = UISize(window_size);
+    const s_v2 cursor_ui_pos = DisplayToUIPos(input_context->state->mouse_pos, window_size);
 
     for (int r = 0; r < PLAYER_INVENTORY_ROW_CNT; r++) {
         for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
             s_inventory_slot* const slot = &world->player_inv_slots[r][c];
 
-            const zfw_s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, ui_size);
+            const s_v2 slot_pos = PlayerInventorySlotPos(r, c, ui_size);
 
             const zfw_s_rect slot_collider = {
                 slot_pos.x,
@@ -120,11 +120,11 @@ static void WriteItemNameStr(char* const str_buf, const int str_buf_size, const 
     }
 }
 
-static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const zfw_s_vec_2d mouse_pos, const s_world* const world, const zfw_s_vec_2d_int window_size) {
+static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const s_v2 mouse_pos, const s_world* const world, const s_v2_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
-    const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, window_size);
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(mouse_pos, window_size);
+    const s_v2 mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, window_size);
+    const s_v2 mouse_ui_pos = DisplayToUIPos(mouse_pos, window_size);
 
     // TODO: The sequencing of the below should really correspond to draw layering. Maybe add some layer depth variable?
 
@@ -139,7 +139,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
                     continue;
                 }
 
-                const zfw_s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, UISize(window_size));
+                const s_v2 slot_pos = PlayerInventorySlotPos(r, c, UISize(window_size));
 
                 const zfw_s_rect slot_collider = {
                     slot_pos.x,
@@ -188,7 +188,7 @@ static void LoadMouseHoverStr(t_mouse_hover_str_buf* const hover_str_buf, const 
     }
 }
 
-void UpdateWorldUI(s_world* const world, const zfw_s_input_context* const input_context, const zfw_s_vec_2d_int window_size) {
+void UpdateWorldUI(s_world* const world, const zfw_s_input_context* const input_context, const s_v2_int window_size) {
     if (!world->player.killed) {
         UpdatePlayerInventoryHotbarSlotSelected(&world->player_inv_hotbar_slot_selected, input_context);
 
@@ -226,19 +226,19 @@ void UpdateWorldUI(s_world* const world, const zfw_s_input_context* const input_
     }
 }
 
-static void RenderTileHighlight(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_vec_2d mouse_pos) {
+static void RenderTileHighlight(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const s_v2 mouse_pos) {
     const s_inventory_slot* const active_slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
 
     if (!world->player_inv_open && active_slot->quantity > 0) {
-        const zfw_s_vec_2d mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, rendering_context->window_size);
-        const zfw_s_vec_2d_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
+        const s_v2 mouse_cam_pos = DisplayToCameraPos(mouse_pos, &world->cam, rendering_context->window_size);
+        const s_v2_int mouse_tile_pos = CameraToTilePos(mouse_cam_pos);
 
         const s_item_type* const active_item = &g_item_types[active_slot->item_type];
 
         if ((active_item->use_type == ek_item_use_type_tile_place || active_item->use_type == ek_item_use_type_tile_hurt) && IsItemUsable(active_slot->item_type, world, mouse_tile_pos)) {
-            const zfw_s_vec_2d mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
+            const s_v2 mouse_cam_pos_snapped_to_tilemap = {mouse_tile_pos.x * TILE_SIZE, mouse_tile_pos.y * TILE_SIZE};
 
-            const zfw_s_vec_2d highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, &world->cam, rendering_context->window_size);
+            const s_v2 highlight_pos = CameraToUIPos(mouse_cam_pos_snapped_to_tilemap, &world->cam, rendering_context->window_size);
             const float highlight_size = (float)(TILE_SIZE * world->cam.scale) / UIScale(rendering_context->window_size);
             const zfw_s_rect highlight_rect = {
                 .x = highlight_pos.x,
@@ -246,36 +246,36 @@ static void RenderTileHighlight(const s_world* const world, const zfw_s_renderin
                 .width = highlight_size,
                 .height = highlight_size
             };
-            ZFW_RenderRect(rendering_context, highlight_rect, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
+            ZFW_RenderRect(rendering_context, highlight_rect, (u_v4){1.0f, 1.0f, 1.0f, TILE_HIGHLIGHT_ALPHA});
         }
     }
 }
 
-static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const zfw_s_vec_2d pos, const zfw_u_vec_4d outline_color, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
+static bool RenderInventorySlot(const zfw_s_rendering_context* const rendering_context, const s_inventory_slot slot, const s_v2 pos, const u_v4 outline_color, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
     const zfw_s_rect slot_rect = {
         pos.x, pos.y,
         PLAYER_INVENTORY_SLOT_SIZE, PLAYER_INVENTORY_SLOT_SIZE
     };
 
     // Render the slot box.
-    ZFW_RenderRectWithOutline(rendering_context, slot_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA}, outline_color, 1.0f);
+    ZFW_RenderRectWithOutline(rendering_context, slot_rect, (u_v4){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_SLOT_BG_ALPHA}, outline_color, 1.0f);
 
     // Render the item icon.
     if (slot.quantity > 0) {
-        RenderSprite(rendering_context, g_item_types[slot.item_type].icon_spr, textures, ZFW_RectCenter(slot_rect), (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, g_item_types[slot.item_type].icon_spr, textures, ZFW_RectCenter(slot_rect), (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
     }
 
     return true;
 }
 
 static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering_context, const s_world* const world, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena) {
-    const zfw_s_vec_2d_int ui_size = UISize(rendering_context->window_size);
+    const s_v2_int ui_size = UISize(rendering_context->window_size);
 
     if (world->player_inv_open) {
         // Draw a backdrop.
-        const zfw_s_vec_2d_int ui_size = UISize(rendering_context->window_size);
+        const s_v2_int ui_size = UISize(rendering_context->window_size);
         const zfw_s_rect bg_rect = {0.0f, 0.0f, ui_size.x, ui_size.y};
-        ZFW_RenderRect(rendering_context, bg_rect, (zfw_u_vec_4d){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
+        ZFW_RenderRect(rendering_context, bg_rect, (u_v4){0.0f, 0.0f, 0.0f, PLAYER_INVENTORY_BG_ALPHA});
     } else {
         // Render current item name.
         const s_inventory_slot* const slot = &world->player_inv_slots[0][world->player_inv_hotbar_slot_selected];
@@ -284,7 +284,7 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
             char name_buf[32];
             WriteItemNameStr(name_buf, sizeof(name_buf), slot->item_type, slot->quantity);
 
-            const zfw_s_vec_2d name_pos = {
+            const s_v2 name_pos = {
                 ui_size.x * PLAYER_INVENTORY_POS_PERC.x,
                 (ui_size.y * PLAYER_INVENTORY_POS_PERC.y) + PLAYER_INVENTORY_SLOT_SIZE + 8.0f
             };
@@ -301,8 +301,8 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
     for (int r = 0; r < row_cnt; r++) {
         for (int c = 0; c < PLAYER_INVENTORY_COLUMN_CNT; c++) {
             const s_inventory_slot* const slot = &world->player_inv_slots[r][c];
-            const zfw_s_vec_2d slot_pos = PlayerInventorySlotPos(r, c, ui_size);
-            const zfw_u_vec_4d slot_color = r == 0 && c == world->player_inv_hotbar_slot_selected ? ZFW_YELLOW : ZFW_WHITE;
+            const s_v2 slot_pos = PlayerInventorySlotPos(r, c, ui_size);
+            const u_v4 slot_color = r == 0 && c == world->player_inv_hotbar_slot_selected ? ZFW_YELLOW : ZFW_WHITE;
 
             if (!RenderInventorySlot(rendering_context, *slot, slot_pos, slot_color, textures, fonts, temp_mem_arena)) {
                 return false;
@@ -314,8 +314,8 @@ static bool RenderPlayerInventory(const zfw_s_rendering_context* const rendering
 }
 
 bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* const zfw_context, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts) {
-    const zfw_s_vec_2d_int ui_size = UISize(zfw_context->rendering_context.window_size);
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
+    const s_v2_int ui_size = UISize(zfw_context->rendering_context.window_size);
+    const s_v2 mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
 
     RenderTileHighlight(world, &zfw_context->rendering_context, zfw_context->mouse_pos);
 
@@ -329,9 +329,9 @@ bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* 
             continue;
         }
 
-        const zfw_s_vec_2d popup_display_pos = CameraToDisplayPos(popup->pos, &world->cam, zfw_context->rendering_context.window_size);
-        const zfw_s_vec_2d popup_ui_pos = DisplayToUIPos(popup_display_pos, zfw_context->rendering_context.window_size);
-        const zfw_u_vec_4d popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
+        const s_v2 popup_display_pos = CameraToDisplayPos(popup->pos, &world->cam, zfw_context->rendering_context.window_size);
+        const s_v2 popup_ui_pos = DisplayToUIPos(popup_display_pos, zfw_context->rendering_context.window_size);
+        const u_v4 popup_blend = {1.0f, 1.0f, 1.0f, popup->alpha};
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
@@ -344,7 +344,7 @@ bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* 
     // Death Text
     //
     if (world->player.killed) {
-        if (!ZFW_RenderStr(&zfw_context->rendering_context, DEATH_TEXT, fonts, ek_font_eb_garamond_48, (zfw_s_vec_2d){ui_size.x / 2.0f, ui_size.y / 2.0f}, ZFW_ALIGNMENT_CENTER, ZFW_WHITE, zfw_context->temp_mem_arena)) {
+        if (!ZFW_RenderStr(&zfw_context->rendering_context, DEATH_TEXT, fonts, ek_font_eb_garamond_48, (s_v2){ui_size.x / 2.0f, ui_size.y / 2.0f}, ZFW_ALIGNMENT_CENTER, ZFW_WHITE, zfw_context->temp_mem_arena)) {
             return false;
         }
     }
@@ -353,7 +353,7 @@ bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* 
     // Player Health
     //
     {
-        const zfw_s_vec_2d hp_pos = {
+        const s_v2 hp_pos = {
             ui_size.x * PLAYER_HP_POS_PERC.x,
             ui_size.y * PLAYER_HP_POS_PERC.y
         };
@@ -367,7 +367,7 @@ bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* 
 
         ZFW_RenderBarHor(&zfw_context->rendering_context, hp_bar_rect, (float)world->player.hp / world->core.player_hp_max, ZFW_WHITE, ZFW_BLACK);
 
-        const zfw_s_vec_2d hp_str_pos = {
+        const s_v2 hp_str_pos = {
             hp_pos.x - hp_bar_rect.width - 10.0f,
             hp_pos.y + (hp_bar_rect.height / 2.0f)
         };
@@ -397,7 +397,7 @@ bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* 
     // Mouse Item Quantity
     //
     if (world->mouse_item_held_quantity > 0) {
-        RenderSprite(&zfw_context->rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+        RenderSprite(&zfw_context->rendering_context, g_item_types[world->mouse_item_held_type].icon_spr, textures, mouse_ui_pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
     }
 
     return true;

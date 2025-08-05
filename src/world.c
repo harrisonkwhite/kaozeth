@@ -5,10 +5,10 @@
 
 #define RESPAWN_TIME 120
 
-static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
+static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const s_v2_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
-    const zfw_s_vec_2d view_pos = {
+    const s_v2 view_pos = {
         (-cam->pos.x * cam->scale) + (window_size.x / 2.0f),
         (-cam->pos.y * cam->scale) + (window_size.y / 2.0f)
     };
@@ -19,11 +19,11 @@ static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const zfw_s_
     return mat;
 }
 
-static inline float CalcCameraScale(const zfw_s_vec_2d_int window_size) {
+static inline float CalcCameraScale(const s_v2_int window_size) {
     return window_size.x > 1600 || window_size.y > 900 ? 3.0f : 2.0f;
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const zfw_s_vec_2d_int window_size, s_mem_arena* const temp_mem_arena) {
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_int window_size, s_mem_arena* const temp_mem_arena) {
     assert(world && IS_ZERO(*world));
     assert(filename);
 
@@ -53,7 +53,7 @@ void CleanWorld(s_world* const world) {
 
 bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_game_tick_context* const zfw_context, const zfw_s_sound_types* const snd_types) {
     world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
-    const zfw_s_vec_2d cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
+    const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
     if (!world->player.killed) {
         ProcPlayerMovement(world, &zfw_context->input_context);
@@ -105,13 +105,13 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
 
     // Update the camera.
     {
-        const zfw_s_vec_2d cam_pos_dest = world->player.pos;
+        const s_v2 cam_pos_dest = world->player.pos;
 
         if (SettingToggle(settings, ek_setting_smooth_camera)) {
             world->cam.pos.x = Lerp(world->cam.pos.x, cam_pos_dest.x, CAMERA_LERP);
             world->cam.pos.y = Lerp(world->cam.pos.y, cam_pos_dest.y, CAMERA_LERP);
 
-            world->cam.pos = (zfw_s_vec_2d){
+            world->cam.pos = (s_v2){
                 CLAMP(world->cam.pos.x, cam_size.x / 2.0f, WORLD_WIDTH - (cam_size.x / 2.0f)),
                 CLAMP(world->cam.pos.y, cam_size.y / 2.0f, WORLD_HEIGHT - (cam_size.y / 2.0f))
             };
@@ -125,11 +125,11 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     return true;
 }
 
-static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const zfw_s_vec_2d_int window_size) {
+static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const s_v2_int window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
-    const zfw_s_vec_2d cam_tl = CameraTopLeft(cam, window_size);
-    const zfw_s_vec_2d cam_size = CameraSize(cam->scale, window_size);
+    const s_v2 cam_tl = CameraTopLeft(cam, window_size);
+    const s_v2 cam_size = CameraSize(cam->scale, window_size);
 
     zfw_s_rect_edges_int render_range = {
         .left = floorf(cam_tl.x / TILE_SIZE),
@@ -148,7 +148,7 @@ static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const 
 }
 
 static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_int tm_render_range, s_mem_arena* const temp_mem_arena) {
-    const s_lightmap lightmap = GenLightmap(mem_arena, (zfw_s_vec_2d_int){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
+    const s_lightmap lightmap = GenLightmap(mem_arena, (s_v2_int){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
 
     if (!IsLightmapInitted(&lightmap)) {
         return (s_lightmap){0};
@@ -156,11 +156,11 @@ static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap
 
     for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
         for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
-            if (IsTileActive(tm_activity, (zfw_s_vec_2d_int){tx, ty})) {
+            if (IsTileActive(tm_activity, (s_v2_int){tx, ty})) {
                 continue;
             }
 
-            const zfw_s_vec_2d_int lp = {tx - tm_render_range.left, ty - tm_render_range.top};
+            const s_v2_int lp = {tx - tm_render_range.left, ty - tm_render_range.top};
             SetLightLevel(&lightmap, lp, LIGHT_LEVEL_LIMIT);
         }
     }
@@ -198,7 +198,7 @@ bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* cons
         return false;
     }
 
-    RenderLightmap(rendering_context, &world_lightmap, (zfw_s_vec_2d){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
+    RenderLightmap(rendering_context, &world_lightmap, (s_v2){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
 
     ZFW_SubmitBatch(rendering_context);
 
@@ -247,13 +247,13 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-bool PlaceWorldTile(s_world* const world, const zfw_s_vec_2d_int pos, const e_tile_type type) {
+bool PlaceWorldTile(s_world* const world, const s_v2_int pos, const e_tile_type type) {
     AddTile(&world->core.tilemap_core, pos, type);
     world->tilemap_tile_lifes[pos.y][pos.x] = 0;
     return true;
 }
 
-bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
+bool HurtWorldTile(s_world* const world, const s_v2_int pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
@@ -263,7 +263,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
 
     {
         // Spawn particles.
-        const zfw_s_vec_2d tile_mid = {
+        const s_v2 tile_mid = {
             (pos.x + 0.5f) * TILE_SIZE,
             (pos.y + 0.5f) * TILE_SIZE
         };
@@ -271,7 +271,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
         const int part_cnt = ZFW_RandRangeI(3, 5);
 
         for (int i = 0; i < part_cnt; i++) {
-            const zfw_s_vec_2d vel = {
+            const s_v2 vel = {
                 ZFW_RandRangeIncl(-0.5f, 0.5f),
                 ZFW_RandRangeIncl(-2.5f, -1.0f)
             };
@@ -289,7 +289,7 @@ bool HurtWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
     return true;
 }
 
-bool DestroyWorldTile(s_world* const world, const zfw_s_vec_2d_int pos) {
+bool DestroyWorldTile(s_world* const world, const s_v2_int pos) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
@@ -297,7 +297,7 @@ assert(world);
     RemoveTile(&world->core.tilemap_core, pos);
 
     // Spawn item drop.
-    const zfw_s_vec_2d drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
+    const s_v2 drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
     const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
 
     if (!SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1)) {
@@ -307,7 +307,7 @@ assert(world);
     return true;
 }
 
-bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_int tile_pos) {
+bool IsTilePosFree(const s_world* const world, const s_v2_int tile_pos) {
     assert(world);
     assert(IsTilePosInBounds(tile_pos));
     assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
@@ -353,7 +353,7 @@ bool IsTilePosFree(const s_world* const world, const zfw_s_vec_2d_int tile_pos) 
     return true;
 }
 
-s_popup_text* SpawnPopupText(s_world* const world, const zfw_s_vec_2d pos, const float vel_y) {
+s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const float vel_y) {
     for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
         s_popup_text* const popup = &world->popup_texts[i];
 

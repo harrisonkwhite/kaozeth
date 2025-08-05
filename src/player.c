@@ -11,8 +11,8 @@
 #define PLAYER_INV_ALPHA_LOW 0.5f
 #define PLAYER_INV_ALPHA_HIGH 0.7f
 
-static inline bool IsPlayerGrounded(const zfw_s_vec_2d player_pos, const t_tilemap_activity* const tm_activity) {
-    const zfw_s_rect below_collider = ZFW_RectTranslated(PlayerCollider(player_pos), (zfw_s_vec_2d){0.0f, 1.0f});
+static inline bool IsPlayerGrounded(const s_v2 player_pos, const t_tilemap_activity* const tm_activity) {
+    const zfw_s_rect below_collider = ZFW_RectTranslated(PlayerCollider(player_pos), (s_v2){0.0f, 1.0f});
     return TileCollisionCheck(tm_activity, below_collider);
 }
 
@@ -60,7 +60,7 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_context* const i
 
     ProcTileCollisions(&world->player.pos, &world->player.vel, PlayerColliderSize(), PLAYER_ORIGIN, &world->core.tilemap_core.activity);
 
-    world->player.pos = ZFW_Vec2DSum(world->player.pos, world->player.vel);
+    world->player.pos = V2Sum(world->player.pos, world->player.vel);
 }
 
 bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
@@ -88,8 +88,8 @@ bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
         const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
 
         if (ZFW_DoRectsInters(player_collider, npc_collider)) {
-            const zfw_s_vec_2d dir = ZFW_Vec2DDir(npc->pos, world->player.pos);
-            const zfw_s_vec_2d kb = {dir.x * npc_type->contact_kb, dir.y * npc_type->contact_kb};
+            const s_v2 dir = V2Dir(npc->pos, world->player.pos);
+            const s_v2 kb = {dir.x * npc_type->contact_kb, dir.y * npc_type->contact_kb};
 
             if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
                 return false;
@@ -122,10 +122,10 @@ void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* c
 
     if (player->flash_time > 0) {
         ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
-        ZFW_Clear(rendering_context, (zfw_u_vec_4d){0});
+        ZFW_Clear(rendering_context, (u_v4){0});
     }
 
-    RenderSprite(rendering_context, ek_sprite_player, textures, player->pos, PLAYER_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, (zfw_u_vec_4d){1.0f, 1.0f, 1.0f, alpha});
+    RenderSprite(rendering_context, ek_sprite_player, textures, player->pos, PLAYER_ORIGIN, (s_v2){1.0f, 1.0f}, 0.0f, (u_v4){1.0f, 1.0f, 1.0f, alpha});
 
     if (player->flash_time > 0) {
         ZFW_UnsetSurface(rendering_context);
@@ -142,7 +142,7 @@ void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* c
     }
 }
 
-bool HurtPlayer(s_world* const world, const int dmg, const zfw_s_vec_2d kb) {
+bool HurtPlayer(s_world* const world, const int dmg, const s_v2 kb) {
     assert(dmg > 0);
     assert(world->player.invinc_time == 0);
 

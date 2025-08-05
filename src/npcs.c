@@ -11,11 +11,11 @@
 #define SLIME_JUMP_HOR_SPD_MIN 1.0f
 #define SLIME_JUMP_HOR_SPD_MAX 2.0f
 
-static inline bool IsNPCOnGround(const zfw_s_vec_2d npc_pos, const e_npc_type npc_type, const t_tilemap_activity* const tilemap_activity) {
+static inline bool IsNPCOnGround(const s_v2 npc_pos, const e_npc_type npc_type, const t_tilemap_activity* const tilemap_activity) {
     assert(tilemap_activity);
 
     const zfw_s_rect collider = NPCCollider(npc_pos, npc_type);
-    const zfw_s_rect below_collider = ZFW_RectTranslated(collider, (zfw_s_vec_2d){0.0f, 1.0f});
+    const zfw_s_rect below_collider = ZFW_RectTranslated(collider, (s_v2){0.0f, 1.0f});
     return TileCollisionCheck(tilemap_activity, below_collider);
 }
 
@@ -49,7 +49,7 @@ static void SlimeNPCTick(s_world* const world, const int npc_index) {
 
     ProcTileCollisions(&npc->pos, &npc->vel, NPCColliderSize(npc->type), NPC_ORIGIN, &world->core.tilemap_core.activity);
 
-    npc->pos = ZFW_Vec2DSum(npc->pos, npc->vel);
+    npc->pos = V2Sum(npc->pos, npc->vel);
 }
 
 static void PostSlimeNPCSpawn(s_world* const world, const int npc_index) {
@@ -83,7 +83,7 @@ static bool IsNPCValid(const s_npc* const npc) {
     return npc->type >= 0 && npc->type < eks_npc_type_cnt && npc->hp >= 0 && npc->hp <= g_npc_types[npc->type].hp_max;
 }
 
-int SpawnNPC(s_world* const world, const zfw_s_vec_2d pos, const e_npc_type type, const t_tilemap_activity* const tm_activity) {
+int SpawnNPC(s_world* const world, const s_v2 pos, const e_npc_type type, const t_tilemap_activity* const tm_activity) {
     const int index = FirstInactiveBitIndex(world->npcs.activity, NPC_LIMIT);
 
     if (index != -1) {
@@ -152,10 +152,10 @@ void RenderNPCs(const s_npcs* const npcs, const zfw_s_rendering_context* const r
 
         if (npc->flash_time > 0) {
             ZFW_SetSurface(rendering_context, surfs, ek_surface_temp);
-            ZFW_Clear(rendering_context, (zfw_u_vec_4d){0});
+            ZFW_Clear(rendering_context, (u_v4){0});
         }
 
-        RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+        RenderSprite(rendering_context, spr, textures, npc->pos, NPC_ORIGIN, (s_v2){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
         if (npc->flash_time > 0) {
             ZFW_UnsetSurface(rendering_context);
@@ -174,7 +174,7 @@ void RenderNPCs(const s_npcs* const npcs, const zfw_s_rendering_context* const r
 }
 
 // Returns true if successful, false otherwise.
-bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const zfw_s_vec_2d kb) {
+bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_v2 kb) {
     assert(world);
     assert(npc_index >= 0 && npc_index < NPC_LIMIT);
     assert(IsNPCActive(&world->npcs.activity, npc_index));
@@ -245,7 +245,7 @@ bool ProcEnemySpawning(s_world* const world, const float cam_width) {
         if (npc_cnt < spawn_limit) {
             const float spawn_x = GenEnemySpawnX(world->cam.pos.x, cam_width, cam_width, -(cam_width / 4.0f));
 
-            if (SpawnNPC(world, (zfw_s_vec_2d){spawn_x, 0.0f}, ek_npc_type_slime, &world->core.tilemap_core.activity) == -1) {
+            if (SpawnNPC(world, (s_v2){spawn_x, 0.0f}, ek_npc_type_slime, &world->core.tilemap_core.activity) == -1) {
                 return false;
             }
         }

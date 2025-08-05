@@ -1,6 +1,6 @@
 #include "particles.h"
 
-void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const zfw_s_vec_2d pos, const zfw_s_vec_2d vel, const float rot) {
+void InitParticleFromTemplate(s_particle* const part, const e_particle_template temp, const s_v2 pos, const s_v2 vel, const float rot) {
     assert(IS_ZERO(*part));
 
     part->pos = pos;
@@ -63,13 +63,13 @@ void UpdateParticles(s_particles* const particles, const float grav) {
 
         // Update position.
         part->vel.y += grav;
-        part->pos = ZFW_Vec2DSum(part->pos, part->vel);
+        part->pos = V2Sum(part->pos, part->vel);
     }
 }
 
 void RenderParticles(const zfw_s_rendering_context* const rendering_context, const s_particles* const particles, const zfw_s_texture_group* const textures) {
     for (int i = 0; i < particles->cnt; i++) {
         const s_particle* const part = &particles->buf[i];
-        RenderSprite(rendering_context, part->spr, textures, part->pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, part->rot, ZFW_WHITE);
+        RenderSprite(rendering_context, part->spr, textures, part->pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, part->rot, ZFW_WHITE);
     }
 }

@@ -19,15 +19,15 @@ static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
         assert(grass_depth < dirt_depth && level + dirt_depth <= TILEMAP_HEIGHT);
 
         for (int ty = level; ty < level + grass_depth; ty++) {
-            AddTile(tm_core, (zfw_s_vec_2d_int){tx, ty}, ek_tile_type_grass);
+            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_grass);
         }
 
         for (int ty = level + grass_depth; ty < level + dirt_depth; ty++) {
-            AddTile(tm_core, (zfw_s_vec_2d_int){tx, ty}, ek_tile_type_dirt);
+            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_dirt);
         }
 
         for (int ty = level + dirt_depth; ty < TILEMAP_HEIGHT; ty++) {
-            AddTile(tm_core, (zfw_s_vec_2d_int){tx, ty}, ek_tile_type_stone);
+            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_stone);
         }
 
         if (ZFW_RandPerc() < GROUND_LEVEL_OFFS_VAR) {

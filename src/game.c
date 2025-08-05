@@ -21,11 +21,11 @@ static const t_settings g_settings_default = {
     [ek_setting_volume] = 100
 };
 
-static const zfw_s_vec_2d_int* PushSurfaceSizes(s_mem_arena* const mem_arena, const zfw_s_vec_2d_int window_size) {
+static const s_v2_int* PushSurfaceSizes(s_mem_arena* const mem_arena, const s_v2_int window_size) {
     assert(mem_arena && IsMemArenaValid(mem_arena));
     assert(window_size.x > 0 && window_size.y > 0);
 
-    zfw_s_vec_2d_int* const sizes = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, zfw_s_vec_2d_int, eks_surface_cnt);
+    s_v2_int* const sizes = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, s_v2_int, eks_surface_cnt);
 
     for (int i = 0; i < eks_surface_cnt; i++) {
         switch ((e_surface)i) {
@@ -112,7 +112,7 @@ bool InitGame(const zfw_s_game_init_context* const zfw_context) {
     }
 
     {
-        const zfw_s_vec_2d_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+        const s_v2_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
 
         if (!surf_sizes) {
             return false;
@@ -144,7 +144,7 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
     s_game* const game = zfw_context->dev_mem;
 
     {
-        const zfw_s_vec_2d_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
+        const s_v2_int* const surf_sizes = PushSurfaceSizes(zfw_context->temp_mem_arena, zfw_context->window_state.size);
 
         if (!surf_sizes) {
             return zfw_ek_game_tick_result_error;
@@ -190,7 +190,7 @@ zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context
     return zfw_ek_game_tick_result_normal;
 }
 
-static inline zfw_s_matrix_4x4 UIViewMatrix(const zfw_s_vec_2d_int window_size) {
+static inline zfw_s_matrix_4x4 UIViewMatrix(const s_v2_int window_size) {
     zfw_s_matrix_4x4 mat = ZFW_IdentityMatrix4x4();
     ZFW_ScaleMatrix4x4(&mat, UIScale(window_size));
     return mat;
@@ -222,8 +222,8 @@ bool RenderGame(const zfw_s_game_render_context* const zfw_context) {
     }
 
     // Render the mouse.
-    const zfw_s_vec_2d mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
-    RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (zfw_s_vec_2d){0.5f, 0.5f}, (zfw_s_vec_2d){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
+    const s_v2 mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
+    RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, ZFW_WHITE);
 
     return true;
 }
