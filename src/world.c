@@ -56,19 +56,9 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
     if (!world->player.killed) {
-        ProcPlayerMovement(world, &zfw_context->input_context);
-        ProcPlayerCollisionsWithNPCs(world);
-
-        // TODO: I hate how this is decentralised from the player source file. Move there.
-        if (world->player.invinc_time > 0) {
-            world->player.invinc_time--;
+        if (!UpdatePlayer(world, &zfw_context->input_context)) {
+            return false;
         }
-
-        if (world->player.flash_time > 0) {
-            world->player.flash_time--;
-        }
-
-        ProcPlayerDeath(world);
     }
 
     if (world->player.killed) {

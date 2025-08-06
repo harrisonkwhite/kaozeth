@@ -470,9 +470,7 @@ void GenWorld(s_world_core* const world_core);
 // player.c
 //
 void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activity* const tm_activity);
-void ProcPlayerMovement(s_world* const world, const zfw_s_input_context* const input_context);
-bool ProcPlayerCollisionsWithNPCs(s_world* const world);
-void ProcPlayerDeath(s_world* const world);
+bool UpdatePlayer(s_world* const world, const zfw_s_input_context* const input_context);
 void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs);
 bool HurtPlayer(s_world* const world, const int dmg, const s_v2 kb);
 

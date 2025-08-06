@@ -27,9 +27,12 @@ void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activi
     player->hp = hp_max;
 }
 
-void ProcPlayerMovement(s_world* const world, const zfw_s_input_context* const input_context) {
+bool UpdatePlayer(s_world* const world, const zfw_s_input_context* const input_context) {
     assert(!world->player.killed);
 
+    //
+    // Movement
+    //
     const float move_axis = ZFW_IsKeyDown(input_context, zfw_ek_key_code_d) - ZFW_IsKeyDown(input_context, zfw_ek_key_code_a);
     const float move_spd_dest = move_axis * PLAYER_MOVE_SPD;
 
@@ -61,54 +64,61 @@ void ProcPlayerMovement(s_world* const world, const zfw_s_input_context* const i
     ProcTileCollisions(&world->player.pos, &world->player.vel, PlayerColliderSize(), PLAYER_ORIGIN, &world->core.tilemap_core.activity);
 
     world->player.pos = V2Sum(world->player.pos, world->player.vel);
-}
 
-bool ProcPlayerCollisionsWithNPCs(s_world* const world) {
-    assert(!world->player.killed);
+    //
+    // NPC Collisions
+    //
+    if (world->player.invinc_time <= 0) {
+        const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
 
-    if (world->player.invinc_time > 0) {
-        return true;
-    }
+        for (int i = 0; i < NPC_LIMIT; i++) {
+            const s_npc* const npc = &world->npcs.buf[i]; // NOTE: Constant probably temporarily.
 
-    const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
-
-    for (int i = 0; i < NPC_LIMIT; i++) {
-        const s_npc* const npc = &world->npcs.buf[i]; // NOTE: Constant probably temporarily.
-
-        if (!IsNPCActive(&world->npcs.activity, i)) {
-            continue;
-        }
-
-        const s_npc_type* const npc_type = &g_npc_types[npc->type];
-
-        if (npc_type->contact_dmg == 0) {
-            continue;
-        }
-
-        const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
-
-        if (ZFW_DoRectsInters(player_collider, npc_collider)) {
-            const s_v2 dir = V2Dir(npc->pos, world->player.pos);
-            const s_v2 kb = {dir.x * npc_type->contact_kb, dir.y * npc_type->contact_kb};
-
-            if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
-                return false;
+            if (!IsNPCActive(&world->npcs.activity, i)) {
+                continue;
             }
 
-            break;
+            const s_npc_type* const npc_type = &g_npc_types[npc->type];
+
+            if (npc_type->contact_dmg == 0) {
+                continue;
+            }
+
+            const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+
+            if (ZFW_DoRectsInters(player_collider, npc_collider)) {
+                const s_v2 dir = V2Dir(npc->pos, world->player.pos);
+                const s_v2 kb = {dir.x * npc_type->contact_kb, dir.y * npc_type->contact_kb};
+
+                if (!HurtPlayer(world, npc_type->contact_dmg, kb)) {
+                    return false;
+                }
+
+                break;
+            }
         }
     }
 
-    return true;
-}
+    //
+    // Updating Timers
+    //
+    if (world->player.invinc_time > 0) {
+        world->player.invinc_time--;
+    }
 
-void ProcPlayerDeath(s_world* const world) {
-    assert(!world->player.killed);
+    if (world->player.flash_time > 0) {
+        world->player.flash_time--;
+    }
 
+    //
+    // Death
+    //
     if (world->player.hp == 0) {
         // TODO: Do some magic stuff!
         world->player.killed = true;
     }
+
+    return true;
 }
 
 void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs) {
