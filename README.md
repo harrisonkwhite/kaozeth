@@ -1,6 +1,6 @@
 # Terraria Clone in C
 
-<img src="https://github.com/user-attachments/assets/51337b89-61ac-4869-9b24-da9d5ed54959" alt="Terraria Clone Screenshot" style="max-width: 100%; height: auto;" />
+<img src="https://github.com/user-attachments/assets/5bd76a70-30ed-4fe0-8b2e-2decf3a3511f" alt="Terraria Clone Screenshot" style="max-width: 100%; height: auto;" />
 
 ---
 
