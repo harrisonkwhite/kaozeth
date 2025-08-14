@@ -20,7 +20,7 @@ I chose to clone Terraria specifically because it is composed of so many differe
 
 Building and running this project has been tested on Linux and Windows.
 
-Make sure to clone the repository **recursively** with `git clone --recursive https://github.com/harrisonkwhite/terraria_clone.git`.
+Clone the repository by running `git clone --recursive https://github.com/harrisonkwhite/terraria_clone.git`.
 
 > **Note:** If the repository was cloned non-recursively before, just run `git submodule update --init --recursive` to clone the necessary submodules.
 
