@@ -75,11 +75,5 @@
         "output_file_path": "assets/shader_progs/blend",
         "vert_file_path": "assets_raw/shaders/blend.vert",
         "frag_file_path": "assets_raw/shaders/blend.frag"
-    },
-    {
-        "type": "shader_prog",
-        "output_file_path": "assets/shader_progs/outline",
-        "vert_file_path": "assets_raw/shaders/outline.vert",
-        "frag_file_path": "assets_raw/shaders/outline.frag"
     }
 ]

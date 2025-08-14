@@ -80,9 +80,13 @@ bool InitGame(const s_game_init_context* const zfw_context) {
         return false;
     }
 
-    /*if (!InitShaderProgGroup(&game->shader_progs, ARRAY_FROM_STATIC(s_shader_prog_gen_info_array_view, g_shader_prog_gen_infos), zfw_context->gl_res_arena, zfw_context->temp_mem_arena)) {
+    if (!InitShaderProgGroup(&game->shader_progs, (s_shader_prog_gen_info_array_view)ARRAY_FROM_STATIC(g_shader_prog_gen_infos), zfw_context->gl_res_arena, zfw_context->temp_mem_arena)) {
         return false;
-    }*/
+    }
+
+    if (!InitSurface(&game->temp_surf, zfw_context->window_state.size, zfw_context->gl_res_arena)) {
+        return false;
+    }
 
     LoadSettings(&game->settings);
 

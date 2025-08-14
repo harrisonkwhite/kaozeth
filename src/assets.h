@@ -70,14 +70,11 @@ STATIC_ARRAY_LEN_CHECK(g_font_file_paths, eks_font_cnt);
 
 typedef enum {
     ek_shader_prog_blend,
-    ek_shader_prog_outline,
-
     eks_shader_prog_cnt
 } e_shader_prog;
 
 const static s_shader_prog_gen_info g_shader_prog_gen_infos[] = {
-    [ek_shader_prog_blend] = {.file_path = "assets/shader_progs/blend"},
-    [ek_shader_prog_outline] = {.file_path = "assets/shader_progs/outline"}
+    [ek_shader_prog_blend] = {.file_path = "assets/shader_progs/blend"}
 };
 
 STATIC_ARRAY_LEN_CHECK(g_shader_prog_gen_infos, eks_shader_prog_cnt);
