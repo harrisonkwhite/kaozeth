@@ -33,3 +33,12 @@ target_link_libraries(terraria_clone PRIVATE zfw_core)
 set_target_properties(terraria_clone PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
+
+add_custom_target(pack_assets ALL
+    COMMAND $<TARGET_FILE:zfw_asset_packer>
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Packing assets..."
+    VERBATIM
+)
+
+add_dependencies(terraria_clone pack_assets)
