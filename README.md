@@ -20,7 +20,11 @@ I chose to clone Terraria specifically because it is composed of so many differe
 
 Building and running this project has been tested on Linux and Windows.
 
-Make sure to clone the repository **recursively**, then build using CMake:
+Make sure to clone the repository **recursively** with `git clone --recursive https://github.com/harrisonkwhite/terraria_clone.git`.
+
+> **Note:** If the repository was cloned non-recursively before, just run `git submodule update --init --recursive` to clone the necessary submodules.
+
+Then go into the repository root and build with CMake:
 
 ```
 mkdir build
@@ -32,14 +36,11 @@ For Linux, there are a number of dependencies you might need to manually install
 
 You can also use the "run.sh" shell script if on a platform which supports it.
 
-> **Important:** The game itself depends on the assets folder being in the current working directory.
-
 ---
 
 ## Upcoming Features
 
 - Animations  
-- Asset Packing  
 - Crafting  
 - Biomes  
 - Liquids  
