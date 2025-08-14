@@ -20,25 +20,25 @@ typedef enum {
 static s_rgba_texture GenTextureRGBA(const t_s32 tex_index, s_mem_arena* const mem_arena) {
     switch ((e_texture)tex_index) {
         case ek_texture_player:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/player"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/player"), mem_arena);
 
         case ek_texture_npcs:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/npcs"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/npcs"), mem_arena);
 
         case ek_texture_tiles:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/tiles"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/tiles"), mem_arena);
 
         case ek_texture_item_icons:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/item_icons"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/item_icons"), mem_arena);
 
         case ek_texture_projectiles:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/projectiles"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/projectiles"), mem_arena);
 
         case ek_texture_particles:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/particles"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/particles"), mem_arena);
 
         case ek_texture_misc:
-            return LoadRGBATextureFromFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/misc"), mem_arena);
+            return LoadRGBATextureFromPackedFile(ARRAY_FROM_STATIC(s_char_array_view, "assets/textures/misc"), mem_arena);
 
         default:
             assert(false && "Texture case not handled!");

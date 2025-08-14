@@ -1,7 +1,8 @@
 build/
 .cache/
-assets/
-debug.sh
+assets/**
+!assets/**/
+!assets/**/.gitkeep
 compile_commands.json
 *.wrld
 settings.dat

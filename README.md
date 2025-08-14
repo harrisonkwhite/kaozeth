@@ -18,7 +18,7 @@ I chose to clone Terraria specifically because it is composed of so many differe
 
 ## Building
 
-Building and running this project has been tested on Windows and Linux.
+Building and running this project has been tested on Linux and Windows.
 
 Make sure to clone the repository **recursively**, then build using CMake:
 
