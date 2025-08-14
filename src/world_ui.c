@@ -289,7 +289,7 @@ static bool RenderPlayerInventory(const s_rendering_context* const rendering_con
                 (ui_size.y * PLAYER_INVENTORY_POS_PERC.y) + PLAYER_INVENTORY_SLOT_SIZE + 8.0f
             };
 
-            if (!RenderStr(rendering_context, ARRAY_FROM_STATIC(s_char_array_view, name_buf), fonts, ek_font_eb_garamond_24, name_pos, ALIGNMENT_TOP_LEFT, WHITE, temp_mem_arena)) {
+            if (!RenderStr(rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(name_buf), fonts, ek_font_eb_garamond_24, name_pos, ALIGNMENT_TOP_LEFT, WHITE, temp_mem_arena)) {
                 return false;
             }
         }
@@ -335,7 +335,7 @@ bool RenderWorldUI(const s_world* const world, const s_game_render_context* cons
 
         assert(popup->str[0] != '\0' && "Popup text string cannot be empty!\n");
 
-        if (!RenderStr(&context->rendering_context, ARRAY_FROM_STATIC(s_char_array_view, popup->str), fonts, ek_font_eb_garamond_32, popup_ui_pos, ALIGNMENT_CENTER, popup_blend, context->temp_mem_arena)) {
+        if (!RenderStr(&context->rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(popup->str), fonts, ek_font_eb_garamond_32, popup_ui_pos, ALIGNMENT_CENTER, popup_blend, context->temp_mem_arena)) {
             return false;
         }
     }
@@ -344,7 +344,7 @@ bool RenderWorldUI(const s_world* const world, const s_game_render_context* cons
     // Death Text
     //
     if (world->player.killed) {
-        if (!RenderStr(&context->rendering_context, ARRAY_FROM_STATIC(s_char_array_view, DEATH_TEXT), fonts, ek_font_eb_garamond_48, (s_v2){ui_size.x / 2.0f, ui_size.y / 2.0f}, ALIGNMENT_CENTER, WHITE, context->temp_mem_arena)) {
+        if (!RenderStr(&context->rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(DEATH_TEXT), fonts, ek_font_eb_garamond_48, (s_v2){ui_size.x / 2.0f, ui_size.y / 2.0f}, ALIGNMENT_CENTER, WHITE, context->temp_mem_arena)) {
             return false;
         }
     }
@@ -375,7 +375,7 @@ bool RenderWorldUI(const s_world* const world, const s_game_render_context* cons
         char hp_str[8] = {0};
         snprintf(hp_str, sizeof(hp_str), "%d/%d", world->player.hp, world->core.player_hp_max);
 
-        if (!RenderStr(&context->rendering_context, ARRAY_FROM_STATIC(s_char_array_view, hp_str), fonts, ek_font_eb_garamond_28, hp_str_pos, ALIGNMENT_CENTER_RIGHT, WHITE, context->temp_mem_arena)) {
+        if (!RenderStr(&context->rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(hp_str), fonts, ek_font_eb_garamond_28, hp_str_pos, ALIGNMENT_CENTER_RIGHT, WHITE, context->temp_mem_arena)) {
             return false;
         }
     }
@@ -388,7 +388,7 @@ bool RenderWorldUI(const s_world* const world, const s_game_render_context* cons
     // Mouse Hover String
     //
     if (world->mouse_hover_str[0]) {
-        if (!RenderStr(&context->rendering_context, ARRAY_FROM_STATIC(s_char_array_view, world->mouse_hover_str), fonts, ek_font_eb_garamond_24, mouse_ui_pos, ALIGNMENT_TOP_LEFT, WHITE, context->temp_mem_arena)) {
+        if (!RenderStr(&context->rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(world->mouse_hover_str), fonts, ek_font_eb_garamond_24, mouse_ui_pos, ALIGNMENT_TOP_LEFT, WHITE, context->temp_mem_arena)) {
             return false;
         }
     }

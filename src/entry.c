@@ -4,7 +4,7 @@
 t_s32 main() {
     const s_game_info game_info = {
         .window_init_size = {1280, 720},
-        .window_title = ARRAY_FROM_STATIC(s_char_array_view, GAME_TITLE),
+        .window_title = ARRAY_FROM_STATIC(GAME_TITLE),
         .window_flags = ek_window_flags_hide_cursor | ek_window_flags_resizable,
 
         .dev_mem_size = sizeof(s_game),

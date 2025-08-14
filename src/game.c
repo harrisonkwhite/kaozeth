@@ -76,7 +76,7 @@ bool InitGame(const s_game_init_context* const zfw_context) {
         return false;
     }
 
-    if (!InitFontGroupFromFiles(&game->fonts, ARRAY_FROM_STATIC(s_char_array_view_array_view, g_font_file_paths), zfw_context->perm_mem_arena, zfw_context->gl_res_arena, zfw_context->temp_mem_arena)) {
+    if (!InitFontGroupFromFiles(&game->fonts, (s_char_array_view_array_view)ARRAY_FROM_STATIC(g_font_file_paths), zfw_context->perm_mem_arena, zfw_context->gl_res_arena, zfw_context->temp_mem_arena)) {
         return false;
     }
 

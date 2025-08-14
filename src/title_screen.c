@@ -35,7 +35,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames, s_mem_arena* 
 
     s_filename_buf_array local_filename_bufs = {0};
 
-    if (!LoadDirFilenames(&local_filename_bufs, temp_mem_arena, ARRAY_FROM_STATIC(s_char_array_view, "."))) {
+    if (!LoadDirFilenames(&local_filename_bufs, temp_mem_arena, (s_char_array_view)ARRAY_FROM_STATIC("."))) {
         return false;
     }
 
@@ -45,7 +45,7 @@ static bool LoadWorldFilenames(t_world_filenames* const filenames, s_mem_arena* 
         t_filename_buf* const buf = FilenameBufElem(local_filename_bufs, i);
         const s_char_array_view local_filename = StrViewFromRawTerminated(*buf);
 
-        if (DoesFilenameHaveExt(local_filename, ARRAY_FROM_STATIC(s_char_array_view, WORLD_FILENAME_EXT))) {
+        if (DoesFilenameHaveExt(local_filename, (s_char_array_view)ARRAY_FROM_STATIC(WORLD_FILENAME_EXT))) {
             // TODO: Make sure the world filename isn't too long!
             strncpy(*STATIC_ARRAY_ELEM(*filenames, next_index), *buf, sizeof((*filenames)[next_index]));
             next_index++;
@@ -131,10 +131,15 @@ static bool NewWorldPageAcceptButtonClick(const t_s32 index, void* const data_ge
     snprintf(filename, sizeof(filename), "%s%s", data->ts->new_world_name_buf, WORLD_FILENAME_EXT);
 
     {
-        s_world_core world_core = {0};
-        GenWorld(&world_core);
+        s_world_core* const world_core = PushToMemArena(data->temp_mem_arena, sizeof(s_world_core), ALIGN_OF(s_world_core));
 
-        if (!WriteWorldCoreToFile(&world_core, &filename)) {
+        if (!world_core) {
+            return false;
+        }
+
+        GenWorld(world_core);
+
+        if (!WriteWorldCoreToFile(world_core, &filename)) {
             return false;
         }
     }
@@ -157,8 +162,7 @@ static bool SettingsPageSettingButtonClick(const t_s32 index, void* const data_g
 
     assert(index >= 0 && index < eks_setting_cnt);
 
-    t_s32 limit;
-    t_s32 inc = 1;
+    t_s32 limit = 0, inc = 1;
 
     switch (g_settings[index].type) {
         case ek_setting_type_toggle:
@@ -189,7 +193,7 @@ static bool SettingsPageBackButtonClick(const t_s32 index, void* const data_gene
 static bool WARN_UNUSED_RESULT GenPageFeatures(s_page_feature_array* const feats, s_mem_arena* const mem_arena, const e_title_screen_page page, const t_world_filenames* const world_filenames, const t_world_name_buf* const new_world_name_buf, const t_settings* const settings) {
     assert(IS_ZERO(*feats));
 
-    t_s32 feat_cnt;
+    t_s32 feat_cnt = 0;
 
     switch (page) {
         case ek_title_screen_page_home: feat_cnt = 4; break;
@@ -442,7 +446,7 @@ static bool WARN_UNUSED_RESULT LoadIndexOfFirstHoveredButtonPageElem(t_s32* cons
 
         s_rect collider = {0};
 
-        if (!GenStrCollider(&collider, ARRAY_FROM_STATIC(s_char_array_view, feat->str), fonts, feat->font, *V2ElemView(feat_positions, i), ALIGNMENT_CENTER, temp_mem_arena)) {
+        if (!GenStrCollider(&collider, (s_char_array_view)ARRAY_FROM_STATIC(feat->str), fonts, feat->font, *V2ElemView(feat_positions, i), ALIGNMENT_CENTER, temp_mem_arena)) {
             return false;
         }
 
@@ -562,7 +566,7 @@ bool RenderTitleScreen(const s_title_screen* const ts, const s_rendering_context
             }
         }
 
-        if (!RenderStr(rendering_context, ARRAY_FROM_STATIC(s_char_array_view, elem->str), fonts, elem->font, *V2Elem(page_feat_positions, i), ALIGNMENT_CENTER, color, temp_mem_arena)) {
+        if (!RenderStr(rendering_context, (s_char_array_view)ARRAY_FROM_STATIC(elem->str), fonts, elem->font, *V2Elem(page_feat_positions, i), ALIGNMENT_CENTER, color, temp_mem_arena)) {
             return false;
         }
     }

@@ -17,7 +17,7 @@ static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_
         ProjectileCollider(proj_type, pos_after)
     };
 
-    return GenSpanningRect(ARRAY_FROM_STATIC(s_rect_array_view, colliders));
+    return GenSpanningRect((s_rect_array_view)ARRAY_FROM_STATIC(colliders));
 }
 
 s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const t_s32 dmg, const s_v2 pos, const s_v2 vel) {
@@ -48,7 +48,7 @@ bool UpdateProjectiles(s_world* const world) {
     // Store the colliders we'll need to test against.
     const s_rect player_collider = PlayerCollider(world->player.pos);
 
-    s_rect npc_colliders[NPC_LIMIT];
+    s_rect npc_colliders[NPC_LIMIT] = {0};
 
     for (t_s32 i = 0; i < NPC_LIMIT; i++) {
         if (!IsNPCActivityBitSet(&world->npcs.activity, i)) {
