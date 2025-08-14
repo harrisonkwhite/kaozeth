@@ -11,27 +11,27 @@ static_assert(GROUND_LEVEL_OFFS_VAR >= 0.0f && GROUND_LEVEL_OFFS_VAR <= 1.0f, "V
 static void GenWorldTilemapGround(s_tilemap_core* const tm_core) {
     assert(tm_core);
 
-    int level = GROUND_LEVEL_BASE + ZFW_RandRangeI(-GROUND_LEVEL_OFFS_LIM, GROUND_LEVEL_OFFS_LIM);
+    t_s32 level = GROUND_LEVEL_BASE + RandRangeS32(-GROUND_LEVEL_OFFS_LIM, GROUND_LEVEL_OFFS_LIM);
 
-    for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
-        const int grass_depth = ZFW_RandRangeI(2, 4);
-        const int dirt_depth = ZFW_RandRangeI(11, 15);
+    for (t_s32 tx = 0; tx < TILEMAP_WIDTH; tx++) {
+        const t_s32 grass_depth = RandRangeS32(2, 4);
+        const t_s32 dirt_depth = RandRangeS32(11, 15);
         assert(grass_depth < dirt_depth && level + dirt_depth <= TILEMAP_HEIGHT);
 
-        for (int ty = level; ty < level + grass_depth; ty++) {
-            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_grass);
+        for (t_s32 ty = level; ty < level + grass_depth; ty++) {
+            AddTile(tm_core, (s_v2_s32){tx, ty}, ek_tile_type_grass);
         }
 
-        for (int ty = level + grass_depth; ty < level + dirt_depth; ty++) {
-            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_dirt);
+        for (t_s32 ty = level + grass_depth; ty < level + dirt_depth; ty++) {
+            AddTile(tm_core, (s_v2_s32){tx, ty}, ek_tile_type_dirt);
         }
 
-        for (int ty = level + dirt_depth; ty < TILEMAP_HEIGHT; ty++) {
-            AddTile(tm_core, (s_v2_int){tx, ty}, ek_tile_type_stone);
+        for (t_s32 ty = level + dirt_depth; ty < TILEMAP_HEIGHT; ty++) {
+            AddTile(tm_core, (s_v2_s32){tx, ty}, ek_tile_type_stone);
         }
 
-        if (ZFW_RandPerc() < GROUND_LEVEL_OFFS_VAR) {
-            if (ZFW_RandPerc() < 0.5f) {
+        if (RandPerc() < GROUND_LEVEL_OFFS_VAR) {
+            if (RandPerc() < 0.5f) {
                 level++;
             } else {
                 level--;

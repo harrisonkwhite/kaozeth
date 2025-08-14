@@ -2,25 +2,25 @@
 
 #include <stdio.h>
 
-const s_projectile_type g_projectile_types[] = {
+const s_projectile_type_info g_projectile_type_infos[] = {
     [ek_projectile_type_wooden_arrow] = {
         .spr = ek_sprite_projectile,
         .flags = ek_projectile_type_flags_rot_is_dir
     }
 };
 
-STATIC_ARRAY_LEN_CHECK(g_projectile_types, eks_projectile_type_cnt);
+STATIC_ARRAY_LEN_CHECK(g_projectile_type_infos, eks_projectile_type_cnt);
 
-static inline zfw_s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_v2 pos_before, const s_v2 pos_after) {
-    const zfw_s_rect colliders[2] = {
+static inline s_rect ProjectileTranslationCollider(const e_projectile_type proj_type, const s_v2 pos_before, const s_v2 pos_after) {
+    const s_rect colliders[2] = {
         ProjectileCollider(proj_type, pos_before),
         ProjectileCollider(proj_type, pos_after)
     };
 
-    return ZFW_GenSpanningRect(colliders, 2);
+    return GenSpanningRect(ARRAY_FROM_STATIC(s_rect_array_view, colliders));
 }
 
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_v2 pos, const s_v2 vel) {
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const t_s32 dmg, const s_v2 pos, const s_v2 vel) {
     assert(world);
     assert(dmg > 0);
 
@@ -46,12 +46,12 @@ bool UpdateProjectiles(s_world* const world) {
     assert(world);
 
     // Store the colliders we'll need to test against.
-    const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
+    const s_rect player_collider = PlayerCollider(world->player.pos);
 
-    zfw_s_rect npc_colliders[NPC_LIMIT];
+    s_rect npc_colliders[NPC_LIMIT];
 
-    for (int i = 0; i < NPC_LIMIT; i++) {
-        if (!IsNPCActive(&world->npcs.activity, i)) {
+    for (t_s32 i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActivityBitSet(&world->npcs.activity, i)) {
             continue;
         }
 
@@ -60,12 +60,12 @@ bool UpdateProjectiles(s_world* const world) {
     }
 
     // Perform an update on each projectile.
-    for (int i = 0; i < world->proj_cnt; i++) {
+    for (t_s32 i = 0; i < world->proj_cnt; i++) {
         s_projectile* const proj = &world->projectiles[i]; 
 
         bool destroy = false; // Do we destroy this projectile at the end of this update?
 
-        const s_projectile_type* const proj_type = &g_projectile_types[proj->type];
+        const s_projectile_type_info* const proj_type = &g_projectile_type_infos[proj->type];
 
         // Perform movement.
         if (proj_type->flags & ek_projectile_type_flags_falls) {
@@ -81,17 +81,17 @@ bool UpdateProjectiles(s_world* const world) {
         }
 
         // Perform collision detection.
-        const zfw_s_rect proj_trans_collider = ProjectileTranslationCollider(proj->type, pos_before_trans, proj->pos);
+        const s_rect proj_trans_collider = ProjectileTranslationCollider(proj->type, pos_before_trans, proj->pos);
 
         if (proj->friendly) {
-            for (int j = 0; j < NPC_LIMIT; j++) {
-                if (!IsNPCActive(&world->npcs.activity, j)) {
+            for (t_s32 j = 0; j < NPC_LIMIT; j++) {
+                if (!IsNPCActivityBitSet(&world->npcs.activity, j)) {
                     continue;
                 }
 
                 s_npc* const npc = &world->npcs.buf[j];
                 
-                if (ZFW_DoRectsInters(proj_trans_collider, npc_colliders[j])) {
+                if (DoRectsInters(proj_trans_collider, npc_colliders[j])) {
                     if (!HurtNPC(world, j, proj->dmg, proj->vel)) {
                         return false;
                     }
@@ -100,7 +100,7 @@ bool UpdateProjectiles(s_world* const world) {
                 }
             }
         } else {
-            if (ZFW_DoRectsInters(proj_trans_collider, player_collider)) {
+            if (DoRectsInters(proj_trans_collider, player_collider)) {
                 if (!HurtPlayer(world, proj->dmg, proj->vel)) {
                     return false;
                 }
@@ -126,15 +126,11 @@ bool UpdateProjectiles(s_world* const world) {
     return true;
 }
 
-void RenderProjectiles(const s_projectile* const projectiles, const int proj_cnt, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures) {
-    assert(rendering_context);
-    assert(projectiles);
-    assert(proj_cnt >= 0);
+void RenderProjectiles(const s_projectile_array_view projectiles, const s_rendering_context* const rendering_context, const s_texture_group* const textures) {
+    for (t_s32 i = 0; i < projectiles.elem_cnt; i++) {
+        const s_projectile* const proj = ProjectileElemView(projectiles, i);
+        const s_projectile_type_info* const proj_type = STATIC_ARRAY_ELEM(g_projectile_type_infos, proj->type);
 
-    for (int i = 0; i < proj_cnt; i++) {
-        const s_projectile* const proj = &projectiles[i];
-        const s_projectile_type* const proj_type = &g_projectile_types[proj->type];
-
-        RenderSprite(rendering_context, proj_type->spr, textures, proj->pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, proj->rot, ZFW_WHITE);
+        RenderSprite(rendering_context, proj_type->spr, textures, proj->pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, proj->rot, WHITE);
     }
 }

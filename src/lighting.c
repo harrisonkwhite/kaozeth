@@ -1,43 +1,17 @@
 #include "lighting.h"
 
-#define DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS false // Having this enabled slows things down tremendously. Only have active if needing to make sure the queue never enters an invalid state.
-
-// NOTE: Using a queue system instead of recursion as that would blow up the stack.
 typedef struct {
-    s_v2_int* buf;
-    int cap;
-    int start;
-    int len;
+    s_v2_s32_array positions;
+    t_s32 cap;
+    t_s32 start;
+    t_s32 len;
 } s_light_pos_queue;
 
-static bool IsLightPosQueueValid(const s_light_pos_queue* const queue, const s_v2_int map_size) {
-    if (!queue->buf
-        || queue->cap <= 0
-        || queue->start < 0 || queue->start >= queue->cap
-        || queue->len < 0 || queue->len > queue->cap) {
-        return false;
-    }
-
-    for (int i = 0; i < queue->len; i++) {
-        const int bi = (queue->start + i) % queue->cap;
-        const s_v2_int pos = queue->buf[bi];
-
-        if (!IsLightPosInBounds(pos, map_size)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool EnqueueLightPos(s_light_pos_queue* const queue, const s_v2_int light_pos, const s_v2_int map_size) {
-#if DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS
-    assert(IsLightPosQueueValid(queue, map_size));
-#endif
+static bool EnqueueLightPos(s_light_pos_queue* const queue, const s_v2_s32 light_pos, const s_v2_s32 map_size) {
     assert(IsLightPosInBounds(light_pos, map_size));
 
     if (queue->len < queue->cap) {
-        queue->buf[(queue->start + queue->len) % queue->cap] = light_pos;
+        *V2S32Elem(queue->positions, (queue->start + queue->len) % queue->cap) = light_pos;
         queue->len++;
         return true;
     }
@@ -45,13 +19,10 @@ static bool EnqueueLightPos(s_light_pos_queue* const queue, const s_v2_int light
     return false;
 }
 
-static s_v2_int DequeueLightPos(s_light_pos_queue* const queue, const s_v2_int map_size) {
-#if DO_LIGHT_POS_QUEUE_VALIDITY_CHECKS
-    assert(IsLightPosQueueValid(queue, map_size));
-#endif
+static s_v2_s32 DequeueLightPos(s_light_pos_queue* const queue, const s_v2_s32 map_size) {
     assert(queue->len > 0);
 
-    const s_v2_int light = queue->buf[queue->start];
+    const s_v2_s32 light = *V2S32Elem(queue->positions, queue->start);
 
     queue->start++;
     queue->start %= queue->cap;
@@ -61,68 +32,66 @@ static s_v2_int DequeueLightPos(s_light_pos_queue* const queue, const s_v2_int m
     return light;
 }
 
-s_lightmap GenLightmap(s_mem_arena* const mem_arena, const s_v2_int size) {
+bool GenLightmap(s_lightmap* const lightmap, s_mem_arena* const mem_arena, const s_v2_s32 size) {
+    assert(IS_ZERO(*lightmap));
     assert(size.x > 0 && size.y > 0);
 
-    t_light_level* const buf = MEM_ARENA_PUSH_TYPE_CNT(mem_arena, t_light_level, size.x * size.y);
+    lightmap->levels = PushLightLevelArrayToMemArena(mem_arena, size.x * size.y);
 
-    if (!buf) {
+    if (IS_ZERO(lightmap->levels)) {
         LOG_ERROR("Failed to allocate memory for lightmap!");
-        return (s_lightmap){0};
+        return false;
     }
 
-    return (s_lightmap){
-        .buf = buf,
-        .size = size
-    };
+    lightmap->size = size;
+
+    return true;
 }
 
-bool PropagateLights(const s_lightmap* const lightmap, s_mem_arena* const temp_mem_arena) {
-    assert(IsLightmapInitted(lightmap));
-
+bool PropagateLights(const s_lightmap lightmap, s_mem_arena* const temp_mem_arena) {
     // Set up the light position queue.
-    const int light_limit = lightmap->size.x * lightmap->size.y;
+    const t_s32 light_limit = lightmap.size.x * lightmap.size.y;
 
     s_light_pos_queue light_pos_queue = {
-        .buf = MEM_ARENA_PUSH_TYPE_CNT(temp_mem_arena, s_v2_int, light_limit),
+        .positions = PushV2S32ArrayToMemArena(temp_mem_arena, light_limit),
         .cap = light_limit
     };
 
-    if (!light_pos_queue.buf) {
-        LOG_ERROR("Failed to allocate memory for light position queue!");
+    if (IS_ZERO(light_pos_queue.positions)) {
+        LOG_ERROR("Failed to reserve memory for light positions!");
         return false;
     }
 
     // Enqueue lights already in the map.
-    for (int y = 0; y < lightmap->size.y; y++) {
-        for (int x = 0; x < lightmap->size.x; x++) {
-            const s_v2_int pos = {x, y};
-            const int i = IndexFrom2D(pos.x, pos.y, lightmap->size.x);
+    for (t_s32 y = 0; y < lightmap.size.y; y++) {
+        for (t_s32 x = 0; x < lightmap.size.x; x++) {
+            const s_v2_s32 pos = {x, y};
+            const t_s32 i = IndexFrom2D(pos.x, pos.y, lightmap.size.x);
 
-            const int lvl = LightLevel(lightmap, pos);
-            assert(lvl >= 0 && lvl <= LIGHT_LEVEL_LIMIT);
+            const t_s32 lvl = LightLevel(lightmap, pos);
+            assert(IsLightLevelValid(lvl));
 
             if (lvl > 0) {
-                EnqueueLightPos(&light_pos_queue, pos, lightmap->size);
+                EnqueueLightPos(&light_pos_queue, pos, lightmap.size);
             }
         }
     }
 
     // Propagate lights (BFS).
     while (light_pos_queue.len > 0) {
-        const s_v2_int pos = DequeueLightPos(&light_pos_queue, lightmap->size);
+        const s_v2_s32 pos = DequeueLightPos(&light_pos_queue, lightmap.size);
 
-        const s_v2_int neighbour_pos_offsets[] = {
+        const s_v2_s32 neighbour_pos_offsets[] = {
             {0, 1},
             {0, -1},
             {1, 0},
-            {-1, 0},
+            {-1, 0}
         };
 
-        for (int i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
-            const s_v2_int neighbour_pos = V2IntSum(pos, neighbour_pos_offsets[i]);
+        for (t_s32 i = 0; i < STATIC_ARRAY_LEN(neighbour_pos_offsets); i++) {
+            const s_v2_s32 neighbour_pos = V2S32Sum(pos, *STATIC_ARRAY_ELEM(neighbour_pos_offsets, i));
 
-            if (!IsLightPosInBounds(neighbour_pos, lightmap->size)) {
+            if (!IsLightPosInBounds(neighbour_pos, lightmap.size)) {
                 continue;
             }
 
@@ -134,7 +103,7 @@ bool PropagateLights(const s_lightmap* const lightmap, s_mem_arena* const temp_m
 
                 // No point in adding it to the queue it if it's completely dark, as there'd be no brightness to propagate.
                 if (LightLevel(lightmap, neighbour_pos) > 0) {
-                    EnqueueLightPos(&light_pos_queue, neighbour_pos, lightmap->size);
+                    EnqueueLightPos(&light_pos_queue, neighbour_pos, lightmap.size);
                 }
             }
         }
@@ -143,19 +112,18 @@ bool PropagateLights(const s_lightmap* const lightmap, s_mem_arena* const temp_m
     return true;
 }
 
-void RenderLightmap(const zfw_s_rendering_context* const rendering_context, const s_lightmap* const map, const s_v2 pos, const float tile_size) {
-    assert(IsLightmapInitted(map));
+void RenderLightmap(const s_rendering_context* const rendering_context, const s_lightmap map, const s_v2 pos, const t_r32 tile_size) {
     assert(tile_size > 0.0f);
 
-    for (int ty = 0; ty < map->size.y; ty++) {
-        for (int tx = 0; tx < map->size.x; tx++) {
-            const t_light_level light_lvl = LightLevel(map, (s_v2_int){tx, ty});
+    for (t_s32 ty = 0; ty < map.size.y; ty++) {
+        for (t_s32 tx = 0; tx < map.size.x; tx++) {
+            const t_light_level light_lvl = LightLevel(map, (s_v2_s32){tx, ty});
 
             if (light_lvl == LIGHT_LEVEL_LIMIT) {
                 continue;
             }
 
-            const zfw_s_rect rect = {
+            const s_rect rect = {
                 pos.x + (tx * tile_size),
                 pos.y + (ty * tile_size),
                 tile_size,
@@ -163,10 +131,10 @@ void RenderLightmap(const zfw_s_rendering_context* const rendering_context, cons
             };
 
             const u_v4 blend = {
-                .w = 1.0f - ((float)light_lvl / LIGHT_LEVEL_LIMIT)
+                .w = 1.0f - ((t_r32)light_lvl / LIGHT_LEVEL_LIMIT)
             };
 
-            ZFW_RenderRect(rendering_context, rect, blend);
+            RenderRect(rendering_context, rect, blend);
         }
     }
 }

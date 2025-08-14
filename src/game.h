@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <zfw.h>
+#include <zfwc.h>
 #include "sprites.h"
 #include "particles.h"
 
@@ -69,11 +69,6 @@ typedef char t_world_name_buf[WORLD_NAME_LEN_LIMIT + 1];
 #define ITEM_QUANTITY_LIMIT 99 // TEMP: Eventually each item type will have its own unique quantity.
 
 typedef enum {
-    ek_surface_temp, // Used for anything short-lived, like player and NPC flash effects.
-    eks_surface_cnt
-} e_surface;
-
-typedef enum {
     ek_tile_type_dirt,
     ek_tile_type_stone,
     ek_tile_type_grass,
@@ -92,7 +87,7 @@ typedef enum {
 
 typedef struct {
     e_item_type item_type;
-    int quantity;
+    t_s32 quantity;
 } s_inventory_slot;
 
 typedef enum {
@@ -145,55 +140,53 @@ typedef enum {
 typedef struct {
     e_sprite spr;
     e_item_type drop_item;
-    int life;
+    t_s32 life;
     e_particle_template particle_template;
-} s_tile_type;
+} s_tile_type_info;
 
-extern const s_tile_type g_tile_types[];
+extern const s_tile_type_info g_tile_type_infos[];
 
 typedef struct {
-    const char* name;
+    s_char_array_view name;
 
     e_sprite icon_spr;
 
     bool consume_on_use;
     e_item_use_type use_type;
-    int use_break;
+    t_s32 use_break;
 
     e_tile_type tile_place_type;
 
-    int tile_hurt_dist;
+    t_s32 tile_hurt_dist;
 
     e_projectile_type shoot_proj_type;
-    float shoot_proj_spd;
-    int shoot_proj_dmg;
-} s_item_type;
+    t_r32 shoot_proj_spd;
+    t_s32 shoot_proj_dmg;
+} s_item_type_info;
 
-extern const s_item_type g_item_types[];
+extern const s_item_type_info g_item_type_infos[];
 
 typedef struct {
     e_sprite spr;
     e_projectile_type_flags flags;
-} s_projectile_type;
+} s_projectile_type_info;
 
-extern const s_projectile_type g_projectile_types[];
+extern const s_projectile_type_info g_projectile_type_infos[];
 
 typedef struct {
     bool killed;
     s_v2 pos;
     s_v2 vel;
     bool jumping;
-    int hp;
-    int invinc_time;
-    int item_use_break;
-    int flash_time;
+    t_s32 hp;
+    t_s32 invinc_time;
+    t_s32 item_use_break;
+    t_s32 flash_time;
 } s_player;
 
-typedef t_byte t_npc_activity[BITS_TO_BYTES(NPC_LIMIT)];
-
 typedef struct {
-    int jump_time;
-    float jump_hor_spd;
+    t_s32 jump_time;
+    t_r32 jump_hor_spd;
 } s_slime_npc;
 
 typedef union {
@@ -203,11 +196,13 @@ typedef union {
 typedef struct {
     s_v2 pos;
     s_v2 vel;
-    int hp;
-    int flash_time;
+    t_s32 hp;
+    t_s32 flash_time;
     e_npc_type type;
     u_npc_type_data type_data;
 } s_npc;
+
+DEF_STATIC_BITSET_TYPE(npc_activity, NPCActivity, NPC_LIMIT);
 
 typedef struct {
     s_npc buf[NPC_LIMIT];
@@ -217,15 +212,17 @@ typedef struct {
 typedef struct {
     e_projectile_type type;
     bool friendly;
-    int dmg;
+    t_s32 dmg;
     s_v2 pos;
     s_v2 vel;
-    float rot;
+    t_r32 rot;
 } s_projectile;
+
+DEF_ARRAY_TYPE(s_projectile, projectile, Projectile);
 
 typedef struct {
     e_item_type item_type;
-    int quantity;
+    t_s32 quantity;
     s_v2 pos;
     s_v2 vel;
 } s_item_drop;
@@ -233,26 +230,26 @@ typedef struct {
 typedef struct {
     char str[POPUP_TEXT_STR_BUF_SIZE];
     s_v2 pos;
-    float vel_y;
-    float alpha;
+    t_r32 vel_y;
+    t_r32 alpha;
 } s_popup_text;
 
 typedef struct {
     s_v2 pos;
-    float scale;
+    t_r32 scale;
 } s_camera;
 
-typedef t_byte t_tilemap_activity[BITS_TO_BYTES(TILEMAP_HEIGHT)][BITS_TO_BYTES(TILEMAP_WIDTH)];
+DEF_STATIC_BITSET_TYPE(tilemap_activity, TilemapActivity, TILEMAP_WIDTH * TILEMAP_HEIGHT);
 
 typedef struct {
     t_tilemap_activity activity;
     e_tile_type tile_types[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 } s_tilemap_core;
 
-typedef int t_tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
+typedef t_s32 t_tilemap_tile_lifes[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 
 typedef struct {
-    int player_hp_max;
+    t_s32 player_hp_max;
     s_tilemap_core tilemap_core;
 } s_world_core;
 
@@ -261,17 +258,17 @@ typedef struct world {
 
     s_world_core core;
 
-    int respawn_time;
+    t_s32 respawn_time;
 
     s_player player;
 
     s_npcs npcs;
 
     s_projectile projectiles[PROJECTILE_LIMIT];
-    int proj_cnt;
+    t_s32 proj_cnt;
 
     s_item_drop item_drops[ITEM_DROP_LIMIT];
-    int item_drop_active_cnt;
+    t_s32 item_drop_active_cnt;
 
     t_tilemap_tile_lifes tilemap_tile_lifes;
 
@@ -281,35 +278,35 @@ typedef struct world {
 
     bool player_inv_open;
     s_inventory_slot player_inv_slots[PLAYER_INVENTORY_ROW_CNT][PLAYER_INVENTORY_COLUMN_CNT];
-    int player_inv_hotbar_slot_selected;
+    t_s32 player_inv_hotbar_slot_selected;
 
     s_popup_text popup_texts[POPUP_TEXT_LIMIT];
 
     t_mouse_hover_str_buf mouse_hover_str;
     e_item_type mouse_item_held_type;
-    int mouse_item_held_quantity;
+    t_s32 mouse_item_held_quantity;
 } s_world;
 
-typedef void (*t_npc_tick_func)(s_world* const world, const int npc_index);
-typedef void (*t_npc_postspawn_func)(s_world* const world, const int npc_index);
+typedef void (*t_npc_tick_func)(s_world* const world, const t_s32 npc_index);
+typedef void (*t_npc_postspawn_func)(s_world* const world, const t_s32 npc_index);
 
 typedef struct {
-    const char* name;
+    s_char_array_view name;
     e_sprite spr;
     t_npc_tick_func tick_func;
     t_npc_postspawn_func postspawn_func;
-    int hp_max;
-    int contact_dmg;
-    float contact_kb;
+    t_s32 hp_max;
+    t_s32 contact_dmg;
+    t_r32 contact_kb;
 } s_npc_type;
 
 typedef struct {
     e_setting_type type;
-    const char* name;
-    t_byte preset;
+    s_char_array_view name;
+    t_u8 preset;
 } s_setting;
 
-typedef t_byte t_settings[eks_setting_cnt];
+typedef t_u8 t_settings[eks_setting_cnt];
 extern const s_setting g_settings[];
 
 typedef struct {
@@ -319,17 +316,15 @@ typedef struct {
 
 typedef struct {
     e_title_screen_page page;
-    int page_btn_elem_hovered_index;
+    t_s32 page_btn_feat_hovered_index;
     t_world_filenames world_filenames_cache;
     t_world_name_buf new_world_name_buf;
 } s_title_screen;
 
 typedef struct {
-    zfw_s_texture_group textures;
-    zfw_s_font_group fonts;
-    zfw_s_shader_prog_group shader_progs;
-    zfw_s_sound_types snd_types;
-    zfw_s_surface_group surfs;
+    s_texture_group textures;
+    s_font_group fonts;
+    //s_shader_prog_group shader_progs;
 
     t_settings settings;
 
@@ -338,7 +333,7 @@ typedef struct {
     s_world world;
 } s_game;
 
-static inline float UIScale(const s_v2_int window_size) {
+static inline t_r32 UIScale(const s_v2_s32 window_size) {
     if (window_size.x > 1920 && window_size.y > 1080) {
         return 2.0f;
     }
@@ -350,23 +345,23 @@ static inline float UIScale(const s_v2_int window_size) {
     return 1.0f;
 }
 
-static inline s_v2_int UISize(const s_v2_int window_size) {
+static inline s_v2_s32 UISize(const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
-    const float ui_scale = UIScale(window_size);
-    return (s_v2_int){window_size.x / ui_scale, window_size.y / ui_scale};
+    const t_r32 ui_scale = UIScale(window_size);
+    return (s_v2_s32){window_size.x / ui_scale, window_size.y / ui_scale};
 }
 
-static inline s_v2 DisplayToUIPos(const s_v2 pos, const s_v2_int window_size) {
-    const float ui_scale = UIScale(window_size);
+static inline s_v2 DisplayToUIPos(const s_v2 pos, const s_v2_s32 window_size) {
+    const t_r32 ui_scale = UIScale(window_size);
     return (s_v2){pos.x / ui_scale, pos.y / ui_scale};
 }
 
-static inline zfw_s_rect Collider(const s_v2 pos, const s_v2 size, const s_v2 origin) {
+static inline s_rect Collider(const s_v2 pos, const s_v2 size, const s_v2 origin) {
     assert(size.x > 0.0f && size.y > 0.0f);
-    return (zfw_s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
+    return (s_rect){pos.x - (size.x * origin.x), pos.y - (size.y * origin.y), size.x, size.y};
 }
 
-static inline zfw_s_rect ColliderFromSprite(const e_sprite spr, const s_v2 pos, const s_v2 origin) {
+static inline s_rect ColliderFromSprite(const e_sprite spr, const s_v2 pos, const s_v2 origin) {
     return Collider(pos, (s_v2){g_sprites[spr].src_rect.width, g_sprites[spr].src_rect.height}, origin);
 }
 
@@ -375,32 +370,32 @@ static inline bool SettingToggle(const t_settings* const settings, const e_setti
     return (*settings)[setting];
 }
 
-static inline float SettingPerc(const t_settings* const settings, const e_setting setting) {
+static inline t_r32 SettingPerc(const t_settings* const settings, const e_setting setting) {
     assert(g_settings[setting].type == ek_setting_type_perc);
-    return (float)(*settings)[setting] / 100.0f;
+    return (t_r32)(*settings)[setting] / 100.0f;
 }
 
-static inline s_v2_int CameraToTilePos(const s_v2 pos) {
-    return (s_v2_int){
+static inline s_v2_s32 CameraToTilePos(const s_v2 pos) {
+    return (s_v2_s32){
         floorf(pos.x / TILE_SIZE),
         floorf(pos.y / TILE_SIZE)
     };
 }
 
-static inline s_v2 CameraSize(const float cam_scale, const s_v2_int window_size) {
+static inline s_v2 CameraSize(const t_r32 cam_scale, const s_v2_s32 window_size) {
     assert(cam_scale > 0.0f);
     assert(window_size.x > 0 && window_size.y > 0);
     return (s_v2){window_size.x / cam_scale, window_size.y / cam_scale};
 }
 
-static inline s_v2 CameraTopLeft(const s_camera* const cam, const s_v2_int window_size) {
+static inline s_v2 CameraTopLeft(const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const s_v2 size = CameraSize(cam->scale, window_size);
     return (s_v2){cam->pos.x - (size.x / 2.0f), cam->pos.y - (size.y / 2.0f)};
 }
 
-static inline s_v2 CameraToDisplayPos(const s_v2 pos, const s_camera* const cam, const s_v2_int window_size) {
+static inline s_v2 CameraToDisplayPos(const s_v2 pos, const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const s_v2 cam_tl = CameraTopLeft(cam, window_size);
@@ -410,7 +405,7 @@ static inline s_v2 CameraToDisplayPos(const s_v2 pos, const s_camera* const cam,
     };
 }
 
-static inline s_v2 DisplayToCameraPos(const s_v2 pos, const s_camera* const cam, const s_v2_int window_size) {
+static inline s_v2 DisplayToCameraPos(const s_v2 pos, const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const s_v2 cam_tl = CameraTopLeft(cam, window_size);
@@ -420,7 +415,7 @@ static inline s_v2 DisplayToCameraPos(const s_v2 pos, const s_camera* const cam,
     };
 }
 
-static inline s_v2 CameraToUIPos(const s_v2 pos, const s_camera* const cam, const s_v2_int window_size) {
+static inline s_v2 CameraToUIPos(const s_v2 pos, const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
     return DisplayToUIPos(CameraToDisplayPos(pos, cam, window_size), window_size);
 }
@@ -428,38 +423,38 @@ static inline s_v2 CameraToUIPos(const s_v2 pos, const s_camera* const cam, cons
 //
 // game.c
 //
-bool InitGame(const zfw_s_game_init_context* const zfw_context);
-zfw_e_game_tick_result GameTick(const zfw_s_game_tick_context* const zfw_context);
-bool RenderGame(const zfw_s_game_render_context* const zfw_context);
+bool InitGame(const s_game_init_context* const context);
+e_game_tick_result GameTick(const s_game_tick_context* const context);
+bool RenderGame(const s_game_render_context* const context);
 void CleanGame(void* const dev_mem);
 
 //
 // title_screen.c
 //
 bool InitTitleScreen(s_title_screen* const ts, s_mem_arena* const temp_mem_arena);
-s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const zfw_s_game_tick_context* const zfw_context, const zfw_s_font_group* const fonts, const zfw_s_sound_types* const snd_types);
-bool RenderTitleScreen(const s_title_screen* const ts, const zfw_s_rendering_context* const rendering_context, const t_settings* const settings, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts, s_mem_arena* const temp_mem_arena);
+s_title_screen_tick_result TitleScreenTick(s_title_screen* const ts, t_settings* const settings, const s_game_tick_context* const zfw_context, const s_font_group* const fonts);
+bool RenderTitleScreen(const s_title_screen* const ts, const s_rendering_context* const rendering_context, const t_settings* const settings, const s_texture_group* const textures, const s_font_group* const fonts, s_mem_arena* const temp_mem_arena);
 
 //
 // world.c
 //
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_int window_size, s_mem_arena* const temp_mem_arena);
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_s32 window_size, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_game_tick_context* const zfw_context, const zfw_s_sound_types* const snd_types);
-bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, zfw_s_surface_group* const surfs, s_mem_arena* const temp_mem_arena);
+bool WorldTick(s_world* const world, const t_settings* const settings, const s_game_tick_context* const zfw_context);
+bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
-bool PlaceWorldTile(s_world* const world, const s_v2_int pos, const e_tile_type type);
-bool HurtWorldTile(s_world* const world, const s_v2_int pos);
-bool DestroyWorldTile(s_world* const world, const s_v2_int pos);
-bool IsTilePosFree(const s_world* const world, const s_v2_int tile_pos);
-s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const float vel_y);
+bool PlaceWorldTile(s_world* const world, const s_v2_s32 pos, const e_tile_type type);
+bool HurtWorldTile(s_world* const world, const s_v2_s32 pos);
+bool DestroyWorldTile(s_world* const world, const s_v2_s32 pos);
+bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos);
+s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const t_r32 vel_y);
 
 //
 // world_ui.c
 //
-void UpdateWorldUI(s_world* const world, const zfw_s_input_context* const input_context, const s_v2_int window_size);
-bool RenderWorldUI(const s_world* const world, const zfw_s_game_render_context* const zfw_context, const zfw_s_texture_group* const textures, const zfw_s_font_group* const fonts);
+void UpdateWorldUI(s_world* const world, const s_input_context* const input_context, const s_v2_s32 window_size);
+bool RenderWorldUI(const s_world* const world, const s_game_render_context* const context, const s_texture_group* const textures, const s_font_group* const fonts);
 
 //
 // world_gen.c
@@ -469,17 +464,17 @@ void GenWorld(s_world_core* const world_core);
 //
 // player.c
 //
-void InitPlayer(s_player* const player, const int hp_max, const t_tilemap_activity* const tm_activity);
-bool UpdatePlayer(s_world* const world, const zfw_s_input_context* const input_context);
-void RenderPlayer(const s_player* const player, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs);
-bool HurtPlayer(s_world* const world, const int dmg, const s_v2 kb);
+void InitPlayer(s_player* const player, const t_s32 hp_max, const t_tilemap_activity* const tm_activity);
+bool UpdatePlayer(s_world* const world, const s_input_context* const input_context);
+void RenderPlayer(const s_player* const player, const s_rendering_context* const rendering_context, const s_texture_group* const textures);
+bool HurtPlayer(s_world* const world, const t_s32 dmg, const s_v2 kb);
 
 static inline s_v2 PlayerColliderSize() {
     const s_sprite* const spr = &g_sprites[ek_sprite_player];
     return (s_v2){spr->src_rect.width, spr->src_rect.height};
 }
 
-static inline zfw_s_rect PlayerCollider(const s_v2 pos) {
+static inline s_rect PlayerCollider(const s_v2 pos) {
     return Collider(pos, PlayerColliderSize(), PLAYER_ORIGIN);
 }
 
@@ -488,88 +483,86 @@ static inline zfw_s_rect PlayerCollider(const s_v2 pos) {
 //
 extern const s_npc_type g_npc_types[];
 
-int SpawnNPC(s_world* const world, const s_v2 pos, const e_npc_type type, const t_tilemap_activity* const tm_activity);
+t_s32 SpawnNPC(s_world* const world, const s_v2 pos, const e_npc_type type, const t_tilemap_activity* const tm_activity);
 void UpdateNPCs(s_world* const world);
 void ProcNPCDeaths(s_world* const world);
-void RenderNPCs(const s_npcs* const npcs, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, const zfw_s_surface_group* const surfs);
-bool HurtNPC(s_world* const world, const int npc_index, const int dmg, const s_v2 kb);
-bool IsNPCActive(const t_npc_activity* const activity, const int index);
-bool ProcEnemySpawning(s_world* const world, const float cam_width);
+void RenderNPCs(const s_npcs* const npcs, const s_rendering_context* const rendering_context, const s_texture_group* const textures);
+bool HurtNPC(s_world* const world, const t_s32 npc_index, const t_s32 dmg, const s_v2 kb);
+bool ProcEnemySpawning(s_world* const world, const t_r32 cam_width);
 
 static inline s_v2 NPCColliderSize(const e_npc_type npc_type) {
     const s_sprite* const spr = &g_sprites[g_npc_types[npc_type].spr];
     return (s_v2){spr->src_rect.width, spr->src_rect.height};
 }
 
-static inline zfw_s_rect NPCCollider(const s_v2 npc_pos, const e_npc_type npc_type) {
+static inline s_rect NPCCollider(const s_v2 npc_pos, const e_npc_type npc_type) {
     return Collider(npc_pos, NPCColliderSize(npc_type), NPC_ORIGIN);
 }
 
 //
 // projectiles.c
 //
-s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const int dmg, const s_v2 pos, const s_v2 vel);
+s_projectile* SpawnProjectile(s_world* const world, const e_projectile_type type, const bool friendly, const t_s32 dmg, const s_v2 pos, const s_v2 vel);
 bool UpdateProjectiles(s_world* const world);
-void RenderProjectiles(const s_projectile* const projectiles, const int proj_cnt, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures);
+void RenderProjectiles(const s_projectile_array_view projectiles, const s_rendering_context* const rendering_context, const s_texture_group* const textures);
 
-static inline zfw_s_rect ProjectileCollider(const e_projectile_type proj_type, const s_v2 pos) {
-    return ColliderFromSprite(g_projectile_types[proj_type].spr, pos, (s_v2){0.5f, 0.5f});
+static inline s_rect ProjectileCollider(const e_projectile_type proj_type, const s_v2 pos) {
+    return ColliderFromSprite(g_projectile_type_infos[proj_type].spr, pos, (s_v2){0.5f, 0.5f});
 }
 
 //
 // items.c
 //
-bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_v2_int mouse_tile_pos);
-bool ProcItemUsage(s_world* const world, const zfw_s_input_context* const input_context, const s_v2_int window_size);
-bool SpawnItemDrop(s_world* const world, const s_v2 pos, const e_item_type item_type, const int item_quantity);
-bool UpdateItemDrops(s_world* const world, zfw_s_audio_sys* const audio_sys, const zfw_s_sound_types* const snd_types, const t_settings* const settings);
-void RenderItemDrops(const s_item_drop* const drops, const int drop_cnt, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures);
+bool IsItemUsable(const e_item_type item_type, const s_world* const world, const s_v2_s32 mouse_tile_pos);
+bool ProcItemUsage(s_world* const world, const s_input_context* const input_context, const s_v2_s32 window_size);
+bool SpawnItemDrop(s_world* const world, const s_v2 pos, const e_item_type item_type, const t_s32 item_quantity);
+bool UpdateItemDrops(s_world* const world, const t_settings* const settings);
+void RenderItemDrops(const s_item_drop* const drops, const t_s32 drop_cnt, const s_rendering_context* const rendering_context, const s_texture_group* const textures);
 
 static inline s_v2 ItemDropColliderSize(const e_item_type item_type) {
-    const s_sprite* const spr = &g_sprites[g_item_types[item_type].icon_spr];
+    const s_sprite* const spr = &g_sprites[g_item_type_infos[item_type].icon_spr];
     return (s_v2){spr->src_rect.width, spr->src_rect.height};
 }
 
-static inline zfw_s_rect ItemDropCollider(const s_v2 pos, const e_item_type item_type) {
+static inline s_rect ItemDropCollider(const s_v2 pos, const e_item_type item_type) {
     return Collider(pos, ItemDropColliderSize(item_type), ITEM_DROP_ORIGIN);
 }
 
 //
 // tilemap.c
 //
-void AddTile(s_tilemap_core* const tm_core, const s_v2_int pos, const e_tile_type tile_type);
-void RemoveTile(s_tilemap_core* const tm_core, const s_v2_int pos);
-zfw_s_rect_edges_int RectTilemapSpan(const zfw_s_rect rect);
-bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const zfw_s_rect collider);
+void AddTile(s_tilemap_core* const tm_core, const s_v2_s32 pos, const e_tile_type tile_type);
+void RemoveTile(s_tilemap_core* const tm_core, const s_v2_s32 pos);
+s_rect_edges_s32 RectTilemapSpan(const s_rect rect);
+bool TileCollisionCheck(const t_tilemap_activity* const tm_activity, const s_rect collider);
 void ProcTileCollisions(s_v2* const pos, s_v2* const vel, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
-void ProcVerTileCollisions(s_v2* const pos, float* const vel_y, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
-void MakeContactWithTilemap(s_v2* const pos, const zfw_e_cardinal_dir dir, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
-void MakeContactWithTilemapByJumpSize(s_v2* const pos, const float jump_size, const zfw_e_cardinal_dir dir, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
-void RenderTilemap(const s_tilemap_core* const tilemap_core, const zfw_s_rendering_context* const rendering_context, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const zfw_s_rect_edges_int range, const zfw_s_texture_group* const textures);
+void ProcVerTileCollisions(s_v2* const pos, t_r32* const vel_y, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
+void MakeContactWithTilemap(s_v2* const pos, const e_cardinal_dir dir, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
+void MakeContactWithTilemapByJumpSize(s_v2* const pos, const t_r32 jump_size, const e_cardinal_dir dir, const s_v2 collider_size, const s_v2 collider_origin, const t_tilemap_activity* const tm_activity);
+void RenderTilemap(const s_tilemap_core* const tilemap_core, const s_rendering_context* const rendering_context, const t_tilemap_tile_lifes* const tilemap_tile_lifes, const s_rect_edges_s32 range, const s_texture_group* const textures);
 
-static inline bool IsTilePosInBounds(const s_v2_int pos) {
+static inline bool IsTilePosInBounds(const s_v2_s32 pos) {
     return pos.x >= 0 && pos.x < TILEMAP_WIDTH && pos.y >= 0 && pos.y < TILEMAP_HEIGHT;
 }
 
-static inline bool IsTilemapRangeValid(const zfw_s_rect_edges_int range) {
-    return ZFW_IsRangeIntValid(range, (s_v2_int){TILEMAP_WIDTH, TILEMAP_HEIGHT});
+static inline bool IsTilemapRangeValid(const s_rect_edges_s32 range) {
+    return IsRangeS32Valid(range, (s_v2_s32){TILEMAP_WIDTH, TILEMAP_HEIGHT});
 }
 
-static inline int TileDist(const s_v2_int a, const s_v2_int b) {
+static inline t_s32 TileDist(const s_v2_s32 a, const s_v2_s32 b) {
     return Dist((s_v2){a.x, a.y}, (s_v2){b.x, b.y});
 }
 
-static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_v2_int pos) {
-    assert(tm_activity);
+static bool IsTileActive(const t_tilemap_activity* const tm_activity, const s_v2_s32 pos) {
     assert(IsTilePosInBounds(pos));
-    return IsBitActive((const t_byte*)tm_activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH), TILEMAP_WIDTH * TILEMAP_HEIGHT);
+    return IsTilemapActivityBitSet(tm_activity, IndexFrom2D(pos.x, pos.y, TILEMAP_WIDTH));
 }
 
 //
 // inventory.c
 //
-int AddToInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
-int RemoveFromInventory(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
-bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const int slot_cnt, const e_item_type item_type, int quantity);
+t_s32 AddToInventory(s_inventory_slot* const slots, const t_s32 slot_cnt, const e_item_type item_type, t_s32 quantity);
+t_s32 RemoveFromInventory(s_inventory_slot* const slots, const t_s32 slot_cnt, const e_item_type item_type, t_s32 quantity);
+bool DoesInventoryHaveRoomFor(s_inventory_slot* const slots, const t_s32 slot_cnt, const e_item_type item_type, t_s32 quantity);
 
 #endif

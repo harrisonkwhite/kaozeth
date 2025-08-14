@@ -28,8 +28,7 @@ add_executable(terraria_clone
     src/particles.h
 )
 
-target_include_directories(terraria_clone PRIVATE zeta_framework/include)
-target_link_libraries(terraria_clone PRIVATE zeta_framework)
+target_link_libraries(terraria_clone PRIVATE zfw_core)
 
 set_target_properties(terraria_clone PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"

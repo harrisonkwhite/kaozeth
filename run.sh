@@ -6,4 +6,5 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 cmake --build .
 cp compile_commands.json ..
 cd ..
-./build/terraria_clone
+build/zeta_framework/zfw_asset_packer/zfw_asset_packer
+build/terraria_clone

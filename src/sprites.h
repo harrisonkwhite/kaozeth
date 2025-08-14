@@ -1,7 +1,7 @@
 #ifndef SPRITES_H
 #define SPRITES_H
 
-#include <zfw.h>
+#include <zfwc.h>
 #include "assets.h"
 
 typedef enum {
@@ -37,7 +37,7 @@ typedef enum {
 
 typedef struct {
     e_texture tex;
-    zfw_s_rect_int src_rect;
+    s_rect_s32 src_rect;
 } s_sprite;
 
 static const s_sprite g_sprites[] = {
@@ -144,8 +144,9 @@ static const s_sprite g_sprites[] = {
 
 STATIC_ARRAY_LEN_CHECK(g_sprites, eks_sprite_cnt);
 
-static inline void RenderSprite(const zfw_s_rendering_context* const context, const e_sprite spr, const zfw_s_texture_group* const textures, const s_v2 pos, const s_v2 origin, const s_v2 scale, const float rot, const u_v4 blend) {
-    ZFW_RenderTexture(context, textures, g_sprites[spr].tex, g_sprites[spr].src_rect, pos, origin, scale, rot, blend);
+static inline void RenderSprite(const s_rendering_context* const context, const e_sprite spr, const s_texture_group* const textures, const s_v2 pos, const s_v2 origin, const s_v2 scale, const t_r32 rot, const u_v4 blend) {
+    const s_sprite* const s = STATIC_ARRAY_ELEM(g_sprites, spr);
+    RenderTexture(context, textures, s->tex, s->src_rect, pos, origin, scale, rot, blend);
 }
 
 #endif

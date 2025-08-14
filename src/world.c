@@ -5,7 +5,7 @@
 
 #define RESPAWN_TIME 120
 
-static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const s_v2_int window_size) {
+static s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const s_v2 view_pos = {
@@ -13,17 +13,17 @@ static zfw_s_matrix_4x4 CameraViewMatrix(const s_camera* const cam, const s_v2_i
         (-cam->pos.y * cam->scale) + (window_size.y / 2.0f)
     };
 
-    zfw_s_matrix_4x4 mat = ZFW_IdentityMatrix4x4();
-    ZFW_TranslateMatrix4x4(&mat, view_pos);
-    ZFW_ScaleMatrix4x4(&mat, cam->scale);
+    s_matrix_4x4 mat = IdentityMatrix4x4();
+    TranslateMatrix4x4(&mat, view_pos);
+    ScaleMatrix4x4(&mat, cam->scale);
     return mat;
 }
 
-static inline float CalcCameraScale(const s_v2_int window_size) {
+static inline t_r32 CalcCameraScale(const s_v2_s32 window_size) {
     return window_size.x > 1600 || window_size.y > 900 ? 3.0f : 2.0f;
 }
 
-bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_int window_size, s_mem_arena* const temp_mem_arena) {
+bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_s32 window_size, s_mem_arena* const temp_mem_arena) {
     assert(world && IS_ZERO(*world));
     assert(filename);
 
@@ -51,7 +51,7 @@ void CleanWorld(s_world* const world) {
     CleanMemArena(&world->mem_arena);
 }
 
-bool WorldTick(s_world* const world, const t_settings* const settings, const zfw_s_game_tick_context* const zfw_context, const zfw_s_sound_types* const snd_types) {
+bool WorldTick(s_world* const world, const t_settings* const settings, const s_game_tick_context* const zfw_context) {
     world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
     const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
@@ -79,7 +79,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     UpdateNPCs(world);
     ProcNPCDeaths(world); // NOTE: Might need to defer this until later in the tick.
 
-    if (!UpdateItemDrops(world, zfw_context->audio_sys, snd_types, settings)) {
+    if (!UpdateItemDrops(world, settings)) {
         return false;
     }
 
@@ -115,13 +115,13 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const zfw
     return true;
 }
 
-static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const s_v2_int window_size) {
+static s_rect_edges_s32 TilemapRenderRange(const s_camera* const cam, const s_v2_s32 window_size) {
     assert(window_size.x > 0 && window_size.y > 0);
 
     const s_v2 cam_tl = CameraTopLeft(cam, window_size);
     const s_v2 cam_size = CameraSize(cam->scale, window_size);
 
-    zfw_s_rect_edges_int render_range = {
+    s_rect_edges_s32 render_range = {
         .left = floorf(cam_tl.x / TILE_SIZE),
         .top = floorf(cam_tl.y / TILE_SIZE),
         .right = ceilf((cam_tl.x + cam_size.x) / TILE_SIZE),
@@ -137,60 +137,54 @@ static zfw_s_rect_edges_int TilemapRenderRange(const s_camera* const cam, const 
     return render_range;
 }
 
-static s_lightmap GenWorldLightmap(s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const zfw_s_rect_edges_int tm_render_range, s_mem_arena* const temp_mem_arena) {
-    const s_lightmap lightmap = GenLightmap(mem_arena, (s_v2_int){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top});
+static bool WARN_UNUSED_RESULT GenWorldLightmap(s_lightmap* const lightmap, s_mem_arena* const mem_arena, const t_tilemap_activity* const tm_activity, const s_rect_edges_s32 tm_render_range, s_mem_arena* const temp_mem_arena) {
+    assert(IS_ZERO(*lightmap));
 
-    if (!IsLightmapInitted(&lightmap)) {
-        return (s_lightmap){0};
+    if (!GenLightmap(lightmap, mem_arena, (s_v2_s32){tm_render_range.right - tm_render_range.left, tm_render_range.bottom - tm_render_range.top})) {
+        return false;
     }
 
-    for (int ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
-        for (int tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
-            if (IsTileActive(tm_activity, (s_v2_int){tx, ty})) {
+    for (t_s32 ty = tm_render_range.top; ty < tm_render_range.bottom; ty++) {
+        for (t_s32 tx = tm_render_range.left; tx < tm_render_range.right; tx++) {
+            if (IsTileActive(tm_activity, (s_v2_s32){tx, ty})) {
                 continue;
             }
 
-            const s_v2_int lp = {tx - tm_render_range.left, ty - tm_render_range.top};
-            SetLightLevel(&lightmap, lp, LIGHT_LEVEL_LIMIT);
+            const s_v2_s32 lp = {tx - tm_render_range.left, ty - tm_render_range.top};
+            SetLightLevel(*lightmap, lp, LIGHT_LEVEL_LIMIT);
         }
     }
 
-    if (!PropagateLights(&lightmap, temp_mem_arena)) {
-        return (s_lightmap){0};
-    }
-
-    return lightmap;
+    return PropagateLights(*lightmap, temp_mem_arena);
 }
 
-bool RenderWorld(const s_world* const world, const zfw_s_rendering_context* const rendering_context, const zfw_s_texture_group* const textures, const zfw_s_shader_prog_group* const shader_progs, zfw_s_surface_group* const surfs, s_mem_arena* const temp_mem_arena) {
-    const zfw_s_matrix_4x4 cam_view_mat = CameraViewMatrix(&world->cam, rendering_context->window_size);
-    ZFW_SetViewMatrix(rendering_context, &cam_view_mat);
+bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, s_mem_arena* const temp_mem_arena) {
+    const s_matrix_4x4 cam_view_mat = CameraViewMatrix(&world->cam, rendering_context->window_size);
+    SetViewMatrix(rendering_context, &cam_view_mat);
 
-    const zfw_s_rect_edges_int tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
+    const s_rect_edges_s32 tilemap_render_range = TilemapRenderRange(&world->cam, rendering_context->window_size);
 
     RenderTilemap(&world->core.tilemap_core, rendering_context, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
-        RenderPlayer(&world->player, rendering_context, textures, shader_progs, surfs);
+        RenderPlayer(&world->player, rendering_context, textures);
     }
 
-    RenderNPCs(&world->npcs, rendering_context, textures, shader_progs, surfs);
+    RenderNPCs(&world->npcs, rendering_context, textures);
 
     RenderItemDrops(world->item_drops, world->item_drop_active_cnt, rendering_context, textures);
 
-    RenderProjectiles(world->projectiles, world->proj_cnt, rendering_context, textures);
+    RenderProjectiles((s_projectile_array_view){.buf_raw = world->projectiles, .elem_cnt = world->proj_cnt}, rendering_context, textures);
 
-    RenderParticles(rendering_context, &world->particles, textures);
+    RenderParticles(&world->particles, rendering_context, textures);
 
-    const s_lightmap world_lightmap = GenWorldLightmap(temp_mem_arena, &world->core.tilemap_core.activity, tilemap_render_range, temp_mem_arena);
+    s_lightmap world_lightmap = {0};
 
-    if (!IsLightmapInitted(&world_lightmap)) {
+    if (!GenWorldLightmap(&world_lightmap, temp_mem_arena, &world->core.tilemap_core.activity, tilemap_render_range, temp_mem_arena)) {
         return false;
     }
 
-    RenderLightmap(rendering_context, &world_lightmap, (s_v2){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
-
-    ZFW_SubmitBatch(rendering_context);
+    RenderLightmap(rendering_context, world_lightmap, (s_v2){tilemap_render_range.left * TILE_SIZE, tilemap_render_range.top * TILE_SIZE}, TILE_SIZE);
 
     return true;
 }
@@ -237,19 +231,19 @@ bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_fi
     return true;
 }
 
-bool PlaceWorldTile(s_world* const world, const s_v2_int pos, const e_tile_type type) {
+bool PlaceWorldTile(s_world* const world, const s_v2_s32 pos, const e_tile_type type) {
     AddTile(&world->core.tilemap_core, pos, type);
     world->tilemap_tile_lifes[pos.y][pos.x] = 0;
     return true;
 }
 
-bool HurtWorldTile(s_world* const world, const s_v2_int pos) {
+bool HurtWorldTile(s_world* const world, const s_v2_s32 pos) {
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
 
     world->tilemap_tile_lifes[pos.y][pos.x]++;
 
-    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+    const s_tile_type_info* const tile_type = &g_tile_type_infos[world->core.tilemap_core.tile_types[pos.y][pos.x]];
 
     {
         // Spawn particles.
@@ -258,15 +252,15 @@ bool HurtWorldTile(s_world* const world, const s_v2_int pos) {
             (pos.y + 0.5f) * TILE_SIZE
         };
 
-        const int part_cnt = ZFW_RandRangeI(3, 5);
+        const t_s32 part_cnt = RandRangeS32(3, 5);
 
-        for (int i = 0; i < part_cnt; i++) {
+        for (t_s32 i = 0; i < part_cnt; i++) {
             const s_v2 vel = {
-                ZFW_RandRangeIncl(-0.5f, 0.5f),
-                ZFW_RandRangeIncl(-2.5f, -1.0f)
+                RandRangeIncl(-0.5f, 0.5f),
+                RandRangeIncl(-2.5f, -1.0f)
             };
 
-            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, TAU * ZFW_RandPerc());
+            SpawnParticleFromTemplate(&world->particles, tile_type->particle_template, tile_mid, vel, TAU * RandPerc());
         }
     }
 
@@ -279,7 +273,7 @@ bool HurtWorldTile(s_world* const world, const s_v2_int pos) {
     return true;
 }
 
-bool DestroyWorldTile(s_world* const world, const s_v2_int pos) {
+bool DestroyWorldTile(s_world* const world, const s_v2_s32 pos) {
 assert(world);
     assert(IsTilePosInBounds(pos));
     assert(IsTileActive(&world->core.tilemap_core.activity, pos));
@@ -288,7 +282,7 @@ assert(world);
 
     // Spawn item drop.
     const s_v2 drop_pos = {(pos.x + 0.5f) * TILE_SIZE, (pos.y + 0.5f) * TILE_SIZE};
-    const s_tile_type* const tile_type = &g_tile_types[world->core.tilemap_core.tile_types[pos.y][pos.x]];
+    const s_tile_type_info* const tile_type = &g_tile_type_infos[world->core.tilemap_core.tile_types[pos.y][pos.x]];
 
     if (!SpawnItemDrop(world, drop_pos, tile_type->drop_item, 1)) {
         return false;
@@ -297,12 +291,12 @@ assert(world);
     return true;
 }
 
-bool IsTilePosFree(const s_world* const world, const s_v2_int tile_pos) {
+bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos) {
     assert(world);
     assert(IsTilePosInBounds(tile_pos));
     assert(!IsTileActive(&world->core.tilemap_core.activity, tile_pos));
 
-    const zfw_s_rect tile_collider = {
+    const s_rect tile_collider = {
         tile_pos.x * TILE_SIZE,
         tile_pos.y * TILE_SIZE,
         TILE_SIZE,
@@ -310,32 +304,32 @@ bool IsTilePosFree(const s_world* const world, const s_v2_int tile_pos) {
     };
 
     // Check for player.
-    const zfw_s_rect player_collider = PlayerCollider(world->player.pos);
+    const s_rect player_collider = PlayerCollider(world->player.pos);
 
-    if (ZFW_DoRectsInters(tile_collider, player_collider)) {
+    if (DoRectsInters(tile_collider, player_collider)) {
         return false;
     }
 
     // Check for NPCs.
-    for (int i = 0; i < NPC_LIMIT; i++) {
-        if (!IsNPCActive(&world->npcs.activity, i)) {
+    for (t_s32 i = 0; i < NPC_LIMIT; i++) {
+        if (!IsNPCActivityBitSet(&world->npcs.activity, i)) {
             continue;
         }
 
         const s_npc* const npc = &world->npcs.buf[i];
-        const zfw_s_rect npc_collider = NPCCollider(npc->pos, npc->type);
+        const s_rect npc_collider = NPCCollider(npc->pos, npc->type);
 
-        if (ZFW_DoRectsInters(tile_collider, npc_collider)) {
+        if (DoRectsInters(tile_collider, npc_collider)) {
             return false;
         }
     }
 
     // Check for projectiles.
-    for (int i = 0; i < world->proj_cnt; i++) {
+    for (t_s32 i = 0; i < world->proj_cnt; i++) {
         const s_projectile* const proj = &world->projectiles[i];
-        const zfw_s_rect proj_collider = ProjectileCollider(proj->type, proj->pos);
+        const s_rect proj_collider = ProjectileCollider(proj->type, proj->pos);
 
-        if (ZFW_DoRectsInters(tile_collider, proj_collider)) {
+        if (DoRectsInters(tile_collider, proj_collider)) {
             return false;
         }
     }
@@ -343,8 +337,8 @@ bool IsTilePosFree(const s_world* const world, const s_v2_int tile_pos) {
     return true;
 }
 
-s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const float vel_y) {
-    for (int i = 0; i < POPUP_TEXT_LIMIT; i++) {
+s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const t_r32 vel_y) {
+    for (t_s32 i = 0; i < POPUP_TEXT_LIMIT; i++) {
         s_popup_text* const popup = &world->popup_texts[i];
 
         if (popup->alpha > POPUP_TEXT_INACTIVITY_ALPHA_THRESH) {
