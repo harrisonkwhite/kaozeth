@@ -120,8 +120,13 @@ bool UpdatePlayer(s_world* const world, const s_input_context* const input_conte
     return true;
 }
 
-void RenderPlayer(const s_player* const player, const s_rendering_context* const rendering_context, const s_texture_group* const textures) {
+void RenderPlayer(const s_player* const player, const s_rendering_context* const rendering_context, const s_texture_group* const textures, const s_surface* const temp_surf) {
     assert(!player->killed);
+
+    if (player->flash_time > 0) {
+        SetSurface(rendering_context, temp_surf);
+        Clear(rendering_context, (u_v4){0});
+    }
 
     t_r32 alpha = 1.0f;
 
@@ -130,6 +135,15 @@ void RenderPlayer(const s_player* const player, const s_rendering_context* const
     }
 
     RenderSprite(rendering_context, ek_sprite_player, textures, player->pos, PLAYER_ORIGIN, (s_v2){1.0f, 1.0f}, 0.0f, (u_v4){1.0f, 1.0f, 1.0f, alpha});
+
+    if (player->flash_time > 0) {
+        UnsetSurface(rendering_context);
+
+        SetSurfaceShaderProg(rendering_context, &rendering_context->basis->builtin_shader_progs, ek_builtin_shader_prog_surface_blend);
+        SetSurfaceShaderProgUniform(rendering_context, "u_col", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_v3, .as_v3 = WHITE.rgb});
+        SetSurfaceShaderProgUniform(rendering_context, "u_intensity", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_r32, .as_r32 = 1.0f});
+        RenderSurface(rendering_context, temp_surf, (s_v2){0});
+    }
 }
 
 bool HurtPlayer(s_world* const world, const t_s32 dmg, const s_v2 kb) {

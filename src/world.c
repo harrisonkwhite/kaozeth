@@ -158,7 +158,7 @@ static bool WARN_UNUSED_RESULT GenWorldLightmap(s_lightmap* const lightmap, s_me
     return PropagateLights(*lightmap, temp_mem_arena);
 }
 
-bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, s_mem_arena* const temp_mem_arena) {
+bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, const s_surface* const temp_surf, s_mem_arena* const temp_mem_arena) {
     const s_matrix_4x4 cam_view_mat = CameraViewMatrix(&world->cam, rendering_context->window_size);
     SetViewMatrix(rendering_context, &cam_view_mat);
 
@@ -167,7 +167,7 @@ bool RenderWorld(const s_world* const world, const s_rendering_context* const re
     RenderTilemap(&world->core.tilemap_core, rendering_context, &world->tilemap_tile_lifes, tilemap_render_range, textures);
 
     if (!world->player.killed) {
-        RenderPlayer(&world->player, rendering_context, textures);
+        RenderPlayer(&world->player, rendering_context, textures, temp_surf);
     }
 
     RenderNPCs(&world->npcs, rendering_context, textures);

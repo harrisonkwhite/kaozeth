@@ -443,7 +443,7 @@ bool RenderTitleScreen(const s_title_screen* const ts, const s_rendering_context
 bool InitWorld(s_world* const world, const t_world_filename* const filename, const s_v2_s32 window_size, s_mem_arena* const temp_mem_arena);
 void CleanWorld(s_world* const world);
 bool WorldTick(s_world* const world, const t_settings* const settings, const s_game_tick_context* const zfw_context);
-bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, s_mem_arena* const temp_mem_arena);
+bool RenderWorld(const s_world* const world, const s_rendering_context* const rendering_context, const s_texture_group* const textures, const s_surface* const temp_surf, s_mem_arena* const temp_mem_arena);
 bool LoadWorldCoreFromFile(s_world_core* const world_core, const t_world_filename* const filename);
 bool WriteWorldCoreToFile(const s_world_core* const world_core, const t_world_filename* const filename);
 bool PlaceWorldTile(s_world* const world, const s_v2_s32 pos, const e_tile_type type);
@@ -468,7 +468,7 @@ void GenWorld(s_world_core* const world_core);
 //
 void InitPlayer(s_player* const player, const t_s32 hp_max, const t_tilemap_activity* const tm_activity);
 bool UpdatePlayer(s_world* const world, const s_input_context* const input_context);
-void RenderPlayer(const s_player* const player, const s_rendering_context* const rendering_context, const s_texture_group* const textures);
+void RenderPlayer(const s_player* const player, const s_rendering_context* const rendering_context, const s_texture_group* const textures, const s_surface* const temp_surf);
 bool HurtPlayer(s_world* const world, const t_s32 dmg, const s_v2 kb);
 
 static inline s_v2 PlayerColliderSize() {

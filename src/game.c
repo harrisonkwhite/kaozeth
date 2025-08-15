@@ -142,12 +142,18 @@ static inline s_matrix_4x4 UIViewMatrix(const s_v2_s32 window_size) {
 bool RenderGame(const s_game_render_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
 
+    if (!V2S32sEqual(game->temp_surf.size, zfw_context->rendering_context.window_size)) {
+        if (!ResizeSurface(&game->temp_surf, zfw_context->rendering_context.window_size)) {
+            return false;
+        }
+    }
+
     const s_matrix_4x4 ui_view_matrix = UIViewMatrix(zfw_context->rendering_context.window_size);
 
     Clear(&zfw_context->rendering_context, BG_COLOR);
 
     if (game->in_world) {
-        if (!RenderWorld(&game->world, &zfw_context->rendering_context, &game->textures, zfw_context->temp_mem_arena)) {
+        if (!RenderWorld(&game->world, &zfw_context->rendering_context, &game->textures, &game->temp_surf, zfw_context->temp_mem_arena)) {
             return false;
         }
 
