@@ -140,9 +140,13 @@ void RenderPlayer(const s_player* const player, const s_rendering_context* const
         UnsetSurface(rendering_context);
 
         SetSurfaceShaderProg(rendering_context, &rendering_context->basis->builtin_shader_progs, ek_builtin_shader_prog_surface_blend);
+
         SetSurfaceShaderProgUniform(rendering_context, "u_col", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_v3, .as_v3 = WHITE.rgb});
-        SetSurfaceShaderProgUniform(rendering_context, "u_intensity", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_r32, .as_r32 = 1.0f});
-        RenderSurface(rendering_context, temp_surf, (s_v2){0});
+
+        assert(player->flash_time >= 0 && player->flash_time <= PLAYER_HURT_FLASH_TIME);
+        SetSurfaceShaderProgUniform(rendering_context, "u_intensity", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_r32, .as_r32 = (float)player->flash_time / PLAYER_HURT_FLASH_TIME});
+
+        RenderSurface(rendering_context, temp_surf, (s_v2){0}, true);
     }
 }
 

@@ -326,6 +326,7 @@ typedef struct {
     s_font_group fonts;
     s_shader_prog_group shader_progs;
 
+    s_surface global_surf;
     s_surface temp_surf;
 
     t_settings settings;

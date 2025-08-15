@@ -84,6 +84,10 @@ bool InitGame(const s_game_init_context* const zfw_context) {
         return false;
     }
 
+    if (!InitSurface(&game->global_surf, zfw_context->window_state.size, zfw_context->gl_res_arena)) {
+        return false;
+    }
+
     if (!InitSurface(&game->temp_surf, zfw_context->window_state.size, zfw_context->gl_res_arena)) {
         return false;
     }
@@ -142,6 +146,12 @@ static inline s_matrix_4x4 UIViewMatrix(const s_v2_s32 window_size) {
 bool RenderGame(const s_game_render_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
 
+    if (!V2S32sEqual(game->global_surf.size, zfw_context->rendering_context.window_size)) {
+        if (!ResizeSurface(&game->global_surf, zfw_context->rendering_context.window_size)) {
+            return false;
+        }
+    }
+
     if (!V2S32sEqual(game->temp_surf.size, zfw_context->rendering_context.window_size)) {
         if (!ResizeSurface(&game->temp_surf, zfw_context->rendering_context.window_size)) {
             return false;
@@ -149,6 +159,8 @@ bool RenderGame(const s_game_render_context* const zfw_context) {
     }
 
     const s_matrix_4x4 ui_view_matrix = UIViewMatrix(zfw_context->rendering_context.window_size);
+
+    SetSurface(&zfw_context->rendering_context, &game->global_surf);
 
     Clear(&zfw_context->rendering_context, BG_COLOR);
 
@@ -173,6 +185,13 @@ bool RenderGame(const s_game_render_context* const zfw_context) {
     // Render the mouse.
     const s_v2 mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
     RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, WHITE);
+
+    UnsetSurface(&zfw_context->rendering_context);
+
+    glDisable(GL_BLEND);
+    SetSurfaceShaderProg(&zfw_context->rendering_context, &zfw_context->rendering_context.basis->builtin_shader_progs, ek_builtin_shader_prog_surface_default);
+    RenderSurface(&zfw_context->rendering_context, &game->global_surf, (s_v2){0}, false);
+    glEnable(GL_BLEND);
 
     return true;
 }
