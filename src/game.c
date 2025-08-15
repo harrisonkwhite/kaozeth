@@ -146,52 +146,52 @@ static inline s_matrix_4x4 UIViewMatrix(const s_v2_s32 window_size) {
 bool RenderGame(const s_game_render_context* const zfw_context) {
     s_game* const game = zfw_context->dev_mem;
 
-    if (!V2S32sEqual(game->global_surf.size, zfw_context->rendering_context.window_size)) {
-        if (!ResizeSurface(&game->global_surf, zfw_context->rendering_context.window_size)) {
+    const s_rendering_context* const rc = &zfw_context->rendering_context;
+
+    if (!V2S32sEqual(game->global_surf.size, rc->window_size)) {
+        if (!ResizeSurface(&game->global_surf, rc->window_size)) {
             return false;
         }
     }
 
-    if (!V2S32sEqual(game->temp_surf.size, zfw_context->rendering_context.window_size)) {
-        if (!ResizeSurface(&game->temp_surf, zfw_context->rendering_context.window_size)) {
+    if (!V2S32sEqual(game->temp_surf.size, rc->window_size)) {
+        if (!ResizeSurface(&game->temp_surf, rc->window_size)) {
             return false;
         }
     }
 
-    const s_matrix_4x4 ui_view_matrix = UIViewMatrix(zfw_context->rendering_context.window_size);
+    const s_matrix_4x4 ui_view_matrix = UIViewMatrix(rc->window_size);
 
-    SetSurface(&zfw_context->rendering_context, &game->global_surf);
+    SetSurface(rc, &game->global_surf);
 
-    Clear(&zfw_context->rendering_context, BG_COLOR);
+    Clear(rc, BG_COLOR);
 
     if (game->in_world) {
-        if (!RenderWorld(&game->world, &zfw_context->rendering_context, &game->textures, &game->temp_surf, zfw_context->temp_mem_arena)) {
+        if (!RenderWorld(&game->world, rc, &game->textures, &game->temp_surf, zfw_context->temp_mem_arena)) {
             return false;
         }
 
-        SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
+        SetViewMatrix(rc, &ui_view_matrix);
 
         if (!RenderWorldUI(&game->world, zfw_context, &game->textures, &game->fonts)) {
             return false;
         }
     } else {
-        SetViewMatrix(&zfw_context->rendering_context, &ui_view_matrix);
+        SetViewMatrix(rc, &ui_view_matrix);
 
-        if (!RenderTitleScreen(&game->title_screen, &zfw_context->rendering_context, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
+        if (!RenderTitleScreen(&game->title_screen, rc, &game->settings, &game->textures, &game->fonts, zfw_context->temp_mem_arena)) {
             return false;
         }
     }
 
     // Render the mouse.
-    const s_v2 mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, zfw_context->rendering_context.window_size);
-    RenderSprite(&zfw_context->rendering_context, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, WHITE);
+    const s_v2 mouse_ui_pos = DisplayToUIPos(zfw_context->mouse_pos, rc->window_size);
+    RenderSprite(rc, ek_sprite_mouse, &game->textures, mouse_ui_pos, (s_v2){0.5f, 0.5f}, (s_v2){1.0f, 1.0f}, 0.0f, WHITE);
 
-    UnsetSurface(&zfw_context->rendering_context);
+    UnsetSurface(rc);
 
-    glDisable(GL_BLEND);
-    SetSurfaceShaderProg(&zfw_context->rendering_context, &zfw_context->rendering_context.basis->builtin_shader_progs, ek_builtin_shader_prog_surface_default);
-    RenderSurface(&zfw_context->rendering_context, &game->global_surf, (s_v2){0}, false);
-    glEnable(GL_BLEND);
+    SetSurfaceShaderProg(rc, &rc->basis->builtin_shader_progs, ek_builtin_shader_prog_surface_default);
+    RenderSurface(rc, &game->global_surf, (s_v2){0}, false);
 
     return true;
 }

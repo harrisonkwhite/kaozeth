@@ -72,8 +72,8 @@
     },
     {
         "type": "shader_prog",
-        "output_file_path": "assets/shader_progs/blend",
-        "vert_file_path": "assets_raw/shaders/blend.vert",
-        "frag_file_path": "assets_raw/shaders/blend.frag"
+        "output_file_path": "assets/shader_progs/glow",
+        "vert_file_path": "assets_raw/shaders/glow.vert",
+        "frag_file_path": "assets_raw/shaders/glow.frag"
     }
 ]
