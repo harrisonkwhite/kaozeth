@@ -191,7 +191,7 @@ bool RenderGame(const s_game_render_context* const zfw_context) {
     UnsetSurface(rc);
 
     SetSurfaceShaderProg(rc, &rc->basis->builtin_shader_progs, ek_builtin_shader_prog_surface_default);
-    RenderSurface(rc, &game->global_surf, (s_v2){0}, false);
+    RenderSurface(rc, &game->global_surf, (s_v2){0}, V2_ONE, false);
 
     return true;
 }

@@ -146,7 +146,7 @@ void RenderPlayer(const s_player* const player, const s_rendering_context* const
         assert(player->flash_time >= 0 && player->flash_time <= PLAYER_HURT_FLASH_TIME);
         SetSurfaceShaderProgUniform(rendering_context, "u_intensity", (s_shader_prog_uniform_value){.type = ek_shader_prog_uniform_value_type_r32, .as_r32 = (float)player->flash_time / PLAYER_HURT_FLASH_TIME});
 
-        RenderSurface(rendering_context, temp_surf, (s_v2){0}, true);
+        RenderSurface(rendering_context, temp_surf, (s_v2){0}, V2_ONE, true);
     }
 }
 

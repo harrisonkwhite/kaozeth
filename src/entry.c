@@ -10,6 +10,8 @@ t_s32 main() {
         .dev_mem_size = sizeof(s_game),
         .dev_mem_alignment = ALIGN_OF(s_game),
 
+        .targ_ticks_per_sec = 60,
+
         .init_func = InitGame,
         .tick_func = GameTick,
         .render_func = RenderGame,
