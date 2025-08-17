@@ -72,6 +72,7 @@ typedef enum {
     ek_tile_type_dirt,
     ek_tile_type_stone,
     ek_tile_type_grass,
+    ek_tile_type_sand,
     eks_tile_type_cnt
 } e_tile_type;
 
@@ -79,6 +80,7 @@ typedef enum {
     ek_item_type_dirt_block,
     ek_item_type_stone_block,
     ek_item_type_grass_block,
+    ek_item_type_sand_block,
     ek_item_type_copper_pickaxe,
     ek_item_type_wooden_sword,
     ek_item_type_wooden_bow,
@@ -253,12 +255,38 @@ typedef struct {
     s_tilemap_core tilemap_core;
 } s_world_core;
 
+typedef enum {
+    ek_world_biome_overworld,
+    ek_world_biome_desert,
+    ek_world_biome_ocean
+} e_world_biome;
+
+static int TileTypeCnt(const s_tilemap_core* const tm_core, const s_rect_edges_s32 tm_range, const e_tile_type tile_type) {
+    //assert(IsTilemapRangeValid(tm_range));
+
+    int cnt = 0;
+
+    for (int ty = 0; ty < TILEMAP_HEIGHT; ty++) {
+        for (int tx = 0; tx < TILEMAP_WIDTH; tx++) {
+            const e_tile_type tt = *STATIC_ARRAY_2D_ELEM(tm_core->tile_types, ty, tx);
+
+            if (tt == tile_type) {
+                cnt++;
+            }
+        }
+    }
+
+    return cnt;
+}
+
 typedef struct world {
     s_mem_arena mem_arena;
 
     s_world_core core;
 
     t_s32 respawn_time;
+
+    e_world_biome biome;
 
     s_player player;
 
@@ -451,6 +479,7 @@ bool PlaceWorldTile(s_world* const world, const s_v2_s32 pos, const e_tile_type 
 bool HurtWorldTile(s_world* const world, const s_v2_s32 pos);
 bool DestroyWorldTile(s_world* const world, const s_v2_s32 pos);
 bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos);
+e_world_biome DetermineWorldBiome(const s_world* const world);
 s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const t_r32 vel_y);
 
 //

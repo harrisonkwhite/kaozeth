@@ -26,6 +26,7 @@ typedef enum {
     ek_particle_template_dirt,
     ek_particle_template_stone,
     ek_particle_template_grass,
+    ek_particle_template_sand,
     ek_particle_template_gel,
 
     eks_particle_template_cnt

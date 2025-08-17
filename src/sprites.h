@@ -12,6 +12,7 @@ typedef enum {
     ek_sprite_dirt_tile,
     ek_sprite_stone_tile,
     ek_sprite_grass_tile,
+    ek_sprite_sand_tile,
     ek_sprite_tile_break_0,
     ek_sprite_tile_break_1,
     ek_sprite_tile_break_2,
@@ -20,6 +21,7 @@ typedef enum {
     ek_sprite_dirt_block_item_icon,
     ek_sprite_stone_block_item_icon,
     ek_sprite_grass_block_item_icon,
+    ek_sprite_sand_block_item_icon,
     ek_sprite_copper_pickaxe_item_icon,
     ek_sprite_item_icon_template,
 
@@ -28,6 +30,7 @@ typedef enum {
     ek_sprite_dirt_particle,
     ek_sprite_stone_particle,
     ek_sprite_grass_particle,
+    ek_sprite_sand_particle,
     ek_sprite_gel_particle,
 
     ek_sprite_mouse,
@@ -64,6 +67,11 @@ static const s_sprite g_sprites[] = {
     [ek_sprite_grass_tile] = {
         .tex = ek_texture_tiles,
         .src_rect = {16, 0, 8, 8}
+    },
+
+    [ek_sprite_sand_tile] = {
+        .tex = ek_texture_tiles,
+        .src_rect = {16, 0, 8, 8} // TEMP
     },
 
     [ek_sprite_tile_break_0] = {
@@ -127,6 +135,11 @@ static const s_sprite g_sprites[] = {
     },
 
     [ek_sprite_grass_particle] = {
+        .tex = ek_texture_particles,
+        .src_rect = {18, 2, 4, 4}
+    },
+
+    [ek_sprite_sand_particle] = {
         .tex = ek_texture_particles,
         .src_rect = {18, 2, 4, 4}
     },

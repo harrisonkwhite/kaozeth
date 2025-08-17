@@ -55,6 +55,9 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_g
     world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
     const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
+    world->biome = DetermineWorldBiome(world);
+    LOG("biome: %d\n", world->biome);
+
     if (!world->player.killed) {
         if (!UpdatePlayer(world, &zfw_context->input_context)) {
             return false;
@@ -335,6 +338,16 @@ bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos) {
     }
 
     return true;
+}
+
+e_world_biome DetermineWorldBiome(const s_world* const world) {
+    const int sand_cnt = TileTypeCnt(&world->core.tilemap_core, (s_rect_edges_s32){0}, ek_tile_type_sand); // NOTE: This is not ideal. Ideally we want to sample the tile type counts that we're interested in within a single pass. Maybe we could have an array of the tile types we want to cache, or an enum of them.
+
+    if (sand_cnt > 1024) {
+        return ek_world_biome_desert;
+    }
+
+    return ek_world_biome_overworld;
 }
 
 s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const t_r32 vel_y) {

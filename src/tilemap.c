@@ -20,6 +20,12 @@ const s_tile_type_info g_tile_type_infos[] = {
         .drop_item = ek_item_type_grass_block,
         .life = 3,
         .particle_template = ek_particle_template_grass
+    },
+    [ek_tile_type_sand] = {
+        .spr = ek_sprite_sand_tile,
+        .drop_item = ek_item_type_sand_block,
+        .life = 3,
+        .particle_template = ek_particle_template_sand
     }
 };
 
