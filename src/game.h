@@ -479,7 +479,7 @@ bool PlaceWorldTile(s_world* const world, const s_v2_s32 pos, const e_tile_type 
 bool HurtWorldTile(s_world* const world, const s_v2_s32 pos);
 bool DestroyWorldTile(s_world* const world, const s_v2_s32 pos);
 bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos);
-e_world_biome DetermineWorldBiome(const s_world* const world);
+e_world_biome DetermineWorldBiome(const s_world* const world, const s_v2_s32 screen_size);
 s_popup_text* SpawnPopupText(s_world* const world, const s_v2 pos, const t_r32 vel_y);
 
 //

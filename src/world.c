@@ -55,7 +55,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_g
     world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
     const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
-    world->biome = DetermineWorldBiome(world);
+    world->biome = DetermineWorldBiome(world, zfw_context->window_state.size);
     LOG("biome: %d\n", world->biome);
 
     if (!world->player.killed) {
@@ -340,10 +340,21 @@ bool IsTilePosFree(const s_world* const world, const s_v2_s32 tile_pos) {
     return true;
 }
 
-e_world_biome DetermineWorldBiome(const s_world* const world) {
-    const int sand_cnt = TileTypeCnt(&world->core.tilemap_core, (s_rect_edges_s32){0}, ek_tile_type_sand); // NOTE: This is not ideal. Ideally we want to sample the tile type counts that we're interested in within a single pass. Maybe we could have an array of the tile types we want to cache, or an enum of them.
+e_world_biome DetermineWorldBiome(const s_world* const world, const s_v2_s32 screen_size) {
+    const s_v2 cam_size = CameraSize(world->cam.scale, screen_size);
 
-    if (sand_cnt > 1024) {
+    const int tile_range_margin = 32;
+
+    const s_rect_edges_s32 tile_range_edges = {
+        .left = floorf(world->cam.pos.x / TILE_SIZE) - tile_range_margin,
+        .top = floorf(world->cam.pos.y / TILE_SIZE) - tile_range_margin,
+        .right = ceilf((world->cam.pos.x + cam_size.x) / TILE_SIZE) + tile_range_margin,
+        .bottom = ceilf((world->cam.pos.y + cam_size.y) / TILE_SIZE) + tile_range_margin
+    };
+
+    const int sand_cnt = TileTypeCnt(&world->core.tilemap_core, tile_range_edges, ek_tile_type_sand); // NOTE: This is not ideal. Ideally we want to sample the tile type counts that we're interested in within a single pass. Maybe we could have an array of the tile types we want to cache, or an enum of them.
+
+    if (sand_cnt > 64) {
         return ek_world_biome_desert;
     }
 
