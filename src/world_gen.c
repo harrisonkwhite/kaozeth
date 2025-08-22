@@ -75,5 +75,4 @@ void GenWorld(s_world_core* const world_core) {
     world_core->player_hp_max = PLAYER_INIT_HP_MAX;
 
     GroundGenStep(&world_core->tilemap_core);
-    DesertGenStep(&world_core->tilemap_core);
 }

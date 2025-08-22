@@ -55,8 +55,7 @@ bool WorldTick(s_world* const world, const t_settings* const settings, const s_g
     world->cam.scale = CalcCameraScale(zfw_context->window_state.size);
     const s_v2 cam_size = CameraSize(world->cam.scale, zfw_context->window_state.size);
 
-    world->biome = DetermineWorldBiome(world, zfw_context->window_state.size);
-    LOG("biome: %d\n", world->biome);
+    //world->biome = DetermineWorldBiome(world, zfw_context->window_state.size);
 
     if (!world->player.killed) {
         if (!UpdatePlayer(world, &zfw_context->input_context)) {

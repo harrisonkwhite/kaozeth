@@ -18,7 +18,7 @@ I chose to clone Terraria specifically because it is composed of so many differe
 
 ## Building
 
-Building and running this project has been tested on Linux and Windows.
+Building and running this project has been tested on Windows and Linux.
 
 Clone the repository by running `git clone --recursive https://github.com/harrisonkwhite/terraria_clone.git`.
 
@@ -33,8 +33,6 @@ cmake ..
 ```
 
 For Linux, there are a number of dependencies you might need to manually install. CMake will report if any are missing.
-
-You can also use the "run.sh" shell script if on a platform which supports it.
 
 ---
 
