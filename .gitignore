@@ -6,6 +6,3 @@ assets/**
 compile_commands.json
 *.wrld
 settings.dat
-perf.data
-perf.data.old
-build_and_run.bat

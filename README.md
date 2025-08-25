@@ -32,6 +32,8 @@ cd build
 cmake ..
 ```
 
+There is also a "run.ps1" script which I use personally, which you might find helpful.
+
 ---
 
 ## Upcoming Features
