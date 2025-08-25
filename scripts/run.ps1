@@ -1,3 +1,5 @@
+# This needs to be run from project root.
+
 param(
     [ValidateSet("Debug", "Release")]
     [string]$Config = "Debug"
@@ -11,17 +13,17 @@ mkdir build -Force | Out-Null
 try {
     Push-Location build
 
-    cmake .. -A x64 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    cmake --build . --config $Config
+    cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    cmake --build .
 
     $src = Join-Path (Get-Location) "compile_commands.json"
-    $dst = Join-Path $projectRoot "compile_commands.json"
+    $dest = Join-Path $projectRoot "compile_commands.json"
 
     if (Test-Path $src) {
-        Copy-Item $src $dst -Force
+        Copy-Item $src $dest -Force
     }
 
-    $exe = Join-Path (Get-Location) "$Config/terraria_clone.exe"
+    $exe = Join-Path (Get-Location) "terraria_clone.exe"
 
     if (Test-Path $exe) {
         Push-Location $projectRoot
