@@ -1,36 +1,22 @@
 cmake_minimum_required(VERSION 3.28)
-project(terraria_clone C)
 
-set(CMAKE_C_STANDARD 11)
+project(kaozeth CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(zeta_framework)
 
-add_executable(terraria_clone
-    src/entry.c
-    src/game.c
-    src/title_screen.c
-    src/world.c
-    src/world_ui.c
-    src/world_gen.c
-    src/player.c
-    src/npcs.c
-    src/projectiles.c
-    src/items.c
-    src/inventory.c
-    src/tilemap.c
-    src/lighting.c
-    src/particles.c
+add_executable(kaozeth
+    src/entry.cpp
+    src/game.cpp
 
     src/game.h
-    src/assets.h
-    src/sprites.h
-    src/lighting.h
-    src/particles.h
 )
 
-target_link_libraries(terraria_clone PRIVATE zfw_core)
+target_link_libraries(kaozeth PRIVATE zfw_core)
 
-set_target_properties(terraria_clone PROPERTIES
+set_target_properties(kaozeth PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
@@ -41,4 +27,4 @@ add_custom_target(pack_assets ALL
     VERBATIM
 )
 
-add_dependencies(terraria_clone pack_assets)
+add_dependencies(kaozeth pack_assets)

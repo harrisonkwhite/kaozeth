@@ -23,7 +23,7 @@ try {
         Copy-Item $src $dest -Force
     }
 
-    $exe = Join-Path (Get-Location) "terraria_clone.exe"
+    $exe = Join-Path (Get-Location) "kaozeth.exe"
 
     if (Test-Path $exe) {
         Push-Location $projectRoot
