@@ -1,12 +1,15 @@
 #pragma once
 
-#include <zfwc.h>
+#include <zf.h>
+#include "world/world.h"
+
+const zf::c_string_view g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
 struct s_game {
-    int a;
+    s_world world;
 };
 
-bool InitGame(const s_game_init_context* const zfw_context);
-e_game_tick_result GameTick(const s_game_tick_context* const zfw_context);
-bool RenderGame(const s_game_render_context* const zfw_context);
+bool InitGame(const zf::s_game_init_context& zfw_context);
+zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zfw_context);
+bool RenderGame(const zf::s_game_render_context& zfw_context);
 void CleanGame(void* const dev_mem);

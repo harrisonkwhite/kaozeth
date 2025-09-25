@@ -2,10 +2,10 @@
 #include "game.h"
 
 int main() {
-    const s_game_info game_info = {
+    const zf::s_game_info game_info = {
         .window_init_size = {1280, 720},
-        .window_title = "Kaōzeth",
-        .window_flags = static_cast<e_window_flags>(ek_window_flags_hide_cursor | ek_window_flags_resizable),
+        .window_title = g_game_title,
+        .window_flags = static_cast<zf::e_window_flags>(zf::ek_window_flags_hide_cursor | zf::ek_window_flags_resizable),
 
         .dev_mem_size = sizeof(s_game),
         .dev_mem_alignment = alignof(s_game),
@@ -18,5 +18,5 @@ int main() {
         .clean_func = CleanGame
     };
 
-    return RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return zf::RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
