@@ -9,7 +9,7 @@ struct s_game {
     s_world world;
 };
 
-bool InitGame(const zf::s_game_init_context& zfw_context);
-zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zfw_context);
-bool RenderGame(const zf::s_game_render_context& zfw_context);
+[[nodiscard]] bool InitGame(const zf::s_game_init_context& zf_context);
+[[nodiscard]] zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context);
+[[nodiscard]] bool RenderGame(const zf::s_game_render_context& zf_context);
 void CleanGame(void* const dev_mem);

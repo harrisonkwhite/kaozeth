@@ -11,8 +11,7 @@ struct s_world {
     s_player player;
 };
 
-bool InitWorld(s_world& world);
-bool WorldTick(s_world& world);
-bool RenderWorld(const s_world& world, zf::s_rendering_context& rc);
+[[nodiscard]] bool InitWorld(s_world& world);
+[[nodiscard]] bool WorldTick(s_world& world, const zf::s_game_tick_context& zf_context);
 
-void PlayerTick(s_world& world);
+void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);

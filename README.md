@@ -1,12 +1,10 @@
 # Kaōzeth
 
----
-
 ## About
 
 This is a game, I think!
 
-> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple framework I made for developing 2D games using OpenGL.
+> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple C++ framework I made for developing 2D games.
 
 ---
 
