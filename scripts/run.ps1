@@ -13,7 +13,7 @@ mkdir build -Force | Out-Null
 try {
     Push-Location build
 
-    cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBGFX_BUILD_TOOLS=OFF -DBGFX_BUILD_EXAMPLES=OFF
+    cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     cmake --build .
 
     $src = Join-Path (Get-Location) "compile_commands.json"

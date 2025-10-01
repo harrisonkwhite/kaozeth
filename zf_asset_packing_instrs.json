@@ -1,0 +1,14 @@
+{
+    "textures": [
+        { "file_path": "assets/textures/player.png" }
+    ],
+
+    "fonts": [
+        { "file_path": "assets/fonts/eb_garamond.ttf", "height": 48 },
+        { "file_path": "assets/fonts/eb_garamond.ttf", "height": 80 }
+    ],
+
+    "shader_progs": [
+        { "vs_file_path": "assets/shaders/quad_vs.sc", "fs_file_path": "assets/shaders/quad_fs.sc", "varying_def_file_path": "assets/shaders/varying.def.sc" }
+    ]
+}

@@ -1,8 +1,4 @@
 build/
 .cache/
-assets/**
-!assets/**/
-!assets/**/.gitkeep
+assets.zfdat
 compile_commands.json
-*.wrld
-settings.dat

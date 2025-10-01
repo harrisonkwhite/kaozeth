@@ -12,10 +12,10 @@ int main() {
 
         .targ_ticks_per_sec = 60,
 
-        .init_func = InitGame,
+        .init_func = GameInit,
         .tick_func = GameTick,
-        .render_func = RenderGame,
-        .clean_func = CleanGame
+        .render_func = GameRender,
+        .clean_func = GameCleanup
     };
 
     return zf::RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
