@@ -5,9 +5,15 @@
 
 const zf::c_string_view g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
+enum e_texture {
+    ek_texture_player,
+    ek_texture_enemies,
+    eks_texture_cnt
+};
+
 struct s_game {
-    zf::c_texture_group tex_group;
     s_world world;
+    //zf::s_static_array<zf::s_texture, eks_texture_cnt> textures;
 };
 
 [[nodiscard]] bool GameInit(const zf::s_game_init_context& zf_context);

@@ -8,9 +8,17 @@ bool GameInit(const zf::s_game_init_context& zf_context) {
         "assets/textures/player.png"
     }};
 
-    if (!game->tex_group.LoadRaws(tex_file_paths.Nonstatic(), zf_context.perm_mem_arena, zf::c_renderer::GFXResourceLifetime(), zf_context.temp_mem_arena)) {
+    /*for (int i = 0; i < eks_texture_cnt; i++) {
+        switch (i) {
+            case 0:
+                game->textures[i].LoadFromPacked();
+                break;
+        }
+    }*/
+
+    /*if (!game->tex_group.LoadRaws(tex_file_paths.Nonstatic(), zf_context.perm_mem_arena, zf::c_renderer::GFXResourceLifetime(), zf_context.temp_mem_arena)) {
         return false;
-    }
+    }*/
 
     return true;
 }
@@ -33,7 +41,7 @@ bool GamePrerender(const zf::s_game_render_context& zf_context) {
 bool GameRender(const zf::s_game_render_context& zf_context) {
     const auto game = static_cast<const s_game*>(zf_context.dev_mem);
 
-    zf::c_renderer::Draw(0, game->tex_group, {32.0f, 32.0f}, {32.0f, 32.0f});
+    //zf::c_renderer::Draw(0, game->tex_group, {32.0f, 32.0f}, {32.0f, 32.0f});
 
     return true;
 }

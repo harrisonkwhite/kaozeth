@@ -2,7 +2,7 @@
 #include "game.h"
 
 int main() {
-    const zf::s_game_info game_info = {
+    /*const zf::s_game_info game_info = {
         .window_init_size = {1280, 720},
         .window_title = g_game_title,
         .window_flags = static_cast<zf::e_window_flags>(zf::ek_window_flags_hide_cursor | zf::ek_window_flags_resizable),
@@ -18,5 +18,7 @@ int main() {
         .clean_func = GameCleanup
     };
 
-    return zf::RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return zf::RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;*/
+
+    return EXIT_SUCCESS;
 }
