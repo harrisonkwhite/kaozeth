@@ -10,11 +10,12 @@ $projectRoot = $PWD
 
 mkdir build -Force | Out-Null
 
+Push-Location build
 try {
-    Push-Location build
-
     cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    cmake --build .
+
+    & cmake --build .
+    $buildExitCode = $LASTEXITCODE
 
     $src = Join-Path (Get-Location) "compile_commands.json"
     $dest = Join-Path $projectRoot "compile_commands.json"
@@ -24,12 +25,17 @@ try {
     }
 
     $exe = Join-Path (Get-Location) "kaozeth.exe"
-
-    if (Test-Path $exe) {
-        Push-Location $projectRoot
-        & $exe
-        Pop-Location
-    }
 } finally {
+    Pop-Location
+}
+
+if ($buildExitCode -ne 0) {
+    Write-Host "Build failed with exit code $buildExitCode."
+    exit $buildExitCode
+}
+
+if (Test-Path $exe) {
+    Push-Location $projectRoot
+    & $exe
     Pop-Location
 }
