@@ -3,7 +3,7 @@
 #include <zf.h>
 #include "world/world.h"
 
-const zf::c_string_view g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
+const auto g_game_title = zf::s_str_view::FromRawTerminated("Kaōzeth"); // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
 enum e_texture {
     ek_texture_player,

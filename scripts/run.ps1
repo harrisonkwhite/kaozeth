@@ -14,7 +14,7 @@ Push-Location build
 try {
     cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-    & cmake --build .
+    & cmake --build . --config Release -- -j4
     $buildExitCode = $LASTEXITCODE
 
     $src = Join-Path (Get-Location) "compile_commands.json"

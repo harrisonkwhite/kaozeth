@@ -1,5 +1,7 @@
 #include "world.h"
 
+#include <zc/gfx.h>
+
 constexpr float g_player_vel_lerp = 0.2f;
 constexpr float g_player_move_spd = 2.0f;
 constexpr zf::s_v2_s32 g_player_size = {32, 20};
