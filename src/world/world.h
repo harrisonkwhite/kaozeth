@@ -1,6 +1,7 @@
 #pragma once
 
 #include <zf.h>
+#include <zc/mem/bit_vector.h>
 
 struct s_player {
     zf::s_v2 pos;
@@ -9,9 +10,9 @@ struct s_player {
 
 struct s_world {
     s_player player;
-};
 
-[[nodiscard]] bool InitWorld(s_world& world);
-[[nodiscard]] bool WorldTick(s_world& world, const zf::s_game_tick_context& zf_context);
+    [[nodiscard]] bool Init();
+    [[nodiscard]] bool Tick(const zf::s_game_tick_context& zf_context);
+};
 
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);
