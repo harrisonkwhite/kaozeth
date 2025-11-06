@@ -29,7 +29,7 @@ set_target_properties(kaozeth PROPERTIES
 )
 
 add_custom_target(pack_assets ALL
-    COMMAND $<TARGET_FILE:zf_asset_packer>
+    COMMAND $<TARGET_FILE:zf_asset_packer> zf_asset_packing_instrs.json
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Packing assets..."
     VERBATIM

@@ -2,6 +2,13 @@
 
 #include <zc/debug.h>
 
+enum class ec_texture {
+    player,
+    zombie,
+
+    cnt
+};
+
 bool GameInit(const zf::s_game_init_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
     return true;

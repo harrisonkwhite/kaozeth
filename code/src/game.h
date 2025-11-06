@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zf.h>
+#include <zf/game.h>
 #include "world/world.h"
 
 const auto g_game_title = zf::s_str_view::FromRawTerminated("Kaōzeth"); // Other Ideas: "Behold a Pale Horse", "Iron Gospel"

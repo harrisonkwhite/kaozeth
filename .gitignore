@@ -1,4 +1,4 @@
 build/
 .cache/
-assets.zfdat
+assets_raw/
 compile_commands.json

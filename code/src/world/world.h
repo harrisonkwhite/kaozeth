@@ -1,7 +1,6 @@
 #pragma once
 
-#include <zf.h>
-#include <zc/mem/bit_vector.h>
+#include <zf/game.h>
 
 struct s_player {
     zf::s_v2<float> pos;
