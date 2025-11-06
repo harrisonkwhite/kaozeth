@@ -10,8 +10,6 @@ bool GameInit(const zf::s_game_init_context& zf_context) {
 zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
 
-    ZF_ASSERT(false);
-
     if (!game->world.Tick(zf_context)) {
         return zf::ek_game_tick_result_error;
     }

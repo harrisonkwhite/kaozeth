@@ -4,8 +4,8 @@
 #include <zc/mem/bit_vector.h>
 
 struct s_player {
-    zf::s_v2 pos;
-    zf::s_v2 vel;
+    zf::s_v2<float> pos;
+    zf::s_v2<float> vel;
 };
 
 struct s_world {
