@@ -11,6 +11,7 @@ $projectRoot = $PWD
 mkdir build -Force | Out-Null
 
 Push-Location build
+
 try {
     cmake .. "-DCMAKE_BUILD_TYPE=$Config" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 

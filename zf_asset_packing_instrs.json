@@ -1,0 +1,5 @@
+{
+    "textures": [
+        { "src_file_path": "assets_raw/textures/player.png", "dest_file_path": "assets/textures/player.zfdat" }
+    ]
+}
