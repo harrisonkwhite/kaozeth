@@ -1,3 +1,3 @@
-[submodule "code/zeta_framework"]
-	path = code/zeta_framework
+[submodule "zeta_framework"]
+	path = zeta_framework
 	url = https://github.com/harrisonkwhite/zeta_framework
