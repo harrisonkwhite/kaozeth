@@ -1,8 +1,6 @@
 #include <cstdlib>
 #include "game.h"
 
-#include <zc/io.h>
-
 int main() {
     const zf::s_game_info game_info = {
         .window_init_size = {1280, 720},

@@ -18,10 +18,6 @@ add_executable(kaozeth
 
 target_link_libraries(kaozeth PRIVATE zf)
 
-target_compile_definitions(kaozeth PRIVATE
-    _CRT_SECURE_NO_WARNINGS
-)
-
 set_target_properties(kaozeth PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
