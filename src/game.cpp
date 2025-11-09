@@ -5,7 +5,7 @@
 bool GameInit(const zf::s_game_init_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
 
-    if (!game->test_tex.LoadFromRaw(zf::s_str_view::FromRawTerminated("test.png"), zf_context.gfx_res_arena, zf_context.temp_mem_arena)) {
+    if (!game->test_tex.LoadFromRaw(zf::s_str_view::FromRawTerminated("assets/test.png"), zf_context.gfx_res_arena, zf_context.temp_mem_arena)) {
         return false;
     }
 

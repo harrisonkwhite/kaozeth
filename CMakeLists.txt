@@ -22,10 +22,6 @@ add_executable(kaozeth
 
 target_link_libraries(kaozeth PRIVATE zf)
 
-set_target_properties(kaozeth PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-)
-
 add_custom_target(pack_assets ALL
     COMMAND $<TARGET_FILE:zf_asset_packer> zf_asset_packing_instrs.json
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -33,4 +29,12 @@ add_custom_target(pack_assets ALL
     VERBATIM
 )
 
-add_dependencies(kaozeth pack_assets)
+add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets"
+        "${CMAKE_BINARY_DIR}/assets"
+    COMMENT "Copying assets..."
+)
+
+add_dependencies(copy_assets pack_assets)
+add_dependencies(kaozeth copy_assets)

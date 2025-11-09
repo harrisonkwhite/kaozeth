@@ -24,7 +24,7 @@
         {
             "name": "ninja-msvc-debug",
             "configurePreset": "ninja-msvc-debug",
-            "nativeToolOptions": [ "-v" ]
+            "nativeToolOptions": ["-v"]
         }
     ],
     "testPresets": [
