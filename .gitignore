@@ -1,4 +1,5 @@
 build/
+.vs/
 .cache/
-assets_raw/
 compile_commands.json
+launch.vs.json

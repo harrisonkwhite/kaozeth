@@ -16,6 +16,8 @@ add_executable(kaozeth
 
     src/game.h
     src/world/world.h
+
+    zf_asset_packing_instrs.json
 )
 
 target_link_libraries(kaozeth PRIVATE zf)

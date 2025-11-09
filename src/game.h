@@ -13,6 +13,7 @@ enum e_texture {
 
 struct s_game {
     s_world world;
+    zf::s_texture test_tex;
     //zf::s_static_array<zf::s_texture, eks_texture_cnt> textures;
 };
 

@@ -1,0 +1,36 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28
+    },
+    "configurePresets": [
+        {
+            "name": "ninja-msvc-debug",
+            "displayName": "Ninja + MSVC (Debug)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            },
+            "environment": {
+                "CC": "cl",
+                "CXX": "cl"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "ninja-msvc-debug",
+            "configurePreset": "ninja-msvc-debug",
+            "nativeToolOptions": [ "-v" ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "ninja-msvc-debug",
+            "configurePreset": "ninja-msvc-debug"
+        }
+    ]
+}
