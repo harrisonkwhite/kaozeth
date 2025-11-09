@@ -1,5 +1,6 @@
 build/
 .vs/
 .cache/
+assets/
 compile_commands.json
 launch.vs.json

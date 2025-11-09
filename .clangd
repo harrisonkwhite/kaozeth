@@ -14,30 +14,38 @@ CompileFlags:
     - -Wconversion
     - -Wdouble-promotion
     - -Wformat
+    - -Wformat-security
     - -Wimplicit-fallthrough
-    - -Wlogical-not-parentheses
     - -Wmisleading-indentation
     - -Wmissing-braces
-    - -Wreturn-type
-    - -Wsign-compare
-    - -Wstrict-aliasing
-    - -Wswitch
-    - -Wtautological-compare
-    - -Wuninitialized
-    - -Wunknown-pragmas
-    - -Wunused-function
-    - -Wunused-label
-    - -Wunused-value
-    - -Wunused-variable
-    - -Wshadow
+    - -Wmissing-field-initializers
     - -Wnull-dereference
     - -Wold-style-cast
     - -Wcast-align
     - -Wcast-qual
     - -Wfloat-equal
+    - -Wreorder
+    - -Wshadow
+    - -Wsign-compare
+    - -Wstrict-aliasing
+    - -Wswitch
+    - -Wtautological-compare
+    - -Wunknown-pragmas
+    - -Wuninitialized
+    - -Wconditional-uninitialized
+    - -Wsometimes-uninitialized
     - -Wunsequenced
-    - -Wshadow-field
-    - -Wimplicit-int-conversion
+    - -Wunused-function
+    - -Wunused-label
+    - -Wunused-value
+    - -Wunused-variable
 
 Diagnostics:
-  Suppress: [-Wc++17-extensions]
+  ClangTidy:
+    Add:
+      - clang-analyzer-core.uninitialized.Assign
+      - clang-analyzer-core.uninitialized.Branch
+      - clang-analyzer-core.uninitialized.CapturedBlockVariable
+      - clang-analyzer-core.uninitialized.UndefReturn
+      - clang-analyzer-cplusplus.NewDelete
+      - clang-analyzer-core.CallAndMessage
