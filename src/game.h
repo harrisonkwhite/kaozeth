@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zf/game.h>
+#include <zf.h>
 #include "world/world.h"
 
 const auto g_game_title = zf::s_str_view::FromRawTerminated("Kaōzeth"); // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
@@ -17,7 +17,7 @@ struct s_game {
     //zf::s_static_array<zf::s_texture, eks_texture_cnt> textures;
 };
 
-[[nodiscard]] bool GameInit(const zf::s_game_init_context& zf_context);
+[[nodiscard]] zf::t_b8 GameInit(const zf::s_game_init_context& zf_context);
 [[nodiscard]] zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context);
-[[nodiscard]] bool GameRender(const zf::s_game_render_context& zf_context);
+[[nodiscard]] zf::t_b8 GameRender(const zf::s_game_render_context& zf_context);
 void GameCleanup(void* const dev_mem);

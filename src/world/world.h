@@ -1,17 +1,17 @@
 #pragma once
 
-#include <zf/game.h>
+#include <zf.h>
 
 struct s_player {
-    zf::s_v2<float> pos;
-    zf::s_v2<float> vel;
+    zf::s_v2<zf::t_f32> pos;
+    zf::s_v2<zf::t_f32> vel;
 };
 
 struct s_world {
     s_player player;
 
-    [[nodiscard]] bool Init();
-    [[nodiscard]] bool Tick(const zf::s_game_tick_context& zf_context);
+    [[nodiscard]] zf::t_b8 Init();
+    [[nodiscard]] zf::t_b8 Tick(const zf::s_game_tick_context& zf_context);
 };
 
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);
