@@ -7,8 +7,9 @@ constexpr zf::s_v2<zf::t_f32> g_player_origin = zf::origins::g_center;
 
 static zf::s_rect<zf::t_f32> MakePlayerRect(const zf::s_v2<zf::t_f32> player_pos) {
     return {
-        player_pos - static_cast<zf::s_v2<zf::t_f32>>(g_player_size).CompwiseProd(g_player_origin),
-        static_cast<zf::s_v2<zf::t_f32>>(g_player_size)
+        player_pos,
+        static_cast<zf::s_v2<zf::t_f32>>(g_player_size),
+        g_player_origin
     };
 }
 

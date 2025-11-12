@@ -5,6 +5,8 @@
 
 const zf::s_str_view g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
+const zf::t_f32 g_mouse_size = 4.0f;
+
 enum e_texture {
     ek_texture_player,
     ek_texture_enemies,
