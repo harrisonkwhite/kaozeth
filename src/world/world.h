@@ -12,6 +12,8 @@ struct s_world {
 
     [[nodiscard]] zf::t_b8 Init();
     [[nodiscard]] zf::t_b8 Tick(const zf::s_game_tick_context& zf_context);
+    void Render(const zf::s_game_render_context& zf_context) const;
 };
 
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);
+void RenderPlayer(const s_player& player, zf::c_renderer& renderer);

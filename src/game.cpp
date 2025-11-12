@@ -17,6 +17,7 @@ zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context) {
 
 zf::t_b8 GameRender(const zf::s_game_render_context& zf_context) {
     const auto game = static_cast<const s_game*>(zf_context.dev_mem);
+    game->world.Render(zf_context);
     return true;
 }
 
