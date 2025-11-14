@@ -27,7 +27,27 @@ add_executable(kaozeth
     zf_asset_packing_instrs.json
 )
 
+if (MSVC)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_options(kaozeth PRIVATE "/SUBSYSTEM:CONSOLE")
+    else()
+        target_link_options(kaozeth PRIVATE
+            "/SUBSYSTEM:WINDOWS"
+            "/ENTRY:mainCRTStartup"
+        )
+    endif()
+endif()
+
 target_link_libraries(kaozeth PRIVATE zf)
+
+if (MSVC)
+    target_compile_options(kaozeth PRIVATE
+        $<$<CONFIG:Release>:/Zi /Oy->
+    )
+    target_link_options(kaozeth PRIVATE
+        $<$<CONFIG:Release>:/DEBUG>
+    )
+endif()
 
 add_custom_target(pack_assets ALL
     COMMAND $<TARGET_FILE:zf_asset_packer> zf_asset_packing_instrs.json

@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include "game.h"
 
 int main() {
@@ -18,5 +17,5 @@ int main() {
         .clean_func = GameCleanup
     };
 
-    return zf::RunGame(game_info) ? EXIT_SUCCESS : EXIT_FAILURE;
+    zf::RunGame(game_info);
 }
