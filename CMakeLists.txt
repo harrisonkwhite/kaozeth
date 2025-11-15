@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.28)
 
 project(kaozeth LANGUAGES C CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if (MSVC)
     add_compile_options(/W3 /permissive-)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -65,3 +67,12 @@ add_custom_target(copy_assets ALL
 
 add_dependencies(copy_assets pack_assets)
 add_dependencies(kaozeth copy_assets)
+
+add_custom_command(
+    TARGET kaozeth POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_BINARY_DIR}/compile_commands.json"
+        "${CMAKE_SOURCE_DIR}/compile_commands.json"
+    COMMENT "Copying compile commands..."
+    VERBATIM
+)
