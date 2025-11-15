@@ -26,8 +26,6 @@ zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context) {
             return zf::ek_game_tick_result_error;
 
         case ec_title_screen_tick_result::go_to_world:
-            return zf::ek_game_tick_result_error;
-            
             game->state = ec_game_state::world;
             break;
         }
