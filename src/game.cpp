@@ -2,13 +2,6 @@
 
 zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
-
-    zf::c_list<zf::t_f32> nums;
-
-    if (!zf::MakeList(zf_context.temp_mem_arena, 8, nums)) {
-        return false;
-    }
-
     return true;
 }
 

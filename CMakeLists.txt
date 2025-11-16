@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.28)
 
 project(kaozeth LANGUAGES C CXX)
 
-(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 if (MSVC)
     add_compile_options(/W3 /permissive-)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
