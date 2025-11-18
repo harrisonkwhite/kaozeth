@@ -14,12 +14,12 @@ struct s_enemy {
 
 struct s_world {
     s_player player;
-    zf::c_activity_array_mut<s_enemy> enemies;
-
-    [[nodiscard]] zf::t_b8 Init();
-    [[nodiscard]] zf::t_b8 Tick(const zf::s_game_tick_context& zf_context);
-    void Render(const zf::s_game_render_context& zf_context) const;
+    zf::s_static_activity_array<s_enemy, 32> enemies;
 };
 
+[[nodiscard]] zf::t_b8 InitWorld(s_world& world);
+[[nodiscard]] zf::t_b8 WorldTick(s_world& world, const zf::s_game_tick_context& zf_context);
+void RenderWorld(const s_world& world, const zf::s_game_render_context& zf_context);
+
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);
-void RenderPlayer(const s_player& player, zf::c_renderer& renderer);
+void RenderPlayer(const s_player& player, const zf::s_rendering_context& rc);

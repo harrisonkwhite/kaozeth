@@ -11,5 +11,6 @@ enum class ec_title_screen_tick_result {
 struct s_title_screen {
 };
 
-ec_title_screen_tick_result TitleScreenTick();
-void RenderTitleScreen(const s_title_screen& ts, const zf::c_renderer& renderer);
+[[nodiscard]] zf::t_b8 InitTitleScreen(s_title_screen& ts);
+ec_title_screen_tick_result TitleScreenTick(s_title_screen& ts);
+void RenderTitleScreen(const s_title_screen& ts, const zf::s_game_render_context& zf_context);

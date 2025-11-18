@@ -4,7 +4,7 @@
 #include "title_screen.h"
 #include "world/world.h"
 
-const zf::s_str_ro g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
+const zf::s_str_rdonly g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
 const zf::t_f32 g_mouse_size = 4.0f;
 
@@ -20,9 +20,7 @@ enum class ec_game_state {
 };
 
 struct s_game {
-    zf::s_static_array<zf::s_texture, eks_texture_cnt> textures;
-
-    ec_game_state state = ec_game_state::title_screen;
+    ec_game_state state;
     s_title_screen ts;
     s_world world;
 };
