@@ -7,11 +7,21 @@ zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
         return false;
     }
 
+    if (!zf::UnpackSound("assets/sounds/explosion.zfdat", zf_context.perm_mem_arena, game->snd_data)) {
+        return false;
+    }
+
     return true;
 }
 
 zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
+
+    if (zf::IsKeyPressed(zf::ek_key_code_space)) {
+        if (!zf::audio::PlaySound(game->snd_data)) {
+            return zf::ek_game_tick_result_error;
+        }
+    }
 
     if (game->state == ec_game_state::title_screen) {
         const auto ts_tick_res = TitleScreenTick(game->state_data.ts);

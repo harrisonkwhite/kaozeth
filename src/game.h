@@ -20,6 +20,8 @@ enum class ec_game_state {
 };
 
 struct s_game {
+    zf::s_sound_data snd_data;
+
     ec_game_state state;
 
     union {

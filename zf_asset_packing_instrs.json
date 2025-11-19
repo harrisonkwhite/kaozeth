@@ -3,5 +3,6 @@
         {"src_file_path": "assets_raw/textures/test.png", "dest_file_path": "assets/textures/test.zfdat"}
     ],
     "sounds": [
+        {"src_file_path": "assets_raw/sounds/explosion.wav", "dest_file_path": "assets/sounds/explosion.zfdat"}
     ]
 }
