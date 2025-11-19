@@ -1,21 +1,21 @@
 #include "world.h"
 
-#if 0
 static zf::t_size SpawnEnemy(s_world& world, const zf::s_v2<zf::t_f32> pos) {
-    const zf::t_size index = world.enemies.TakeFirstInactiveSlot();
+    const zf::t_size index = zf::TakeFirstInactiveSlot(world.enemies);
 
     if (index != -1) {
-        s_enemy& enemy = world.enemies[index];
+        auto& enemy = world.enemies[index];
+
+        enemy = {};
         enemy.pos = pos;
     }
 
     return index;
 }
-#endif
 
 zf::t_b8 InitWorld(s_world& world) {
     world = {};
-    //SpawnEnemy(*this, {});
+    SpawnEnemy(world, {});
     return true;
 }
 

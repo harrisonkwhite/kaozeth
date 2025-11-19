@@ -21,8 +21,11 @@ enum class ec_game_state {
 
 struct s_game {
     ec_game_state state;
-    s_title_screen ts;
-    s_world world;
+
+    union {
+        s_title_screen ts;
+        s_world world;
+    } state_data;
 };
 
 [[nodiscard]] zf::t_b8 GameInit(const zf::s_game_init_context& zf_context);
