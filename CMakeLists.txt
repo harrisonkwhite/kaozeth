@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 project(kaozeth LANGUAGES C CXX)
 
 if (MSVC)
-    add_compile_options(/W3 /permissive-)
+    add_compile_options(/W3 /permissive- /utf-8)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 

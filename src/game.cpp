@@ -7,7 +7,7 @@ zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
         return false;
     }
 
-    if (!zf::UnpackSound("assets/sounds/explosion.zfdat", zf_context.perm_mem_arena, game->snd_data)) {
+    if (!zf::gfx::LoadFontAssetFromPacked("assets/fonts/eb_garamond_128.zfdat", *zf_context.mem_arena, *zf_context.gfx_res_arena, *zf_context.temp_mem_arena, game->font)) {
         return false;
     }
 
@@ -17,24 +17,18 @@ zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
 zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
 
-    if (zf::IsKeyPressed(zf::ek_key_code_space)) {
-        if (!zf::audio::PlaySound(game->snd_data)) {
-            return zf::ek_game_tick_result_error;
-        }
-    }
-
-    if (game->state == ec_game_state::title_screen) {
+    if (game->state == ek_game_state_title_screen) {
         const auto ts_tick_res = TitleScreenTick(game->state_data.ts);
 
         switch (ts_tick_res) {
-        case ec_title_screen_tick_result::success:
+        case ek_title_screen_tick_result_success:
             break;
 
-        case ec_title_screen_tick_result::failure:
+        case ek_title_screen_tick_result_failure:
             return zf::ek_game_tick_result_error;
 
-        case ec_title_screen_tick_result::go_to_world:
-            game->state = ec_game_state::world;
+        case ek_title_screen_tick_result_go_to_world:
+            game->state = ek_game_state_world;
 
             if (!InitWorld(game->state_data.world)) {
                 return zf::ek_game_tick_result_error;
@@ -55,13 +49,17 @@ zf::t_b8 GameRender(const zf::s_game_render_context& zf_context) {
     const auto game = static_cast<const s_game*>(zf_context.dev_mem);
 
     switch (game->state) {
-    case ec_game_state::title_screen:
+    case ek_game_state_title_screen:
         RenderTitleScreen(game->state_data.ts, zf_context);
         break;
 
-    case ec_game_state::world:
+    case ek_game_state_world:
         RenderWorld(game->state_data.world, zf_context);
         break;
+    }
+
+    if (!zf::DrawStr(*zf_context.rendering_context, zf::StrFromRawTerminatedTest("abcvë"), game->font, {}, *zf_context.temp_mem_arena)) {
+        return false;
     }
 
     // Render mouse.

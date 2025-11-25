@@ -2,6 +2,14 @@
     "textures": [
         {"src_file_path": "assets_raw/textures/test.png", "dest_file_path": "assets/textures/test.zfdat"}
     ],
+    "fonts": [
+        {
+            "src_file_path": "assets_raw/fonts/eb_garamond.ttf",
+            "height": 128,
+            "extra_chars_file_path": "all_dialogue.txt",
+            "dest_file_path": "assets/fonts/eb_garamond_128.zfdat"
+        }
+    ],
     "sounds": [
         {"src_file_path": "assets_raw/sounds/explosion.wav", "dest_file_path": "assets/sounds/explosion.zfdat"}
     ]
