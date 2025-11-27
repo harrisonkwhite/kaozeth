@@ -14,7 +14,6 @@ struct s_enemy {
 
 struct s_world {
     s_player player;
-    zf::s_static_activity_array<s_enemy, 32> enemies;
 };
 
 [[nodiscard]] zf::t_b8 InitWorld(s_world& world);

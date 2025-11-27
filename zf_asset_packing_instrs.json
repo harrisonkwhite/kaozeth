@@ -6,7 +6,7 @@
         {
             "src_file_path": "assets_raw/fonts/eb_garamond.ttf",
             "height": 128,
-            "extra_chrs_file_path": "assets_raw/all_dialogue.txt",
+            "extra_chrs_file_path": "assets_raw/fonts/extra_chrs.txt",
             "dest_file_path": "assets/fonts/eb_garamond_128.zfdat"
         }
     ],

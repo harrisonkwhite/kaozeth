@@ -7,7 +7,7 @@ zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
         return false;
     }
 
-    if (!zf::gfx::LoadFontAssetFromPacked(zf::StrFromRaw("assets/fonts/eb_garamond_128.zfdat"), *zf_context.mem_arena, *zf_context.gfx_res_arena, *zf_context.temp_mem_arena, game->font)) {
+    if (!zf::gfx::LoadFontAssetFromPacked("assets/fonts/eb_garamond_128.zfdat", *zf_context.mem_arena, *zf_context.gfx_res_arena, *zf_context.temp_mem_arena, game->font)) {
         return false;
     }
 
@@ -58,7 +58,7 @@ zf::t_b8 GameRender(const zf::s_game_render_context& zf_context) {
         break;
     }
 
-    if (!zf::DrawStr(*zf_context.rendering_context, zf::StrFromRaw("abcvëjhlhvcxlkvhphiudhsaidhs"), game->font, {}, *zf_context.temp_mem_arena)) {
+    if (!zf::DrawStr(*zf_context.rendering_context, "abcvëjhlhvcxlkvhphiudhsaidhs", game->font, {}, {}, *zf_context.temp_mem_arena)) {
         return false;
     }
 

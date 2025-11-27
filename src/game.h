@@ -4,7 +4,7 @@
 #include "title_screen.h"
 #include "world/world.h"
 
-const auto g_game_title = zf::StrFromRaw("Kaōzeth"); // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
+const zf::s_str_rdonly g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
 
 const zf::t_f32 g_mouse_size = 4.0f;
 
