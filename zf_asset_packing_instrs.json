@@ -5,9 +5,9 @@
     "fonts": [
         {
             "src_file_path": "assets_raw/fonts/eb_garamond.ttf",
-            "height": 128,
+            "height": 96,
             "extra_chrs_file_path": "assets_raw/fonts/extra_chrs.txt",
-            "dest_file_path": "assets/fonts/eb_garamond_128.zfdat"
+            "dest_file_path": "assets/fonts/eb_garamond_96.zfdat"
         }
     ],
     "sounds": [
