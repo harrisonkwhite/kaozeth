@@ -21,8 +21,12 @@ enum e_game_state : zf::t_s32 {
 };
 
 struct s_game {
+#if 0
+    zf::gfx::s_texture_asset tex;
     zf::gfx::s_font_asset font;
-    zf::audio::t_sound_type_id snd_type_id;
+    zf::gfx::s_resource_handle blend_shader_prog;
+    zf::gfx::s_resource_handle surf;
+#endif
 
     e_game_state state;
 

@@ -21,4 +21,6 @@ struct s_world {
 void RenderWorld(const s_world& world, const zf::s_game_render_context& zf_context);
 
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context);
+#if 0
 void RenderPlayer(const s_player& player, const zf::s_rendering_context& rc);
+#endif

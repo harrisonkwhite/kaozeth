@@ -3,13 +3,32 @@
 zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
     const auto game = static_cast<s_game*>(zf_context.dev_mem);
 
+    zf::s_static_array<zf::t_size, 32> nums;
+    Copy(Slice(nums, 1, 4), Slice(nums, 8, 11));
+
     if (!InitTitleScreen(game->state_data.ts)) {
+        ZF_REPORT_ERROR();
+        return false;
+    }
+
+#if 0
+    if (!zf::gfx::LoadTextureAssetFromPacked("assets/textures/test.zfdat", *zf_context.gfx_res_arena, *zf_context.temp_mem_arena, game->tex)) {
+        ZF_REPORT_ERROR();
         return false;
     }
 
     if (!zf::gfx::LoadFontAssetFromPacked("assets/fonts/eb_garamond_96.zfdat", *zf_context.mem_arena, *zf_context.gfx_res_arena, *zf_context.temp_mem_arena, game->font)) {
+        ZF_REPORT_ERROR();
         return false;
     }
+
+    game->surf = zf::gfx::MakeSurface(*zf_context.gfx_res_arena, {100, 100});
+
+    if (!zf::gfx::IsResourceHandleValid(game->surf)) {
+        ZF_REPORT_ERROR();
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -58,16 +77,27 @@ zf::t_b8 GameRender(const zf::s_game_render_context& zf_context) {
         break;
     }
 
-    const auto yeah = static_cast<zf::s_v2<zf::t_f32>>(zf::GetWindowSize());
+#if 0
+    zf::SetSurface(*zf_context.rendering_context, game->surf);
+    zf::DrawClear();
+    zf::DrawRect(*zf_context.rendering_context, {0, 0, 32, 32}, {1.0f, 0.0f, 0.0f, 0.5f});
+    zf::UnsetSurface(*zf_context.rendering_context);
 
-    if (!zf::DrawStr(*zf_context.rendering_context, "Český Kŕdeľ žĺtých\nhúsí útočí\nÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\nÓÔÕÖØÙÚÛÜÝÞß\n\nna Ďábla.", game->font, yeah / 2.0f, {0.5f, 0.5f}, *zf_context.temp_mem_arena)) {
-        return false;
-    }
+    zf::SetSurfaceShaderProg(*zf_context.rendering_context, zf_context.rendering_context->basis->surf_default_shader_prog_hdl);
+    zf::DrawSurface(*zf_context.rendering_context, game->surf, {}, {1.0f, 1.0f});
+
+    zf::SetSurface(*zf_context.rendering_context, game->surf);
+    zf::DrawClear();
+    zf::DrawRect(*zf_context.rendering_context, {0, 0, 32, 32}, {0.0f, 1.0f, 0.0f, 1.0f});
+    zf::UnsetSurface(*zf_context.rendering_context);
+
+    zf::SetSurfaceShaderProg(*zf_context.rendering_context, zf_context.rendering_context->basis->surf_default_shader_prog_hdl);
+    zf::DrawSurface(*zf_context.rendering_context, game->surf, {20.0f, 20.0f}, {1.0f, 1.0f});
 
     // Render mouse.
-#if 0
-    const zf::s_rect<zf::t_f32> mouse_rect(zf::GetMousePos(), {g_mouse_size, g_mouse_size}, {0.5f, 0.5f});
-    zf_context.renderer.DrawRect(mouse_rect, zf::colors::g_red);
+    const auto mouse_pos = static_cast<zf::s_v2<zf::t_f32>>(zf::GetMousePos());
+    const zf::s_rect<zf::t_f32> mouse_rect = {mouse_pos.x - (g_mouse_size / 2.0f), mouse_pos.y - (g_mouse_size / 2.0f), g_mouse_size, g_mouse_size};
+    zf::DrawRect(*zf_context.rendering_context, mouse_rect, zf::colors::g_red);
 #endif
 
     return true;

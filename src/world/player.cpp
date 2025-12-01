@@ -6,6 +6,7 @@ constexpr zf::s_v2<zf::t_s32> g_player_size = {24, 40};
 constexpr zf::s_v2<zf::t_f32> g_player_origin = zf::origins::g_center;
 
 static zf::s_rect<zf::t_f32> MakePlayerRect(const zf::s_v2<zf::t_f32> player_pos) {
+    //const auto size = static_cast<zf::s_v2<zf::t_f32>>(g_player_size);
     const auto size = static_cast<zf::s_v2<zf::t_f32>>(g_player_size);
     return {player_pos - (size / 2.0f), size};
 }
@@ -27,7 +28,9 @@ void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context) {
     world.player.pos += world.player.vel;
 }
 
+#if 0
 void RenderPlayer(const s_player& player, const zf::s_rendering_context& rc) {
     const auto rect = MakePlayerRect(player.pos);
     zf::DrawRect(rc, rect, zf::colors::g_green);
 }
+#endif

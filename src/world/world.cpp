@@ -11,5 +11,7 @@ zf::t_b8 WorldTick(s_world& world, const zf::s_game_tick_context& zf_context) {
 }
 
 void RenderWorld(const s_world& world, const zf::s_game_render_context& zf_context) {
+#if 0
     RenderPlayer(world.player, *zf_context.rendering_context);
+#endif
 }
