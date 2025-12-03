@@ -16,13 +16,8 @@ add_subdirectory(zeta_framework)
 add_executable(kaozeth
     src/entry.cpp
     src/game.cpp
-    src/title_screen.cpp
-    src/world/world.cpp
-    src/world/player.cpp
 
     src/game.h
-    src/title_screen.h
-    src/world/world.h
 
     zf_asset_packing_instrs.json
 )
