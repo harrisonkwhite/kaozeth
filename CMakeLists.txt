@@ -27,6 +27,8 @@ add_executable(kaozeth
     zf_asset_packing_instrs.json
 )
 
+target_precompile_headers(kaozeth PRIVATE src/pch.h)
+
 if (MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_link_options(kaozeth PRIVATE "/SUBSYSTEM:CONSOLE")

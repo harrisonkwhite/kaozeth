@@ -4,13 +4,13 @@ int main() {
     const zf::s_game_info game_info = {
         .mem_arena_size = zf::Megabytes(80),
         .temp_mem_arena_size = zf::Megabytes(10),
+        .frame_mem_arena_size = zf::Megabytes(10),
 
         .window_init_size = {1280, 720},
-        .window_title = g_game_title,
-        .window_flags = static_cast<zf::e_window_flags>(zf::ek_window_flags_hide_cursor | zf::ek_window_flags_resizable),
+        .window_init_title = g_game_title,
 
-        .dev_mem_size = sizeof(s_game),
-        .dev_mem_alignment = alignof(s_game),
+        .dev_mem_size = ZF_SIZE_OF(s_game),
+        .dev_mem_alignment = ZF_ALIGN_OF(s_game),
 
         .targ_ticks_per_sec = 60,
 

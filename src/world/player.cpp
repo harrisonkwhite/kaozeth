@@ -12,6 +12,7 @@ static zf::s_rect<zf::t_f32> MakePlayerRect(const zf::s_v2<zf::t_f32> player_pos
 }
 
 void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context) {
+#if 0
     const zf::t_b8 key_right = zf::IsKeyDown(zf::ek_key_code_d);
     const zf::t_b8 key_left = zf::IsKeyDown(zf::ek_key_code_a);
     const zf::t_b8 key_down = zf::IsKeyDown(zf::ek_key_code_s);
@@ -26,6 +27,7 @@ void PlayerTick(s_world &world, const zf::s_game_tick_context& zf_context) {
     world.player.vel = zf::Lerp(world.player.vel, vel_targ, g_player_vel_lerp);
 
     world.player.pos += world.player.vel;
+#endif
 }
 
 #if 0

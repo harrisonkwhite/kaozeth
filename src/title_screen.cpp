@@ -5,9 +5,11 @@ zf::t_b8 InitTitleScreen(s_title_screen& ts) {
 }
 
 e_title_screen_tick_result TitleScreenTick(s_title_screen& ts) {
-    if (zf::IsKeyPressed(zf::ek_key_code_enter)) {
+#if 0
+    if (zf::window::IsKeyPressed(zf::window::ek_key_code_enter)) {
         return ek_title_screen_tick_result_go_to_world;
     }
+#endif
 
     return ek_title_screen_tick_result_success;
 }

@@ -4,7 +4,7 @@
 
 This is a game, I think!
 
-> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a simple C++ framework I made for developing 2D games.
+> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a C++ framework I made for developing 2D games.
 
 ---
 

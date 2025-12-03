@@ -21,14 +21,10 @@ enum e_game_state : zf::t_s32 {
 };
 
 struct s_game {
-#if 0
-    zf::gfx::s_texture_asset tex;
-    zf::gfx::s_font_asset font;
-    zf::gfx::s_resource_handle blend_shader_prog;
-    zf::gfx::s_resource_handle surf;
-#endif
-
     e_game_state state;
+
+    zf::s_gfx_resource* tex;
+    zf::s_gfx_resource* font;
 
     union {
         s_title_screen ts;
@@ -37,6 +33,6 @@ struct s_game {
 };
 
 [[nodiscard]] zf::t_b8 GameInit(const zf::s_game_init_context& zf_context);
-[[nodiscard]] zf::e_game_tick_result GameTick(const zf::s_game_tick_context& zf_context);
+[[nodiscard]] zf::t_b8 GameTick(const zf::s_game_tick_context& zf_context);
 [[nodiscard]] zf::t_b8 GameRender(const zf::s_game_render_context& zf_context);
 void GameCleanup(void* const dev_mem);
