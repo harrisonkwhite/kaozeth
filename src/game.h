@@ -1,35 +1,17 @@
 #pragma once
 
-#include <zf.h>
-#include "title_screen.h"
-#include "world/world.h"
+#include "pch.h"
 
-const zf::s_str_rdonly g_game_title = "Kaōzeth"; // Other Ideas: "Behold a Pale Horse", "Iron Gospel"
+const zf::s_str_rdonly g_game_title = "Kaōzeth";
 
-const zf::t_f32 g_mouse_size = 4.0f;
-
-enum e_texture : zf::t_s32 {
-    ek_texture_player,
-    ek_texture_enemies,
-
-    eks_texture_cnt
-};
-
-enum e_game_state : zf::t_s32 {
-    ek_game_state_title_screen,
-    ek_game_state_world
+struct s_player {
+    zf::s_v2<zf::t_f32> pos;
+    zf::s_v2<zf::t_f32> vel;
+    zf::t_f32 rot;
 };
 
 struct s_game {
-    e_game_state state;
-
-    zf::s_gfx_resource* tex;
-    zf::s_gfx_resource* font;
-
-    union {
-        s_title_screen ts;
-        s_world world;
-    } state_data;
+    s_player player;
 };
 
 [[nodiscard]] zf::t_b8 GameInit(const zf::s_game_init_context& zf_context);
