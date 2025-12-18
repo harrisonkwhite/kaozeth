@@ -1,41 +1,49 @@
 #include "game.h"
 
-constexpr zf::s_v2<zf::t_f32> g_player_size = {32.0f, 32.0f};
 constexpr zf::t_f32 g_player_spd = 3.0f;
 constexpr zf::t_f32 g_player_vel_lerp = 0.2f;
 
-zf::t_b8 GameInit(const zf::s_game_init_context& zf_context) {
-    const auto game = static_cast<s_game*>(zf_context.dev_mem);
-    return true;
+static s_game g_game;
+
+void GameInit(const zf::s_game_init_context &zf_context) {
+    zf::SetWindowTitle(g_game_title, zf_context.temp_mem_arena);
+    zf::SetCursorVisibility(false);
+
+    if (!zf::CreateTextureResourceFromPacked(zf::s_cstr_literal("assets/textures/player.zfd"), zf_context.temp_mem_arena, g_game.player_texture)) {
+        ZF_FATAL();
+    }
+
+    if (!zf::CreateTextureResourceFromPacked(zf::s_cstr_literal("assets/textures/enemy.zfd"), zf_context.temp_mem_arena, g_game.enemy_texture)) {
+        ZF_FATAL();
+    }
+
+#if 0
+    if (!zf::CreateFontResourceFromPacked(zf::s_cstr_literal("assets/fonts/eb_garamond_96.zfd"), zf_context.temp_mem_arena, g_game.font)) {
+        ZF_FATAL();
+    }
+#endif
 }
 
-zf::t_b8 GameTick(const zf::s_game_tick_context& zf_context) {
-    const auto game = static_cast<s_game*>(zf_context.dev_mem);
+void GameTick(const zf::s_game_tick_context &zf_context) {
+    if (zf::IsKeyPressed(zf::ek_key_code_f)) {
+        zf::ToggleFullscreen();
+    }
 
-    const zf::s_v2<zf::t_f32> move_dir = {
+    const zf::s_v2 move_dir = {
         static_cast<zf::t_f32>(zf::IsKeyDown(zf::ek_key_code_d) - zf::IsKeyDown(zf::ek_key_code_a)),
-        static_cast<zf::t_f32>(zf::IsKeyDown(zf::ek_key_code_s) - zf::IsKeyDown(zf::ek_key_code_w))
+        static_cast<zf::t_f32>(zf::IsKeyDown(zf::ek_key_code_s) - zf::IsKeyDown(zf::ek_key_code_w)),
     };
 
     const auto vel_targ = move_dir * g_player_spd;
-    game->player.vel = zf::Lerp(game->player.vel, vel_targ, g_player_vel_lerp);
-    game->player.pos += game->player.vel;
+    g_game.player.vel = zf::Lerp(g_game.player.vel, vel_targ, g_player_vel_lerp);
+    g_game.player.pos += g_game.player.vel;
 
-    game->player.rot = zf::CalcDirInRads(game->player.pos, zf::MousePos());
-
-    return true;
+    g_game.player.rot = zf::CalcDirInRads(g_game.player.pos, zf::CursorPos());
 }
 
-zf::t_b8 GameRender(const zf::s_game_render_context& zf_context) {
-    const auto game = static_cast<const s_game*>(zf_context.dev_mem);
-
-    const auto& rc = *zf_context.rendering_context;
-
-    zf::DrawRectRot(rc, game->player.pos, g_player_size, zf::origins::g_center, game->player.rot, zf::colors::g_red);
-
-    return true;
+void GameRender(const zf::s_game_render_context &zf_context) {
+    zf::DrawTexture(zf_context.rendering_context, *g_game.player_texture, g_game.player.pos);
+    zf::DrawTexture(zf_context.rendering_context, *g_game.enemy_texture, g_game.player.pos + zf::s_v2(100.0f, 100.0f));
 }
 
-void GameCleanup(void* const dev_mem) {
-    const auto game = static_cast<s_game*>(dev_mem);
-}
+void GameCleanup() {}

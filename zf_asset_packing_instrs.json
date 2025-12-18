@@ -1,5 +1,14 @@
 {
-    "textures": [],
+    "textures": [
+        {
+            "src_file_path": "assets_raw/textures/player.png",
+            "dest_file_path": "assets/textures/player.zfd"
+        },
+        {
+            "src_file_path": "assets_raw/textures/enemy.png",
+            "dest_file_path": "assets/textures/enemy.zfd"
+        }
+    ],
     "fonts": [],
     "shader_progs": [],
     "sounds": []

@@ -35,7 +35,7 @@ if (MSVC)
     endif()
 endif()
 
-target_link_libraries(kaozeth PRIVATE zf)
+target_link_libraries(kaozeth PRIVATE zf_game_lib)
 
 target_compile_definitions(kaozeth PRIVATE
     _CRT_SECURE_NO_WARNINGS
