@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
+$ProjectRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 $BuildDir = Join-Path $ProjectRoot "build/debug"
 
 cmake -S "$ProjectRoot" -B "$BuildDir" -G Ninja -DCMAKE_BUILD_TYPE=Debug
