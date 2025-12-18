@@ -1,7 +1,15 @@
-$ProjectRoot = Resolve-Path "$PSScriptRoot\.."
 $ErrorActionPreference = "Stop"
+$ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
+$BuildDir = Join-Path $ProjectRoot "build/release"
 
-cmake -S "$ProjectRoot" -B "$ProjectRoot/build/release" -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build "$ProjectRoot/build/release"
+cmake -S "$ProjectRoot" -B "$BuildDir" -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build "$BuildDir"
 
-& "$ProjectRoot/build/release/kaozeth.exe"
+Push-Location $BuildDir
+
+try {
+    & ".\kaozeth.exe"
+}
+finally {
+    Pop-Location
+}
