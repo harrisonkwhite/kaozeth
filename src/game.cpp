@@ -6,6 +6,8 @@ constexpr zf::t_f32 g_player_vel_lerp = 0.2f;
 static s_game g_game;
 
 void GameInit(const zf::s_game_init_context &zf_context) {
+    ZF_FATAL();
+
     zf::SetWindowTitle(g_game_title, zf_context.temp_mem_arena);
     zf::SetCursorVisibility(false);
 
