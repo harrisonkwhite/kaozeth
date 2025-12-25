@@ -3,7 +3,7 @@ AlignAfterOpenBracket: false
 ColumnLimit: 0
 NamespaceIndentation: All
 FixNamespaceComments: false
-AllowShortBlocksOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: Always
 AllowShortFunctionsOnASingleLine: All
 DerivePointerAlignment: false
 PointerAlignment: Right
@@ -12,7 +12,7 @@ BreakTemplateDeclarations: Leave
 BreakBeforeBinaryOperators: NonAssignment
 AlignOperands: DontAlign
 ContinuationIndentWidth: 4
-AllowShortLambdasOnASingleLine: None
+AllowShortLambdasOnASingleLine: All
 BreakBeforeBraces: Attach
 AccessModifierOffset: -4
 AllowShortCaseLabelsOnASingleLine: true

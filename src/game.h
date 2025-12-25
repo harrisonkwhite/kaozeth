@@ -16,7 +16,7 @@ struct s_game {
     zf::s_ptr<zf::s_gfx_resource> player_texture;
     zf::s_ptr<zf::s_gfx_resource> enemy_texture;
 
-    zf::s_ptr<zf::s_gfx_resource> font;
+    zf::s_font font;
 
     s_player player;
 };

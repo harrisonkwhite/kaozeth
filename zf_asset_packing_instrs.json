@@ -9,7 +9,13 @@
             "dest_file_path": "assets/textures/enemy.zfd"
         }
     ],
-    "fonts": [],
+    "fonts": [
+        {
+            "src_file_path": "assets_raw/fonts/arial.ttf",
+            "height": 80,
+            "dest_file_path": "assets/fonts/arial.zfd"
+        }
+    ],
     "shader_progs": [],
     "sounds": []
 }
