@@ -1,26 +1,15 @@
 {
     "textures": [
-        {
-            "src_file_path": "assets_raw/textures/player.png",
-            "dest_file_path": "assets/textures/player.zfd"
-        },
-        {
-            "src_file_path": "assets_raw/textures/enemy.png",
-            "dest_file_path": "assets/textures/enemy.zfd"
-        }
+        {"file_path": "assets_raw/textures/player.png", "out_file_path": "assets/textures/player.dat"},
+        {"file_path": "assets_raw/textures/enemy.png", "out_file_path": "assets/textures/enemy.dat"}
     ],
     "fonts": [
-        {
-            "src_file_path": "assets_raw/fonts/arial.ttf",
-            "height": 80,
-            "dest_file_path": "assets/fonts/arial.zfd"
-        }
+        {"file_path": "assets_raw/fonts/arial.ttf", "height": 80, "out_file_path": "assets/fonts/arial_80.dat"}
     ],
-    "shader_progs": [],
+    "shaders": [
+        {"file_path": "assets_raw/shaders/test.sc", "varying_def_file_path": "assets_raw/shaders/varying.def.sc", "out_file_path": "assets/shaders/test.dat"}
+    ],
     "sounds": [
-        {
-            "src_file_path": "assets_raw/sounds/explosion.wav",
-            "dest_file_path": "assets/sounds/explosion.zfd"
-        }
+        {"file_path": "assets_raw/sounds/explosion.wav", "out_file_path": "assets/sounds/explosion.dat"}
     ]
 }

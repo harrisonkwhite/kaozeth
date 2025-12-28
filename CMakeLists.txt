@@ -22,12 +22,14 @@ set_target_properties(kaozeth PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:kaozeth>"
 )
 
-add_custom_command(TARGET kaozeth POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_SOURCE_DIR}/assets"
+add_custom_target(pack_assets ALL
     COMMAND $<TARGET_FILE:zf_asset_packer> zf_asset_packing_instrs.json
     COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_FILE_DIR:kaozeth>/assets"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:kaozeth>/assets"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory assets "$<TARGET_FILE_DIR:kaozeth>/assets"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf assets
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Packing assets..."
     VERBATIM
 )
+
+add_dependencies(kaozeth pack_assets)

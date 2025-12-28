@@ -9,6 +9,7 @@ void GameInit(const zf::s_game_init_context &zf_context) {
     zf::SetWindowTitle(g_game_title, zf_context.temp_mem_arena);
     zf::SetCursorVisibility(false);
 
+#if 0
     if (!zf::PermGFXResourceArena().AddTextureFromPacked(zf::s_cstr_literal("assets/textures/player.zfd"), zf_context.temp_mem_arena, g_game.player_texture)) {
         ZF_FATAL();
     }
@@ -24,6 +25,7 @@ void GameInit(const zf::s_game_init_context &zf_context) {
     if (!g_game.snd_type_arena.AddFromPacked(zf::s_cstr_literal("assets/sounds/explosion.zfd"), zf_context.temp_mem_arena, g_game.snd_types.explosion)) {
         ZF_FATAL();
     }
+#endif
 }
 
 void GameTick(const zf::s_game_tick_context &zf_context) {
@@ -54,10 +56,12 @@ void GameTick(const zf::s_game_tick_context &zf_context) {
 }
 
 void GameRender(const zf::s_game_render_context &zf_context) {
+#if 0
     zf::DrawTexture(zf_context.rendering_context, *g_game.player_texture, g_game.player.pos);
     zf::DrawTexture(zf_context.rendering_context, *g_game.enemy_texture, g_game.player.pos + zf::s_v2(100.0f, 100.0f));
 
     zf::DrawStr(zf_context.rendering_context, zf::s_cstr_literal("Dude, man"), g_game.font, {}, zf_context.temp_mem_arena);
+#endif
 }
 
 void GameCleanup() {
