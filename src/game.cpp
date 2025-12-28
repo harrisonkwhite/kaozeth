@@ -9,20 +9,20 @@ void GameInit(const zf::s_game_init_context &zf_context) {
     zf::SetWindowTitle(g_game_title, zf_context.temp_mem_arena);
     zf::SetCursorVisibility(false);
 
+    if (!zf::PermGFXResourceArena().AddTextureFromPacked(zf::s_cstr_literal("assets/textures/player.dat"), zf_context.temp_mem_arena, g_game.player_texture)) {
+        ZF_FATAL();
+    }
+
+    if (!zf::PermGFXResourceArena().AddTextureFromPacked(zf::s_cstr_literal("assets/textures/enemy.dat"), zf_context.temp_mem_arena, g_game.enemy_texture)) {
+        ZF_FATAL();
+    }
+
+    if (!zf::CreateFontFromPacked(zf::s_cstr_literal("assets/fonts/arial_80.dat"), zf_context.temp_mem_arena, g_game.font)) {
+        ZF_FATAL();
+    }
+
 #if 0
-    if (!zf::PermGFXResourceArena().AddTextureFromPacked(zf::s_cstr_literal("assets/textures/player.zfd"), zf_context.temp_mem_arena, g_game.player_texture)) {
-        ZF_FATAL();
-    }
-
-    if (!zf::PermGFXResourceArena().AddTextureFromPacked(zf::s_cstr_literal("assets/textures/enemy.zfd"), zf_context.temp_mem_arena, g_game.enemy_texture)) {
-        ZF_FATAL();
-    }
-
-    if (!zf::CreateFontFromPacked(zf::s_cstr_literal("assets/fonts/arial.zfd"), zf_context.temp_mem_arena, g_game.font)) {
-        ZF_FATAL();
-    }
-
-    if (!g_game.snd_type_arena.AddFromPacked(zf::s_cstr_literal("assets/sounds/explosion.zfd"), zf_context.temp_mem_arena, g_game.snd_types.explosion)) {
+    if (!g_game.snd_type_arena.AddFromPacked(zf::s_cstr_literal("assets/sounds/explosion.dat"), zf_context.temp_mem_arena, g_game.snd_types.explosion)) {
         ZF_FATAL();
     }
 #endif
@@ -56,12 +56,10 @@ void GameTick(const zf::s_game_tick_context &zf_context) {
 }
 
 void GameRender(const zf::s_game_render_context &zf_context) {
-#if 0
     zf::DrawTexture(zf_context.rendering_context, *g_game.player_texture, g_game.player.pos);
     zf::DrawTexture(zf_context.rendering_context, *g_game.enemy_texture, g_game.player.pos + zf::s_v2(100.0f, 100.0f));
 
     zf::DrawStr(zf_context.rendering_context, zf::s_cstr_literal("Dude, man"), g_game.font, {}, zf_context.temp_mem_arena);
-#endif
 }
 
 void GameCleanup() {

@@ -3,5 +3,9 @@ $ErrorActionPreference = "Stop"
 & "$PSScriptRoot\build_debug.ps1"
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
-$ProjectRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
-& "$ProjectRoot\build\debug\kaozeth.exe"
+$ExePath = Resolve-Path "$PSScriptRoot\..\..\build\debug\kaozeth.exe"
+$ExeDir  = Split-Path $ExePath -Parent
+
+Push-Location $ExeDir
+& $ExePath
+Pop-Location
