@@ -1,15 +1,6 @@
 {
-    "textures": [
-        {"file_path": "assets_raw/textures/player.png", "out_file_path": "assets/textures/player.dat"},
-        {"file_path": "assets_raw/textures/enemy.png", "out_file_path": "assets/textures/enemy.dat"}
-    ],
-    "fonts": [
-        {"file_path": "assets_raw/fonts/arial.ttf", "height": 80, "out_file_path": "assets/fonts/arial_80.dat"}
-    ],
-    "shaders": [
-        {"file_path": "assets_raw/shaders/test.sc", "varying_def_file_path": "assets_raw/shaders/varying.def.sc", "out_file_path": "assets/shaders/test.dat"}
-    ],
-    "sounds": [
-        {"file_path": "assets_raw/sounds/explosion.wav", "out_file_path": "assets/sounds/explosion.dat"}
-    ]
+    "textures": [],
+    "fonts": [],
+    "shaders": [],
+    "sounds": []
 }

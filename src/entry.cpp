@@ -1,5 +1,5 @@
 #include "game.h"
 
 int main() {
-    zf::RunGame(GameInit, GameTick, GameRender, GameCleanup);
+    ZF_RunGame(InitGame, RunGameTick, RenderGame, DeinitGame);
 }
