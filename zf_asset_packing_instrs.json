@@ -1,0 +1,11 @@
+{
+    "textures": [
+        {
+            "file_path": "assets_raw/textures/temp.png",
+            "out_file_path": "assets/textures/temp.dat"
+        }
+    ],
+    "fonts": [],
+    "shaders": [],
+    "sounds": []
+}
