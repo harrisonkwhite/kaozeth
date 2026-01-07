@@ -9,9 +9,13 @@ add_subdirectory(zeta_framework)
 add_executable(kaozeth
     src/entry.cpp
     src/game.cpp
+    src/world_main.cpp
+    src/world_player.cpp
+    src/world_enemies.cpp
 
     src/pch.h
     src/game.h
+    src/world.h
 )
 
 target_precompile_headers(kaozeth PRIVATE src/pch.h)

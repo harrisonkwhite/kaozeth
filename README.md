@@ -1,16 +1,6 @@
 # Kaōzeth
 
-## About
-
-This is a game, I think!
-
-> **Note:** This project uses [Zeta Framework](https://github.com/harrisonkwhite/zeta_framework), a C++ framework I made for developing 2D games.
-
----
-
 ## Building
-
-Building and running this project has only been tested on Windows.
 
 Clone the repository by running `git clone --recursive https://github.com/harrisonkwhite/kaozeth.git`.
 
