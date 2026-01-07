@@ -1,34 +1,49 @@
 #pragma once
 
-struct t_player {
-    zf::math::t_v2 pos;
-    zf::math::t_v2 vel;
-    zf::t_f32 rot;
-};
+namespace world {
+    // ============================================================
+    // @section: Types and Constants
 
-constexpr zf::t_i32 g_enemy_limit = 1024;
+    struct t_player {
+        zf::math::t_v2 pos;
+        zf::math::t_v2 vel;
+        zf::t_f32 rot;
+    };
 
-struct t_enemy {
-    zf::math::t_v2 pos;
-    zf::math::t_v2 vel;
-};
+    inline const zf::t_i32 g_enemy_limit = 1024;
 
-struct t_world {
-    t_player player;
+    struct t_enemy {
+        zf::math::t_v2 pos;
+        zf::math::t_v2 vel;
+    };
 
-    zf::t_static_array<t_enemy, g_enemy_limit> enemies;
-    zf::mem::t_static_bitset<g_enemy_limit> enemy_activity;
-};
+    struct t_world {
+        zf::math::t_v2 size;
 
-void world_init(t_world *const world);
-void world_tick(t_world *const world);
-void world_render(t_world *const world);
+        t_player player;
 
-void world_player_init(t_world *const world);
-void world_player_tick(t_world *const world);
-void world_player_render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
-zf::math::t_rect_f world_player_get_collider(const zf::math::t_v2 player_pos);
+        zf::t_static_array<t_enemy, g_enemy_limit> enemies;
+        zf::mem::t_static_bitset<g_enemy_limit> enemy_activity;
+    };
 
-void world_enemy_spawn(t_world *const world, const zf::math::t_v2 pos);
-void world_enemies_tick(t_world *const world);
-void world_enemies_render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
+    // ============================================================
+
+
+    // ============================================================
+    // @section: Functions
+
+    void init(t_world *const world);
+    void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
+    void render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
+
+    void player_init(t_world *const world);
+    void player_tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
+    void player_render(const t_player *const player, zf::rendering::t_frame_context *const frame_context);
+    zf::math::t_rect_f player_get_collider(const zf::math::t_v2 player_pos);
+
+    void enemy_spawn(t_world *const world, const zf::math::t_v2 pos);
+    void enemies_tick(t_world *const world);
+    void enemies_render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
+
+    // ============================================================
+}

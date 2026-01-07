@@ -6,7 +6,7 @@
 inline const zf::strs::t_str_rdonly g_game_title = ZF_STR_LITERAL("Kaōzeth");
 
 struct t_game {
-    t_world world;
+    world::t_world world;
 };
 
 void game_init(const zf::game::t_init_func_context &zf_context);
