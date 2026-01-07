@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include "assets.h"
+
 void game_init(const zf::game::t_init_func_context &zf_context) {
     const auto game = static_cast<t_game *>(zf_context.user_mem);
 
@@ -8,11 +10,14 @@ void game_init(const zf::game::t_init_func_context &zf_context) {
     zf::platform::window_set_title(g_game_title, zf_context.temp_arena);
     zf::platform::cursor_set_visible(false);
 
+    assets::load_all(zf_context.perm_arena, zf_context.temp_arena);
+
     world::init(&game->world);
 }
 
 void game_deinit(void *const user_mem) {
     const auto game = static_cast<t_game *>(user_mem);
+    assets::unload_all();
 }
 
 void game_tick(const zf::game::t_tick_func_context &zf_context) {

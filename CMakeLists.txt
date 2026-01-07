@@ -9,12 +9,14 @@ add_subdirectory(zeta_framework)
 add_executable(kaozeth
     src/entry.cpp
     src/game.cpp
+    src/assets.cpp
     src/world_main.cpp
     src/world_player.cpp
     src/world_enemies.cpp
 
     src/pch.h
     src/game.h
+    src/assets.h
     src/world.h
 )
 

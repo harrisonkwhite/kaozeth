@@ -5,7 +5,23 @@
             "out_file_path": "assets/textures/temp.dat"
         }
     ],
-    "fonts": [],
+    "fonts": [
+        {
+            "file_path": "assets_raw/fonts/eb_garamond.ttf",
+            "height": 32,
+            "out_file_path": "assets/fonts/eb_garamond_32.dat"
+        },
+        {
+            "file_path": "assets_raw/fonts/eb_garamond.ttf",
+            "height": 48,
+            "out_file_path": "assets/fonts/eb_garamond_48.dat"
+        },
+        {
+            "file_path": "assets_raw/fonts/eb_garamond.ttf",
+            "height": 64,
+            "out_file_path": "assets/fonts/eb_garamond_64.dat"
+        }
+    ],
     "shaders": [],
     "sounds": []
 }

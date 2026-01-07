@@ -30,7 +30,7 @@ namespace world {
     }
 
     void player_render(const t_player *const player, zf::rendering::t_frame_context *const frame_context) {
-        zf::rendering::frame_submit_rect_rotated(frame_context, player->pos, zf::math::v2_i_to_f(g_player_size), g_player_origin, player->rot, zf::gfx::g_color_lime);
+        // zf::rendering::frame_submit_rect_rotated(frame_context, player->pos, zf::math::v2_i_to_f(g_player_size), g_player_origin, player->rot, zf::gfx::g_color_lime);
     }
 
     zf::math::t_rect_f player_get_collider(const zf::math::t_v2 player_pos) {
