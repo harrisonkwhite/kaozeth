@@ -18,7 +18,7 @@ namespace world {
     };
 
     struct t_world {
-        zf::math::t_v2 size;
+        zf::math::t_v2 camera_pos;
 
         t_player player;
 

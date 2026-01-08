@@ -1,6 +1,9 @@
 #pragma once
 
 namespace assets {
+    // This actually is quite complicated.
+    // So every texture has 1 or more frames.
+
     enum t_texture_id {
         ek_texture_id_temp,
 
@@ -9,6 +12,16 @@ namespace assets {
 
     inline const zf::t_static_array<zf::strs::t_str_rdonly, ekm_texture_id_cnt> g_texture_file_paths = {{
         ZF_STR_LITERAL("assets/textures/temp.dat"),
+    }};
+
+    enum t_texture_temp_src_rect_id {
+        ek_texture_temp_src_rect_id_player,
+
+        ekm_texture_temp_src_rect_id_cnt
+    };
+
+    constexpr zf::t_static_array<zf::math::t_rect_i, ekm_texture_temp_src_rect_id_cnt> k_texture_temp_src_rects = {{
+        {4, 4, 24, 24},
     }};
 
     enum t_font_id {

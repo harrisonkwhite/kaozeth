@@ -6,6 +6,11 @@ namespace world {
 
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context) {
         player_tick(world, zf_context);
+
+        //
+        // Camera Update
+        //
+        world->camera_pos = world->player.pos;
     }
 
     void render(t_world *const world, zf::rendering::t_frame_context *const frame_context) {

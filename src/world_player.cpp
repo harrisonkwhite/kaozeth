@@ -3,6 +3,7 @@
 #include "assets.h"
 
 namespace world {
+    constexpr zf::math::t_v2_i k_player_size = {20, 20};
     constexpr zf::math::t_v2 k_player_origin = zf::rendering::k_origin_center;
     constexpr zf::t_f32 k_player_spd = 2.0f;
     constexpr zf::t_f32 k_player_vel_lerp_factor = 0.2f;
@@ -31,11 +32,10 @@ namespace world {
     }
 
     void player_render(const t_player *const player, zf::rendering::t_frame_context *const frame_context) {
-        zf::rendering::frame_submit_texture(frame_context, assets::get_texture(assets::ek_texture_id_temp), player->pos, {4, 4, 24, 24}, k_player_origin, player->rot);
+        zf::rendering::frame_submit_texture(frame_context, assets::get_texture(assets::ek_texture_id_temp), player->pos, assets::k_texture_temp_src_rects[assets::ek_texture_temp_src_rect_id_player], k_player_origin, player->rot);
     }
 
     zf::math::t_rect_f player_get_collider(const zf::math::t_v2 player_pos) {
-        return {};
-        // return zf::math::rect_create_f32(player_pos - (zf::math::v2_calc_compwise_prod(zf::math::v2_i_to_f(g_player_size), g_player_origin)), zf::math::v2_i_to_f(g_player_size));
+        return zf::math::rect_create_f32(player_pos - (zf::math::v2_calc_compwise_prod(zf::math::v2_i_to_f(k_player_size), k_player_origin)), zf::math::v2_i_to_f(k_player_size));
     }
 }
