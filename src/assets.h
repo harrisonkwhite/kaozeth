@@ -16,12 +16,14 @@ namespace assets {
 
     enum t_texture_temp_src_rect_id {
         ek_texture_temp_src_rect_id_player,
+        ek_texture_temp_src_rect_id_enemy,
 
         ekm_texture_temp_src_rect_id_cnt
     };
 
     constexpr zf::t_static_array<zf::math::t_rect_i, ekm_texture_temp_src_rect_id_cnt> k_texture_temp_src_rects = {{
         {4, 4, 24, 24},
+        {32, 0, 16, 16},
     }};
 
     enum t_font_id {

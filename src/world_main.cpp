@@ -2,10 +2,12 @@
 
 namespace world {
     void init(t_world *const world) {
+        enemy_spawn(world, {100.0f, 100.0f});
     }
 
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context) {
         player_tick(world, zf_context);
+        enemies_tick(world);
 
         //
         // Camera Update
@@ -13,7 +15,7 @@ namespace world {
         world->camera_pos = world->player.pos;
     }
 
-    void render(t_world *const world, zf::rendering::t_frame_context *const frame_context) {
+    void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context) {
         zf::math::t_mat4x4 cam_view_mat = zf::math::k_mat4x4_identity;
         cam_view_mat.elems[0][0] *= 2.0f;
         cam_view_mat.elems[1][1] *= 2.0f;
@@ -24,5 +26,6 @@ namespace world {
 
         zf::rendering::frame_pass_set(frame_context, 0);
         player_render(&world->player, frame_context);
+        enemies_render(world, frame_context);
     }
 }

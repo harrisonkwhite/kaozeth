@@ -15,6 +15,7 @@ namespace world {
     struct t_enemy {
         zf::math::t_v2 pos;
         zf::math::t_v2 vel;
+        zf::t_f32 rot;
     };
 
     struct t_world {
@@ -34,7 +35,7 @@ namespace world {
 
     void init(t_world *const world);
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
-    void render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
+    void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context);
 
     void player_init(t_world *const world);
     void player_tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
@@ -43,7 +44,7 @@ namespace world {
 
     void enemy_spawn(t_world *const world, const zf::math::t_v2 pos);
     void enemies_tick(t_world *const world);
-    void enemies_render(t_world *const world, zf::rendering::t_frame_context *const frame_context);
+    void enemies_render(const t_world *const world, zf::rendering::t_frame_context *const frame_context);
 
     // ============================================================
 }
