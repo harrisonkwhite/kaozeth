@@ -19,6 +19,10 @@ namespace world {
     };
 
     struct t_world {
+        zf::rendering::t_resource_group rendering_resource_group;
+
+        zf::rendering::t_resource *texture_target_all;
+
         zf::math::t_v2 camera_pos;
 
         t_player player;
@@ -33,7 +37,8 @@ namespace world {
     // ============================================================
     // @section: Functions
 
-    void init(t_world *const world);
+    void init(t_world *const world, zf::mem::t_arena *const arena);
+    void deinit(t_world *const world);
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
     void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context);
 

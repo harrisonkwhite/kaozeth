@@ -10,11 +10,12 @@ void game_init(const zf::game::t_init_func_context &zf_context) {
 
     assets::load_all(zf_context.perm_arena, zf_context.temp_arena);
 
-    world::init(&game->world);
+    world::init(&game->world, zf_context.perm_arena);
 }
 
 void game_deinit(void *const user_mem) {
     const auto game = static_cast<t_game *>(user_mem);
+    world::deinit(&game->world);
     assets::unload_all();
 }
 
