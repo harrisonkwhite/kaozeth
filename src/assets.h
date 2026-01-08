@@ -2,24 +2,24 @@
 
 namespace assets {
     enum t_texture_id {
-        ec_texture_id_temp,
+        ek_texture_id_temp,
 
-        ecm_texture_id_cnt
+        ekm_texture_id_cnt
     };
 
-    inline const zf::t_static_array<zf::strs::t_str_rdonly, ecm_texture_id_cnt> g_texture_file_paths = {{
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_32.dat"),
+    inline const zf::t_static_array<zf::strs::t_str_rdonly, ekm_texture_id_cnt> g_texture_file_paths = {{
+        ZF_STR_LITERAL("assets/textures/temp.dat"),
     }};
 
     enum t_font_id {
-        ec_font_id_eb_garamond_32,
-        ec_font_id_eb_garamond_48,
-        ec_font_id_eb_garamond_64,
+        ek_font_id_eb_garamond_32,
+        ek_font_id_eb_garamond_48,
+        ek_font_id_eb_garamond_64,
 
-        ecm_font_id_cnt
+        ekm_font_id_cnt
     };
 
-    inline const zf::t_static_array<zf::strs::t_str_rdonly, ecm_font_id_cnt> g_font_file_paths = {{
+    inline const zf::t_static_array<zf::strs::t_str_rdonly, ekm_font_id_cnt> g_font_file_paths = {{
         ZF_STR_LITERAL("assets/fonts/eb_garamond_32.dat"),
         ZF_STR_LITERAL("assets/fonts/eb_garamond_48.dat"),
         ZF_STR_LITERAL("assets/fonts/eb_garamond_64.dat"),

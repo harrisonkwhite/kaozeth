@@ -10,7 +10,7 @@ namespace world {
         zf::t_f32 rot;
     };
 
-    inline const zf::t_i32 g_enemy_limit = 1024;
+    constexpr zf::t_i32 k_enemy_limit = 1024;
 
     struct t_enemy {
         zf::math::t_v2 pos;
@@ -22,8 +22,8 @@ namespace world {
 
         t_player player;
 
-        zf::t_static_array<t_enemy, g_enemy_limit> enemies;
-        zf::mem::t_static_bitset<g_enemy_limit> enemy_activity;
+        zf::t_static_array<t_enemy, k_enemy_limit> enemies;
+        zf::mem::t_static_bitset<k_enemy_limit> enemy_activity;
     };
 
     // ============================================================
