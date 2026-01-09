@@ -7,10 +7,19 @@ namespace world {
 
     constexpr zf::t_f32 k_camera_scale = 2.0f;
 
+    static zf::math::t_v2_i calc_ideal_texture_target_all_size() {
+        const zf::math::t_v2_i fb_size = zf::platform::window_get_framebuffer_size_cache();
+
+        return {
+            static_cast<zf::t_i32>(fb_size.x / k_camera_scale),
+            static_cast<zf::t_i32>(fb_size.y / k_camera_scale),
+        };
+    }
+
     void init(t_world *const world, zf::mem::t_arena *const arena) {
         world->rendering_resource_group = zf::rendering::resource_group_create(arena);
 
-        world->texture_target_all = zf::rendering::texture_create_target(zf::platform::window_get_framebuffer_size_cache(), &world->rendering_resource_group);
+        world->texture_target_all = zf::rendering::texture_create_target(calc_ideal_texture_target_all_size(), &world->rendering_resource_group);
 
         enemy_spawn(world, {100.0f, 100.0f});
     }
@@ -20,7 +29,7 @@ namespace world {
     }
 
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context) {
-        zf::rendering::texture_resize_target_if_needed(world->texture_target_all, zf::platform::window_get_framebuffer_size_cache());
+        zf::rendering::texture_resize_target_if_needed(world->texture_target_all, calc_ideal_texture_target_all_size());
 
         player_tick(world, zf_context);
         enemies_tick(world);
