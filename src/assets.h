@@ -30,6 +30,8 @@ namespace assets {
         ek_font_id_eb_garamond_32,
         ek_font_id_eb_garamond_48,
         ek_font_id_eb_garamond_64,
+        ek_font_id_eb_garamond_128,
+        ek_font_id_eb_garamond_256,
 
         ekm_font_id_cnt
     };
@@ -38,6 +40,8 @@ namespace assets {
         ZF_STR_LITERAL("assets/fonts/eb_garamond_32.dat"),
         ZF_STR_LITERAL("assets/fonts/eb_garamond_48.dat"),
         ZF_STR_LITERAL("assets/fonts/eb_garamond_64.dat"),
+        ZF_STR_LITERAL("assets/fonts/eb_garamond_128.dat"),
+        ZF_STR_LITERAL("assets/fonts/eb_garamond_256.dat"),
     }};
 
     void load_all(zf::mem::t_arena *const arena, zf::mem::t_arena *const temp_arena);

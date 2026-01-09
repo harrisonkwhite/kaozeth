@@ -27,5 +27,14 @@ void game_tick(const zf::game::t_tick_func_context &zf_context) {
 
 void game_render(const zf::game::t_render_func_context &zf_context) {
     const auto game = static_cast<t_game *>(zf_context.user_mem);
+
     world::render(&game->world, zf_context.frame_context);
+
+    zf::rendering::frame_pass_begin(zf_context.frame_context, zf::platform::window_get_framebuffer_size_cache(), zf::math::matrix_create_identity());
+
+    zf::rendering::frame_submit_str(zf_context.frame_context, ZF_STR_LITERAL("KAŌZETH"), *assets::get_font(assets::ek_font_id_eb_garamond_128), {}, zf_context.temp_arena);
+
+    world::render_ui(&game->world, zf_context.frame_context, zf_context.temp_arena);
+
+    zf::rendering::frame_pass_end(zf_context.frame_context);
 }
