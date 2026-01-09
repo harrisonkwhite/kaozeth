@@ -4,6 +4,8 @@ namespace world {
     // ============================================================
     // @section: Types and Constants
 
+    constexpr zcl::t_f32 k_camera_scale = 2.0f;
+
     struct t_player {
         zcl::math::t_v2 pos;
         zcl::math::t_v2 vel;
@@ -41,6 +43,18 @@ namespace world {
     void destroy(t_world *const world);
     void tick(t_world *const world, const zgl::game::t_tick_func_context &zf_context);
     void render(const t_world *const world, zgl::gfx::t_frame_context *const frame_context, zcl::mem::t_arena *const temp_arena);
+
+    inline zcl::math::t_v2 camera_get_size() {
+        return zcl::math::v2_i_to_f(zgl::platform::window_get_framebuffer_size_cache()) / k_camera_scale;
+    }
+
+    inline zcl::math::t_v2 world_to_screen_pos(const zcl::math::t_v2 pos, const zcl::math::t_v2 camera_pos) {
+        return (pos - camera_pos) * k_camera_scale;
+    }
+
+    inline zcl::math::t_v2 screen_to_world_pos(const zcl::math::t_v2 pos, const zcl::math::t_v2 camera_pos) {
+        return (pos / k_camera_scale) + camera_pos;
+    }
 
     void player_init(t_world *const world);
     void player_tick(t_world *const world, const zgl::game::t_tick_func_context &zf_context);

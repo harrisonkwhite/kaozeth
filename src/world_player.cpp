@@ -28,7 +28,7 @@ namespace world {
 
         world->player.pos += world->player.vel;
 
-        world->player.rot = zcl::math::calc_dir_in_rads(world->player.pos, zgl::input::cursor_get_pos(zf_context.input_state));
+        world->player.rot = zcl::math::calc_dir_in_rads(world->player.pos, screen_to_world_pos(zgl::input::cursor_get_pos(zf_context.input_state), world->camera_pos));
     }
 
     void player_render(const t_player *const player, zgl::gfx::t_frame_context *const frame_context) {

@@ -3,14 +3,9 @@
 namespace world {
     constexpr zcl::gfx::t_color_rgba32f k_bg_color = zcl::gfx::color_create_rgba32f(0.43f, 0.73f, 1.0f);
 
-    constexpr zcl::t_f32 k_camera_scale = 2.0f;
-
     static zcl::math::t_mat4x4 camera_create_view_matrix(const zcl::math::t_v2 cam_pos) {
         const zcl::math::t_mat4x4 scaling = zcl::math::matrix_create_scaled({k_camera_scale, k_camera_scale});
-
-        const zcl::math::t_v2 cam_size = zcl::math::v2_i_to_f(zgl::platform::window_get_framebuffer_size_cache()) / k_camera_scale;
-        const zcl::math::t_mat4x4 translation = zcl::math::matrix_create_translated(-cam_pos + (cam_size / 2.0f));
-
+        const zcl::math::t_mat4x4 translation = zcl::math::matrix_create_translated(-cam_pos);
         return zcl::math::matrix_multiply(translation, scaling);
     }
 
@@ -39,7 +34,7 @@ namespace world {
         //
         // Camera Update
         //
-        world->camera_pos = world->player.pos;
+        world->camera_pos = world->player.pos - (camera_get_size() / 2.0f);
     }
 
     void render(const t_world *const world, zgl::gfx::t_frame_context *const frame_context, zcl::mem::t_arena *const temp_arena) {
