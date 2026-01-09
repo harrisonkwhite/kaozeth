@@ -47,6 +47,6 @@ namespace assets {
     void load_all(zf::mem::t_arena *const arena, zf::mem::t_arena *const temp_arena);
     void unload_all();
 
-    const zf::rendering::t_resource *get_texture(const t_texture_id id);
-    const zf::rendering::t_font *get_font(const t_font_id id);
+    const zgl::gfx::t_resource *get_texture(const t_texture_id id);
+    const zgl::gfx::t_font *get_font(const t_font_id id);
 }

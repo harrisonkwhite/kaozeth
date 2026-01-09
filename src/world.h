@@ -19,9 +19,9 @@ namespace world {
     };
 
     struct t_world {
-        zf::rendering::t_resource_group rendering_resource_group;
+        zgl::gfx::t_resource_group rendering_resource_group;
 
-        zf::rendering::t_resource *texture_target_all;
+        zgl::gfx::t_resource *texture_target_all;
 
         zf::math::t_v2 camera_pos;
 
@@ -39,17 +39,17 @@ namespace world {
 
     t_world create(zf::mem::t_arena *const arena);
     void destroy(t_world *const world);
-    void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
-    void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context, zf::mem::t_arena *const temp_arena);
+    void tick(t_world *const world, const zgl::game::t_tick_func_context &zf_context);
+    void render(const t_world *const world, zgl::gfx::t_frame_context *const frame_context, zf::mem::t_arena *const temp_arena);
 
     void player_init(t_world *const world);
-    void player_tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
-    void player_render(const t_player *const player, zf::rendering::t_frame_context *const frame_context);
+    void player_tick(t_world *const world, const zgl::game::t_tick_func_context &zf_context);
+    void player_render(const t_player *const player, zgl::gfx::t_frame_context *const frame_context);
     zf::math::t_rect_f player_get_collider(const zf::math::t_v2 player_pos);
 
     void enemy_spawn(t_world *const world, const zf::math::t_v2 pos);
     void enemies_tick(t_world *const world);
-    void enemies_render(const t_world *const world, zf::rendering::t_frame_context *const frame_context);
+    void enemies_render(const t_world *const world, zgl::gfx::t_frame_context *const frame_context);
 
     // ============================================================
 }

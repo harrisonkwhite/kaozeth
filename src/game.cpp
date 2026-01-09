@@ -38,10 +38,10 @@ static void game_set_state(t_game *const game, const t_game_state state, zf::mem
     }
 }
 
-void game_init(const zf::game::t_init_func_context &zf_context) {
+void game_init(const zgl::game::t_init_func_context &zf_context) {
     const auto game = static_cast<t_game *>(zf_context.user_mem);
 
-    zf::platform::window_set_title(g_game_title, zf_context.temp_arena);
+    zgl::platform::window_set_title(g_game_title, zf_context.temp_arena);
 
     assets::load_all(zf_context.perm_arena, zf_context.temp_arena);
 
@@ -67,24 +67,40 @@ void game_deinit(void *const user_mem) {
     assets::unload_all();
 }
 
-void game_tick(const zf::game::t_tick_func_context &zf_context) {
+void game_tick(const zgl::game::t_tick_func_context &zf_context) {
     const auto game = static_cast<t_game *>(zf_context.user_mem);
 
     switch (game->state) {
-    case ek_game_state_title_screen:
-        title_screen_tick(&game->state_data.title_screen, zf_context);
-        break;
+    case ek_game_state_title_screen: {
+        const t_title_screen_tick_request request = title_screen_tick(&game->state_data.title_screen, zf_context);
 
-    case ek_game_state_world:
+        switch (request) {
+        case ek_title_screen_tick_request_none:
+            break;
+
+        case ek_title_screen_tick_request_go_to_world:
+            game_set_state(game, ek_game_state_world, zf_context.perm_arena);
+            break;
+
+        default:
+            ZF_UNREACHABLE();
+        }
+
+        break;
+    }
+
+    case ek_game_state_world: {
         world::tick(&game->state_data.world, zf_context);
         break;
+    }
 
-    default:
+    default: {
         ZF_UNREACHABLE();
+    }
     }
 }
 
-void game_render(const zf::game::t_render_func_context &zf_context) {
+void game_render(const zgl::game::t_render_func_context &zf_context) {
     const auto game = static_cast<t_game *>(zf_context.user_mem);
 
     switch (game->state) {

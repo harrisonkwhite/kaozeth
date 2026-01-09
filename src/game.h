@@ -19,7 +19,7 @@ struct t_game {
     } state_data;
 };
 
-void game_init(const zf::game::t_init_func_context &zf_context);
+void game_init(const zgl::game::t_init_func_context &zf_context);
 void game_deinit(void *const user_mem);
-void game_tick(const zf::game::t_tick_func_context &zf_context);
-void game_render(const zf::game::t_render_func_context &zf_context);
+void game_tick(const zgl::game::t_tick_func_context &zf_context);
+void game_render(const zgl::game::t_render_func_context &zf_context);
