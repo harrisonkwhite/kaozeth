@@ -1,12 +1,22 @@
 #pragma once
 
 #include "pch.h"
+#include "title_screen.h"
 #include "world.h"
 
-inline const zf::strs::t_str_rdonly g_game_title = ZF_STR_LITERAL("Kaōzeth");
+enum t_game_state : zf::t_i32 {
+    ek_game_state_none,
+    ek_game_state_title_screen,
+    ek_game_state_world
+};
 
 struct t_game {
-    world::t_world world;
+    t_game_state state;
+
+    union {
+        t_title_screen title_screen;
+        world::t_world world;
+    } state_data;
 };
 
 void game_init(const zf::game::t_init_func_context &zf_context);

@@ -10,13 +10,16 @@ add_executable(kaozeth
     src/entry.cpp
     src/game.cpp
     src/assets.cpp
+    src/title_screen.cpp
     src/world_main.cpp
     src/world_player.cpp
     src/world_enemies.cpp
 
     src/pch.h
+    src/game_consts.h
     src/game.h
     src/assets.h
+    src/title_screen.h
     src/world.h
 )
 

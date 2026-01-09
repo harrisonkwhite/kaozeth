@@ -37,11 +37,10 @@ namespace world {
     // ============================================================
     // @section: Functions
 
-    void init(t_world *const world, zf::mem::t_arena *const arena);
-    void deinit(t_world *const world);
+    t_world create(zf::mem::t_arena *const arena);
+    void destroy(t_world *const world);
     void tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
-    void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context);
-    void render_ui(const t_world *const world, zf::rendering::t_frame_context *const frame_context, zf::mem::t_arena *const temp_arena);
+    void render(const t_world *const world, zf::rendering::t_frame_context *const frame_context, zf::mem::t_arena *const temp_arena);
 
     void player_init(t_world *const world);
     void player_tick(t_world *const world, const zf::game::t_tick_func_context &zf_context);
