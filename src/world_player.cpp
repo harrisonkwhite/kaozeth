@@ -29,10 +29,27 @@ namespace world {
         world->player.pos += world->player.vel;
 
         world->player.rot = zcl::math::calc_dir_in_rads(world->player.pos, screen_to_world_pos(zgl::input::cursor_get_pos(zf_context.input_state), world->camera_pos));
+
+        if (world->player.flash_time > 0) {
+            world->player.flash_time--;
+        }
+
+        if (zgl::input::key_check_pressed(zf_context.input_state, zgl::input::ek_key_code_space)) {
+            world->player.flash_time = k_player_flash_time_max;
+        }
     }
 
     void player_render(const t_player *const player, zgl::gfx::t_frame_context *const frame_context) {
+        if (player->flash_time > 0) {
+            zgl::gfx::frame_set_shader_prog(frame_context, zgl::gfx::frame_get_builtin_shader_prog_blend(frame_context));
+            zgl::gfx::frame_set_uniform_v4(frame_context, zgl::gfx::frame_get_builtin_uniform_blend(frame_context), {1.0f, 1.0f, 1.0f, static_cast<zcl::t_f32>(player->flash_time) / k_player_flash_time_max});
+        }
+
         zgl::gfx::frame_submit_texture(frame_context, assets::get_texture(assets::ek_texture_id_temp), player->pos, assets::k_texture_temp_src_rects[assets::ek_texture_temp_src_rect_id_player], k_player_origin, player->rot);
+
+        if (player->flash_time > 0) {
+            zgl::gfx::frame_set_shader_prog(frame_context, nullptr);
+        }
     }
 
     zcl::math::t_rect_f player_get_collider(const zcl::math::t_v2 player_pos) {

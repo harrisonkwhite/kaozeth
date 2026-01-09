@@ -6,10 +6,13 @@ namespace world {
 
     constexpr zcl::t_f32 k_camera_scale = 2.0f;
 
+    constexpr zcl::t_i32 k_player_flash_time_max = 10;
+
     struct t_player {
         zcl::math::t_v2 pos;
         zcl::math::t_v2 vel;
         zcl::t_f32 rot;
+        zcl::t_i32 flash_time;
     };
 
     constexpr zcl::t_i32 k_enemy_limit = 1024;
