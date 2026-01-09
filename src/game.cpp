@@ -3,7 +3,7 @@
 #include "game_consts.h"
 #include "assets.h"
 
-static void game_set_state(t_game *const game, const t_game_state state, zf::mem::t_arena *const arena) {
+static void game_set_state(t_game *const game, const t_game_state state, zcl::mem::t_arena *const arena) {
     ZF_ASSERT(state != ek_game_state_none);
 
     switch (game->state) {

@@ -4,7 +4,7 @@
 #include "title_screen.h"
 #include "world.h"
 
-enum t_game_state : zf::t_i32 {
+enum t_game_state : zcl::t_i32 {
     ek_game_state_none,
     ek_game_state_title_screen,
     ek_game_state_world
