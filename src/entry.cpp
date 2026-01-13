@@ -7,8 +7,8 @@ int main() {
         .tick_func = game_tick,
         .render_func = game_render,
 
-        .user_mem_size = ZF_SIZE_OF(t_game),
-        .user_mem_alignment = ZF_ALIGN_OF(t_game),
+        .user_mem_size = ZCL_SIZE_OF(t_game),
+        .user_mem_alignment = ZCL_ALIGN_OF(t_game),
     };
 
     zgl::game::run(config);

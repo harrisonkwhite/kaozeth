@@ -10,8 +10,8 @@ namespace assets {
         ekm_texture_id_cnt
     };
 
-    inline const zcl::t_static_array<zcl::strs::t_str_rdonly, ekm_texture_id_cnt> g_texture_file_paths = {{
-        ZF_STR_LITERAL("assets/textures/temp.dat"),
+    inline const zcl::t_static_array<zcl::t_str_rdonly, ekm_texture_id_cnt> g_texture_file_paths = {{
+        ZCL_STR_LITERAL("assets/textures/temp.dat"),
     }};
 
     enum t_texture_temp_src_rect_id {
@@ -21,7 +21,7 @@ namespace assets {
         ekm_texture_temp_src_rect_id_cnt
     };
 
-    constexpr zcl::t_static_array<zcl::math::t_rect_i, ekm_texture_temp_src_rect_id_cnt> k_texture_temp_src_rects = {{
+    constexpr zcl::t_static_array<zcl::t_rect_i, ekm_texture_temp_src_rect_id_cnt> k_texture_temp_src_rects = {{
         {4, 4, 24, 24},
         {32, 0, 16, 16},
     }};
@@ -36,15 +36,15 @@ namespace assets {
         ekm_font_id_cnt
     };
 
-    inline const zcl::t_static_array<zcl::strs::t_str_rdonly, ekm_font_id_cnt> g_font_file_paths = {{
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_32.dat"),
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_48.dat"),
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_64.dat"),
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_128.dat"),
-        ZF_STR_LITERAL("assets/fonts/eb_garamond_256.dat"),
+    inline const zcl::t_static_array<zcl::t_str_rdonly, ekm_font_id_cnt> g_font_file_paths = {{
+        ZCL_STR_LITERAL("assets/fonts/eb_garamond_32.dat"),
+        ZCL_STR_LITERAL("assets/fonts/eb_garamond_48.dat"),
+        ZCL_STR_LITERAL("assets/fonts/eb_garamond_64.dat"),
+        ZCL_STR_LITERAL("assets/fonts/eb_garamond_128.dat"),
+        ZCL_STR_LITERAL("assets/fonts/eb_garamond_256.dat"),
     }};
 
-    void load_all(zcl::mem::t_arena *const arena, zcl::mem::t_arena *const temp_arena);
+    void load_all(zcl::t_arena *const arena, zcl::t_arena *const temp_arena);
     void unload_all();
 
     const zgl::gfx::t_resource *get_texture(const t_texture_id id);

@@ -3,8 +3,8 @@
 #include "game_consts.h"
 #include "assets.h"
 
-static void game_set_state(t_game *const game, const t_game_state state, zcl::mem::t_arena *const arena) {
-    ZF_ASSERT(state != ek_game_state_none);
+static void game_set_state(t_game *const game, const t_game_state state, zcl::t_arena *const arena) {
+    ZCL_ASSERT(state != ek_game_state_none);
 
     switch (game->state) {
     case ek_game_state_none:
@@ -19,7 +19,7 @@ static void game_set_state(t_game *const game, const t_game_state state, zcl::me
         break;
 
     default:
-        ZF_UNREACHABLE();
+        ZCL_UNREACHABLE();
     }
 
     game->state = state;
@@ -34,7 +34,7 @@ static void game_set_state(t_game *const game, const t_game_state state, zcl::me
         break;
 
     default:
-        ZF_UNREACHABLE();
+        ZCL_UNREACHABLE();
     }
 }
 
@@ -61,7 +61,7 @@ void game_deinit(void *const user_mem) {
         break;
 
     default:
-        ZF_UNREACHABLE();
+        ZCL_UNREACHABLE();
     }
 
     assets::unload_all();
@@ -83,7 +83,7 @@ void game_tick(const zgl::game::t_tick_func_context &zf_context) {
             break;
 
         default:
-            ZF_UNREACHABLE();
+            ZCL_UNREACHABLE();
         }
 
         break;
@@ -95,7 +95,7 @@ void game_tick(const zgl::game::t_tick_func_context &zf_context) {
     }
 
     default: {
-        ZF_UNREACHABLE();
+        ZCL_UNREACHABLE();
     }
     }
 }
@@ -113,6 +113,6 @@ void game_render(const zgl::game::t_render_func_context &zf_context) {
         break;
 
     default:
-        ZF_UNREACHABLE();
+        ZCL_UNREACHABLE();
     }
 }

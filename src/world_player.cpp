@@ -3,8 +3,8 @@
 #include "assets.h"
 
 namespace world {
-    constexpr zcl::math::t_v2_i k_player_size = {20, 20};
-    constexpr zcl::math::t_v2 k_player_origin = zgl::gfx::k_origin_center;
+    constexpr zcl::t_v2_i k_player_size = {20, 20};
+    constexpr zcl::t_v2 k_player_origin = zgl::gfx::k_origin_center;
     constexpr zcl::t_f32 k_player_spd = 2.0f;
     constexpr zcl::t_f32 k_player_vel_lerp_factor = 0.2f;
 
@@ -18,17 +18,17 @@ namespace world {
         const zcl::t_b8 key_up = zgl::input::key_check_down(zf_context.input_state, zgl::input::ek_key_code_w);
         const zcl::t_b8 key_down = zgl::input::key_check_down(zf_context.input_state, zgl::input::ek_key_code_s);
 
-        const zcl::math::t_v2 move_axis = {
+        const zcl::t_v2 move_axis = {
             static_cast<zcl::t_f32>(key_right - key_left),
             static_cast<zcl::t_f32>(key_down - key_up),
         };
 
-        const zcl::math::t_v2 vel_dest = move_axis * k_player_spd;
-        world->player.vel = zcl::math::lerp(world->player.vel, vel_dest, k_player_vel_lerp_factor);
+        const zcl::t_v2 vel_dest = move_axis * k_player_spd;
+        world->player.vel = zcl::lerp(world->player.vel, vel_dest, k_player_vel_lerp_factor);
 
         world->player.pos += world->player.vel;
 
-        world->player.rot = zcl::math::calc_dir_in_rads(world->player.pos, screen_to_world_pos(zgl::input::cursor_get_pos(zf_context.input_state), world->camera_pos));
+        world->player.rot = zcl::calc_dir_in_rads(world->player.pos, screen_to_world_pos(zgl::input::cursor_get_pos(zf_context.input_state), world->camera_pos));
 
         if (world->player.flash_time > 0) {
             world->player.flash_time--;
@@ -52,7 +52,7 @@ namespace world {
         }
     }
 
-    zcl::math::t_rect_f player_get_collider(const zcl::math::t_v2 player_pos) {
-        return zcl::math::rect_create_f32(player_pos - (zcl::math::v2_calc_compwise_prod(zcl::math::v2_i_to_f(k_player_size), k_player_origin)), zcl::math::v2_i_to_f(k_player_size));
+    zcl::t_rect_f player_get_collider(const zcl::t_v2 player_pos) {
+        return zcl::rect_create_f32(player_pos - (zcl::v2_calc_compwise_prod(zcl::v2_i_to_f(k_player_size), k_player_origin)), zcl::v2_i_to_f(k_player_size));
     }
 }

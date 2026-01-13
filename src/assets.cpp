@@ -11,8 +11,8 @@ namespace assets {
         zcl::t_static_array<zgl::gfx::t_font, ekm_font_id_cnt> fonts;
     } g_module_state;
 
-    void load_all(zcl::mem::t_arena *const arena, zcl::mem::t_arena *const temp_arena) {
-        ZF_ASSERT(!g_module_state.loaded);
+    void load_all(zcl::t_arena *const arena, zcl::t_arena *const temp_arena) {
+        ZCL_ASSERT(!g_module_state.loaded);
 
         g_module_state = {};
 
@@ -30,7 +30,7 @@ namespace assets {
     }
 
     void unload_all() {
-        ZF_ASSERT(g_module_state.loaded);
+        ZCL_ASSERT(g_module_state.loaded);
 
         zgl::gfx::resource_group_destroy(&g_module_state.rendering_resource_group);
 
@@ -38,12 +38,12 @@ namespace assets {
     }
 
     const zgl::gfx::t_resource *get_texture(const t_texture_id id) {
-        ZF_ASSERT(g_module_state.loaded);
+        ZCL_ASSERT(g_module_state.loaded);
         return g_module_state.textures[id];
     }
 
     const zgl::gfx::t_font *get_font(const t_font_id id) {
-        ZF_ASSERT(g_module_state.loaded);
+        ZCL_ASSERT(g_module_state.loaded);
         return &g_module_state.fonts[id];
     }
 }
