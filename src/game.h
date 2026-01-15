@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "assets.h"
 #include "title_screen.h"
 #include "world.h"
 
@@ -11,15 +12,20 @@ enum t_game_state : zcl::t_i32 {
 };
 
 struct t_game {
+    t_assets assets;
+
+    zgl::t_sound_type_group *snd_type_group;
+    zgl::t_sound_type *snd_type;
+
     t_game_state state;
 
     union {
         t_title_screen title_screen;
-        world::t_world world;
+        t_world world;
     } state_data;
 };
 
-void game_init(const zgl::game::t_init_func_context &zf_context);
-void game_deinit(void *const user_mem);
-void game_tick(const zgl::game::t_tick_func_context &zf_context);
-void game_render(const zgl::game::t_render_func_context &zf_context);
+void GameInit(const zgl::t_game_init_func_context &zf_context);
+void GameDeinit(const zgl::t_game_deinit_func_context &zf_context);
+void GameTick(const zgl::t_game_tick_func_context &zf_context);
+void GameRender(const zgl::t_game_render_func_context &zf_context);
